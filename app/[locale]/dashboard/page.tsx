@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -41,6 +42,8 @@ export default async function DashboardPage({
   const fullName =
     profile?.full_name ?? user.user_metadata?.full_name ?? user.email ?? "";
 
+  const isOwnerOrAdmin = role === "owner" || role === "admin";
+
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <div className="mb-8 flex items-start justify-between gap-4">
@@ -79,9 +82,47 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-600">
-        {dict.dashboard.placeholder}
-      </div>
+      {isOwnerOrAdmin ? (
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <Link
+            href={`/${locale}/dashboard/properties`}
+            className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300 hover:bg-brand-50"
+          >
+            <p className="text-lg font-semibold text-slate-900 group-hover:text-brand-700">
+              {dict.dashboard.navCards.properties}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              {dict.dashboard.navCards.propertiesDesc}
+            </p>
+          </Link>
+          <Link
+            href={`/${locale}/dashboard/tenants`}
+            className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300 hover:bg-brand-50"
+          >
+            <p className="text-lg font-semibold text-slate-900 group-hover:text-brand-700">
+              {dict.dashboard.navCards.tenants}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              {dict.dashboard.navCards.tenantsDesc}
+            </p>
+          </Link>
+          <Link
+            href={`/${locale}/dashboard/leases`}
+            className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300 hover:bg-brand-50"
+          >
+            <p className="text-lg font-semibold text-slate-900 group-hover:text-brand-700">
+              {dict.dashboard.navCards.leases}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              {dict.dashboard.navCards.leasesDesc}
+            </p>
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-600">
+          {dict.dashboard.placeholder}
+        </div>
+      )}
     </div>
   );
 }
