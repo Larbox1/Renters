@@ -1,0 +1,243 @@
+export const en = {
+  meta: {
+    siteTitle: "renters — Rental management, simplified",
+    siteDescription:
+      "Manage your properties, tenants, leases, and service providers in one place. Built for owners, tenants, and property managers.",
+    pricingTitle: "Pricing — renters",
+    pricingDescription:
+      "Simple, transparent pricing. Start free with 1 property, or scale up as you grow.",
+  },
+  nav: {
+    home: "Home",
+    pricing: "Pricing",
+    login: "Log in",
+    signup: "Sign up",
+    dashboard: "Dashboard",
+    logout: "Log out",
+    languageLabel: "Language",
+  },
+  auth: {
+    login: {
+      title: "Welcome back",
+      subtitle: "Log in to manage your rentals.",
+      email: "Email",
+      password: "Password",
+      submit: "Log in",
+      submitting: "Logging in…",
+      noAccount: "Don't have an account?",
+      signupLink: "Sign up",
+      errorGeneric: "Could not log you in. Check your email and password.",
+    },
+    signup: {
+      title: "Create your account",
+      subtitle: "Free to start — manage your first property today.",
+      fullName: "Full name",
+      email: "Email",
+      password: "Password",
+      passwordHint: "At least 6 characters.",
+      role: "I am a",
+      roles: {
+        owner: "Property owner",
+        tenant: "Tenant",
+        service_provider: "Service provider",
+      },
+      submit: "Create account",
+      submitting: "Creating account…",
+      haveAccount: "Already have an account?",
+      loginLink: "Log in",
+      emailSent: "Check your email",
+      emailSentBody:
+        "We sent a confirmation link to {email}. Click it to activate your account.",
+      errorGeneric: "Could not create your account. Please try again.",
+    },
+  },
+  dashboard: {
+    title: "Dashboard",
+    greeting: "Welcome, {name}",
+    roleLabel: "Role",
+    emailLabel: "Email",
+    placeholder:
+      "Your dashboard will live here. We'll add properties, tenants, and leases next.",
+    logout: "Log out",
+  },
+  roles: {
+    admin: "Admin",
+    owner: "Owner",
+    tenant: "Tenant",
+    service_provider: "Service provider",
+  },
+  footer: {
+    tagline:
+      "Rental management, simplified. Properties, tenants, and leases — all in one place.",
+    product: "Product",
+    features: "Features",
+    pricing: "Pricing",
+    account: "Account",
+    login: "Log in",
+    signup: "Sign up",
+    rights: "All rights reserved.",
+  },
+  home: {
+    hero: {
+      badge: "Built for owners, tenants, and property managers",
+      titlePrefix: "Rental management, ",
+      titleHighlight: "simplified",
+      description:
+        "Manage your properties, tenants, and leases from one place. Invite owners, tenants, and service providers — everyone sees exactly what matters to them.",
+      primaryCta: "Start for free",
+      secondaryCta: "See pricing",
+      note: "Free plan — no credit card required",
+    },
+    features: {
+      heading: "Everything you need to run your rentals",
+      subheading: "From your first property to your fiftieth, renters grows with you.",
+      items: [
+        {
+          title: "Property management",
+          description:
+            "Track every property in your portfolio — address, units, photos, documents, and maintenance history — from a single dashboard.",
+        },
+        {
+          title: "Tenant profiles",
+          description:
+            "Store tenant contact info, lease history, payment status, and communication logs. Tenants get their own portal to stay in the loop.",
+        },
+        {
+          title: "Lease tracking",
+          description:
+            "Create and renew leases in minutes. Automatic reminders for end dates, rent reviews, and missing documents.",
+        },
+        {
+          title: "Rent & payments",
+          description:
+            "Record incoming payments, generate receipts, and see at a glance who is up to date and who is late.",
+        },
+        {
+          title: "Service providers",
+          description:
+            "Maintain a directory of plumbers, electricians, and cleaners. Assign jobs, track status, and share updates with tenants.",
+        },
+        {
+          title: "Role-based access",
+          description:
+            "Admins, owners, tenants, and service providers each see exactly what they need — and nothing they don't.",
+        },
+      ],
+    },
+    users: {
+      heading: "One platform, four perspectives",
+      subheading: "Every user gets the view they need — no clutter, no confusion.",
+      items: [
+        {
+          role: "Owners",
+          description:
+            "Get a portfolio view, monitor rent flow, and stay on top of lease renewals without the spreadsheets.",
+        },
+        {
+          role: "Tenants",
+          description:
+            "Access lease documents, submit maintenance requests, and view payment history in a clean portal.",
+        },
+        {
+          role: "Service providers",
+          description:
+            "Receive work orders, update job status, and share photos — all tied to the right property.",
+        },
+        {
+          role: "Admins",
+          description:
+            "Manage multiple portfolios on behalf of owners with full oversight and delegated access.",
+        },
+      ],
+    },
+    cta: {
+      heading: "Ready to take control of your rentals?",
+      subheading: "Start free with one property. Upgrade when you grow.",
+      primary: "Create a free account",
+      secondary: "Compare plans",
+    },
+  },
+  pricing: {
+    header: {
+      title: "Simple, transparent pricing",
+      subtitle:
+        "Start free, and pay only for what you need. No setup fees, no hidden costs.",
+    },
+    mostPopular: "Most popular",
+    forever: "forever",
+    perMonth: "/month",
+    note: "Prices in euros. VAT applied where applicable.",
+    plans: [
+      {
+        name: "Free",
+        tagline: "Perfect for getting started",
+        price: "€0",
+        priceSuffix: "forever",
+        cadence: undefined,
+        cta: "Start for free",
+        features: [
+          "Manage 1 property",
+          "Up to 2 tenants",
+          "Lease tracking & reminders",
+          "Tenant portal access",
+          "Email support",
+        ],
+      },
+      {
+        name: "Starter",
+        tagline: "For growing portfolios",
+        price: "€9.99",
+        priceSuffix: undefined,
+        cadence: "/month",
+        cta: "Choose Starter",
+        features: [
+          "Manage up to 5 properties",
+          "Unlimited tenants",
+          "Lease tracking & reminders",
+          "Service provider directory",
+          "Rent payment tracking",
+          "Priority email support",
+        ],
+      },
+      {
+        name: "Pro",
+        tagline: "For professional landlords",
+        price: "€24.99",
+        priceSuffix: undefined,
+        cadence: "/month",
+        cta: "Choose Pro",
+        features: [
+          "Manage more than 5 properties",
+          "Unlimited tenants & providers",
+          "Multiple owners & admin seats",
+          "Advanced reports & exports",
+          "Custom roles & permissions",
+          "Priority support",
+        ],
+      },
+    ],
+    faq: {
+      heading: "Frequently asked questions",
+      items: [
+        {
+          q: "Can I switch plans later?",
+          a: "Yes. You can upgrade or downgrade at any time. Changes take effect at the start of your next billing cycle.",
+        },
+        {
+          q: "What counts as a property?",
+          a: "A property is a single rental unit — an apartment, a house, or an individual room rented out. A 3-unit building counts as 3 properties.",
+        },
+        {
+          q: "Do tenants and service providers need a paid seat?",
+          a: "No. Tenant and service-provider accounts are always free. You only pay for the properties you manage.",
+        },
+        {
+          q: "Is there a free trial of paid plans?",
+          a: "The Free plan is free forever — no trial needed. When you're ready to grow, upgrade in one click.",
+        },
+      ],
+    },
+  },
+};
+
+export type Dictionary = typeof en;
