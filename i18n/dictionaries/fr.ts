@@ -112,14 +112,49 @@ export const fr: Dictionary = {
   users: {
     title: "Utilisateurs",
     empty: "Aucun utilisateur.",
+    newUser: "Nouvel utilisateur",
+    backToList: "Retour aux utilisateurs",
     columns: {
       name: "Nom",
       email: "E-mail",
       role: "Rôle",
+      status: "Statut",
       lastSignIn: "Dernière connexion",
       createdAt: "Inscrit le",
+      actions: "Actions",
     },
+    status: {
+      active: "Actif",
+      suspended: "Suspendu",
+    },
+    actions: {
+      edit: "Modifier",
+      suspend: "Suspendre",
+      unsuspend: "Réactiver",
+      delete: "Supprimer",
+    },
+    confirmSuspend:
+      "Suspendre cet utilisateur ? Il ne pourra plus se connecter.",
+    confirmUnsuspend: "Réactiver l'accès de cet utilisateur ?",
+    confirmDelete:
+      "Supprimer définitivement cet utilisateur et toutes ses données ? Cette action est irréversible.",
     never: "Jamais",
+    form: {
+      createTitle: "Nouvel utilisateur",
+      editTitle: "Modifier l'utilisateur",
+      email: "E-mail",
+      emailPlaceholder: "utilisateur@exemple.com",
+      password: "Mot de passe",
+      passwordHint:
+        "Au moins 6 caractères. L'utilisateur s'en servira pour se connecter.",
+      fullName: "Nom complet",
+      fullNamePlaceholder: "Jane Dupont",
+      role: "Rôle",
+      submit: "Enregistrer",
+      submitting: "Enregistrement…",
+      errorGeneric:
+        "Impossible d'enregistrer l'utilisateur. Veuillez réessayer.",
+    },
   },
   properties: {
     title: "Biens",

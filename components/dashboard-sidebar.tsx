@@ -21,10 +21,8 @@ function buildItems(
       { href: `/${locale}/dashboard/properties`, label: dict.properties },
       { href: `/${locale}/dashboard/tenants`, label: dict.tenants },
       { href: `/${locale}/dashboard/leases`, label: dict.leases },
+      { href: `/${locale}/dashboard/users`, label: dict.users },
     );
-  }
-  if (role === "admin") {
-    items.push({ href: `/${locale}/dashboard/users`, label: dict.users });
   }
   return items;
 }
