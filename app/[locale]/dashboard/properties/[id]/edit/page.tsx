@@ -7,6 +7,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { PropertyForm, type OwnerOption } from "../../property-form";
+import { signPhotos, type PropertyPhoto } from "@/lib/properties/photos";
 
 type ListedUser = {
   id: string;
@@ -49,6 +50,10 @@ export default async function EditPropertyPage({
       .map((u) => ({ id: u.id, full_name: u.full_name, email: u.email }));
   }
 
+  const existingPhotos = await signPhotos(
+    (property.photos ?? []) as PropertyPhoto[],
+  );
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <div className="mb-6">
@@ -68,6 +73,7 @@ export default async function EditPropertyPage({
           dict={dict.properties}
           property={property}
           owners={owners}
+          existingPhotos={existingPhotos}
         />
       </div>
     </div>

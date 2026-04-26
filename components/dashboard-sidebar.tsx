@@ -31,6 +31,8 @@ function buildItems(
   }
   if (role === "admin") {
     items.push({ href: `/${locale}/dashboard/users`, label: dict.users });
+    // The Hub: admin-only, no translation (same in EN and FR).
+    items.push({ href: `/${locale}/dashboard/the-hub`, label: "The Hub" });
   }
   return items;
 }

@@ -35,6 +35,51 @@ export default async function DashboardPage({
 
   const showOwnerNav = isOwnerOrAdmin(role);
 
+  // Stats — fetched in parallel. RLS already restricts what each role sees.
+  let propertiesCount = 0;
+  let occupiedCount = 0;
+  let activeLeasesCount = 0;
+  let monthlyRentCents = 0;
+  let portfolioValueCents = 0;
+
+  if (showOwnerNav) {
+    const [propsRes, propsValues, activeLeases] = await Promise.all([
+      session.supabase
+        .from("properties")
+        .select("*", { count: "exact", head: true }),
+      session.supabase.from("properties").select("value_cents"),
+      session.supabase
+        .from("leases")
+        .select("monthly_rent_cents, property_id")
+        .eq("status", "active"),
+    ]);
+
+    propertiesCount = propsRes.count ?? 0;
+    portfolioValueCents = (propsValues.data ?? []).reduce(
+      (sum, p) => sum + (p.value_cents ?? 0),
+      0,
+    );
+    const leases = activeLeases.data ?? [];
+    activeLeasesCount = leases.length;
+    monthlyRentCents = leases.reduce(
+      (sum, l) => sum + (l.monthly_rent_cents ?? 0),
+      0,
+    );
+    occupiedCount = new Set(leases.map((l) => l.property_id)).size;
+  }
+
+  const occupancyPct =
+    propertiesCount > 0
+      ? Math.round((occupiedCount / propertiesCount) * 100)
+      : 0;
+
+  const fmtCurrency = (cents: number) =>
+    new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0,
+    }).format(cents / 100);
+
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <div className="mb-8 flex items-start justify-between gap-4">
@@ -74,38 +119,63 @@ export default async function DashboardPage({
       </div>
 
       {showOwnerNav ? (
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <div className="mt-8 grid gap-4 grid-cols-2 lg:grid-cols-5">
           <Link
             href={`/${locale}/dashboard/properties`}
-            className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300 hover:bg-brand-50"
+            className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
           >
-            <p className="text-lg font-semibold text-slate-900 group-hover:text-brand-700">
-              {dict.dashboard.navCards.properties}
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {dict.dashboard.stats.properties}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
-              {dict.dashboard.navCards.propertiesDesc}
-            </p>
-          </Link>
-          <Link
-            href={`/${locale}/dashboard/tenants`}
-            className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300 hover:bg-brand-50"
-          >
-            <p className="text-lg font-semibold text-slate-900 group-hover:text-brand-700">
-              {dict.dashboard.navCards.tenants}
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              {dict.dashboard.navCards.tenantsDesc}
+            <p className="mt-2 text-2xl font-bold text-slate-900 group-hover:text-brand-700">
+              {propertiesCount}
             </p>
           </Link>
           <Link
             href={`/${locale}/dashboard/leases`}
-            className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-brand-300 hover:bg-brand-50"
+            className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
           >
-            <p className="text-lg font-semibold text-slate-900 group-hover:text-brand-700">
-              {dict.dashboard.navCards.leases}
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {dict.dashboard.stats.activeLeases}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
-              {dict.dashboard.navCards.leasesDesc}
+            <p className="mt-2 text-2xl font-bold text-slate-900 group-hover:text-brand-700">
+              {activeLeasesCount}
+            </p>
+          </Link>
+          <Link
+            href={`/${locale}/dashboard/properties`}
+            className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
+          >
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {dict.dashboard.stats.occupancy}
+            </p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 group-hover:text-brand-700">
+              {occupancyPct}%
+            </p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {occupiedCount} / {propertiesCount}
+            </p>
+          </Link>
+          <Link
+            href={`/${locale}/dashboard/leases`}
+            className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
+          >
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {dict.dashboard.stats.monthlyRent}
+            </p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 group-hover:text-brand-700">
+              {fmtCurrency(monthlyRentCents)}
+            </p>
+          </Link>
+          <Link
+            href={`/${locale}/dashboard/properties`}
+            className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
+          >
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {dict.dashboard.stats.portfolioValue}
+            </p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 group-hover:text-brand-700">
+              {fmtCurrency(portfolioValueCents)}
             </p>
           </Link>
         </div>
