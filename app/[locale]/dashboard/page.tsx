@@ -42,6 +42,13 @@ export default async function DashboardPage({
   const fullName =
     profile?.full_name ?? user.user_metadata?.full_name ?? user.email ?? "";
 
+  const lastSignIn = user.last_sign_in_at
+    ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
+        dateStyle: "long",
+        timeStyle: "short",
+      }).format(new Date(user.last_sign_in_at))
+    : dict.dashboard.never;
+
   const isOwnerOrAdmin = role === "owner" || role === "admin";
 
   return (
@@ -67,7 +74,7 @@ export default async function DashboardPage({
         </form>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             {dict.dashboard.emailLabel}
@@ -79,6 +86,12 @@ export default async function DashboardPage({
             {dict.dashboard.roleLabel}
           </p>
           <p className="mt-1 text-sm text-slate-900">{dict.roles[role]}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {dict.dashboard.lastSignInLabel}
+          </p>
+          <p className="mt-1 text-sm text-slate-900">{lastSignIn}</p>
         </div>
       </div>
 

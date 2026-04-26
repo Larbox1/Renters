@@ -28,8 +28,35 @@ export const fr: Dictionary = {
       submitting: "Connexion…",
       noAccount: "Pas encore de compte ?",
       signupLink: "S'inscrire",
+      forgotPassword: "Mot de passe oublié ?",
       errorGeneric:
         "Connexion impossible. Vérifiez votre e-mail et votre mot de passe.",
+    },
+    forgotPassword: {
+      title: "Réinitialiser votre mot de passe",
+      subtitle:
+        "Entrez votre adresse e-mail et nous vous enverrons un lien de réinitialisation.",
+      email: "E-mail",
+      submit: "Envoyer le lien",
+      submitting: "Envoi…",
+      sentTitle: "Vérifiez vos e-mails",
+      sentBody:
+        "Si un compte existe pour {email}, vous recevrez un lien de réinitialisation. Vérifiez votre boîte de réception.",
+      backToLogin: "Retour à la connexion",
+      errorGeneric:
+        "Impossible d'envoyer le lien. Veuillez réessayer.",
+    },
+    resetPassword: {
+      title: "Définir un nouveau mot de passe",
+      subtitle: "Choisissez un nouveau mot de passe pour votre compte.",
+      password: "Nouveau mot de passe",
+      passwordHint: "Au moins 6 caractères.",
+      confirmPassword: "Confirmer le mot de passe",
+      submit: "Mettre à jour le mot de passe",
+      submitting: "Mise à jour…",
+      success: "Mot de passe mis à jour. Redirection…",
+      mismatch: "Les mots de passe ne correspondent pas.",
+      errorGeneric: "Impossible de mettre à jour le mot de passe.",
     },
     signup: {
       title: "Créez votre compte",
@@ -61,6 +88,8 @@ export const fr: Dictionary = {
     greeting: "Bienvenue, {name}",
     roleLabel: "Rôle",
     emailLabel: "E-mail",
+    lastSignInLabel: "Dernière connexion",
+    never: "Jamais",
     placeholder:
       "Votre tableau de bord s'installera ici. Nous ajouterons ensuite les biens, locataires et baux.",
     logout: "Se déconnecter",
