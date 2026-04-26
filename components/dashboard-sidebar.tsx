@@ -1,0 +1,67 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { Locale } from "@/i18n/config";
+import type { Role } from "@/lib/auth/current-user";
+import type { Dictionary } from "@/i18n/dictionaries/en";
+
+type SidebarItem = { href: string; label: string };
+
+function buildItems(
+  role: Role,
+  locale: Locale,
+  dict: Dictionary["dashboard"]["sidebar"],
+): SidebarItem[] {
+  const items: SidebarItem[] = [
+    { href: `/${locale}/dashboard`, label: dict.overview },
+  ];
+  if (role === "owner" || role === "admin") {
+    items.push(
+      { href: `/${locale}/dashboard/properties`, label: dict.properties },
+      { href: `/${locale}/dashboard/tenants`, label: dict.tenants },
+      { href: `/${locale}/dashboard/leases`, label: dict.leases },
+    );
+  }
+  return items;
+}
+
+export function DashboardSidebar({
+  locale,
+  role,
+  dict,
+}: {
+  locale: Locale;
+  role: Role;
+  dict: Dictionary["dashboard"]["sidebar"];
+}) {
+  const pathname = usePathname();
+  const items = buildItems(role, locale, dict);
+  const overviewHref = `/${locale}/dashboard`;
+
+  return (
+    <nav className="flex gap-1 overflow-x-auto p-3 md:flex-col md:overflow-visible md:p-4">
+      {items.map((item) => {
+        const isActive =
+          item.href === overviewHref
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={isActive ? "page" : undefined}
+            className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition ${
+              isActive
+                ? "bg-brand-50 text-brand-700"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            }`}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

@@ -101,6 +101,12 @@ export const fr: Dictionary = {
       leases: "Baux",
       leasesDesc: "Suivez et gérez vos contrats de bail.",
     },
+    sidebar: {
+      overview: "Vue d'ensemble",
+      properties: "Biens",
+      tenants: "Locataires",
+      leases: "Baux",
+    },
   },
   properties: {
     title: "Biens",

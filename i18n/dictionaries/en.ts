@@ -94,6 +94,12 @@ export const en = {
       leases: "Leases",
       leasesDesc: "Track and manage lease agreements.",
     },
+    sidebar: {
+      overview: "Overview",
+      properties: "Properties",
+      tenants: "Tenants",
+      leases: "Leases",
+    },
   },
   properties: {
     title: "Properties",
