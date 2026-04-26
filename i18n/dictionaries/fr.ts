@@ -115,6 +115,28 @@ export const fr: Dictionary = {
       tenants: "Locataires",
       leases: "Baux",
       users: "Utilisateurs",
+      settings: "Paramètres",
+    },
+  },
+  settings: {
+    title: "Paramètres",
+    account: {
+      heading: "Compte",
+      email: "E-mail",
+      role: "Rôle",
+    },
+    language: {
+      heading: "Langue",
+      hint: "Utilisée dans toute l'interface.",
+    },
+    storage: {
+      heading: "Utilisation du stockage",
+      myHeading: "Mon utilisation du stockage",
+      bucket: "Bucket",
+      files: "Fichiers",
+      size: "Taille",
+      total: "Total",
+      empty: "Aucun fichier stocké.",
     },
   },
   messages: {

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { LanguageSwitcher } from "./language-switcher";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { logoutAction } from "@/lib/actions/auth";
@@ -47,7 +46,6 @@ export function Navbar({
         </div>
 
         <div className="flex items-center gap-3">
-          <LanguageSwitcher current={locale} />
           {userEmail ? (
             <>
               <span

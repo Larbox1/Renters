@@ -34,6 +34,8 @@ function buildItems(
     // The Hub: admin-only, no translation (same in EN and FR).
     items.push({ href: `/${locale}/dashboard/the-hub`, label: "The Hub" });
   }
+  // Settings goes last and is visible to everyone.
+  items.push({ href: `/${locale}/dashboard/settings`, label: dict.settings });
   return items;
 }
 

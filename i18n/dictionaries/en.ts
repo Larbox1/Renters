@@ -108,6 +108,28 @@ export const en = {
       tenants: "Tenants",
       leases: "Leases",
       users: "Users",
+      settings: "Settings",
+    },
+  },
+  settings: {
+    title: "Settings",
+    account: {
+      heading: "Account",
+      email: "Email",
+      role: "Role",
+    },
+    language: {
+      heading: "Language",
+      hint: "Used across the app interface.",
+    },
+    storage: {
+      heading: "Storage usage",
+      myHeading: "My storage usage",
+      bucket: "Bucket",
+      files: "Files",
+      size: "Size",
+      total: "Total",
+      empty: "No files stored yet.",
     },
   },
   messages: {
