@@ -23,6 +23,9 @@ function buildItems(
       { href: `/${locale}/dashboard/leases`, label: dict.leases },
     );
   }
+  if (role === "admin") {
+    items.push({ href: `/${locale}/dashboard/users`, label: dict.users });
+  }
   return items;
 }
 

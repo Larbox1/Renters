@@ -99,7 +99,20 @@ export const en = {
       properties: "Properties",
       tenants: "Tenants",
       leases: "Leases",
+      users: "Users",
     },
+  },
+  users: {
+    title: "Users",
+    empty: "No users yet.",
+    columns: {
+      name: "Name",
+      email: "Email",
+      role: "Role",
+      lastSignIn: "Last sign-in",
+      createdAt: "Joined",
+    },
+    never: "Never",
   },
   properties: {
     title: "Properties",

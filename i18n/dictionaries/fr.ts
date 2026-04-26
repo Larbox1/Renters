@@ -106,7 +106,20 @@ export const fr: Dictionary = {
       properties: "Biens",
       tenants: "Locataires",
       leases: "Baux",
+      users: "Utilisateurs",
     },
+  },
+  users: {
+    title: "Utilisateurs",
+    empty: "Aucun utilisateur.",
+    columns: {
+      name: "Nom",
+      email: "E-mail",
+      role: "Rôle",
+      lastSignIn: "Dernière connexion",
+      createdAt: "Inscrit le",
+    },
+    never: "Jamais",
   },
   properties: {
     title: "Biens",
