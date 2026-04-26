@@ -7,7 +7,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { ConfirmSubmit } from "@/components/confirm-submit";
-import { deleteTenantAction } from "../actions";
+import { deleteTenantAction, resendTenantInviteAction } from "../actions";
 
 export default async function TenantDetailPage({
   params,
@@ -72,10 +72,27 @@ export default async function TenantDetailPage({
       <div className="grid gap-4 sm:grid-cols-2">
         {tenant.email && (
           <div className="rounded-xl border border-slate-200 bg-white p-5">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {dict.tenants.fields.email}
-            </p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                {dict.tenants.fields.email}
+              </p>
+              {tenant.auth_user_id && (
+                <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                  {dict.tenants.invitedBadge}
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-sm text-slate-900">{tenant.email}</p>
+            <form action={resendTenantInviteAction} className="mt-3">
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="id" value={id} />
+              <button
+                type="submit"
+                className="text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+              >
+                {dict.tenants.resendInvite}
+              </button>
+            </form>
           </div>
         )}
         {tenant.phone && (

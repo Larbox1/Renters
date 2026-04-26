@@ -106,6 +106,9 @@ export function TenantForm({
           placeholder={dict.fields.emailPlaceholder}
           className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
+        {!tenant && (
+          <p className="mt-1 text-xs text-slate-500">{dict.fields.emailHint}</p>
+        )}
       </div>
 
       <div>

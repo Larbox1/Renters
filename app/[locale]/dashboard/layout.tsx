@@ -4,6 +4,7 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { getCurrentSession } from "@/lib/auth/current-user";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { PollRefresh } from "@/components/poll-refresh";
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +22,17 @@ export default async function DashboardLayout({
   // skip the sidebar when the user isn't authenticated yet.
   const session = hasSupabaseEnv() ? await getCurrentSession() : null;
 
+  // Lightweight count of unread received messages for the sidebar badge.
+  let unreadMessages = 0;
+  if (session) {
+    const { count } = await session.supabase
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("recipient_id", session.user.id)
+      .is("read_at", null);
+    unreadMessages = count ?? 0;
+  }
+
   return (
     <div className="mx-auto flex max-w-7xl flex-col md:flex-row">
       {session && (
@@ -29,10 +41,12 @@ export default async function DashboardLayout({
             locale={locale as Locale}
             role={session.role}
             dict={dict.dashboard.sidebar}
+            unreadMessages={unreadMessages}
           />
         </aside>
       )}
       <div className="min-w-0 flex-1">{children}</div>
+      {session && <PollRefresh />}
     </div>
   );
 }
