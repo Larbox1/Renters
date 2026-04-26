@@ -38,7 +38,7 @@ export default async function DashboardPage({
     .eq("id", user.id)
     .maybeSingle();
 
-  const role = (profile?.role ?? "tenant") as Role;
+  const role = (profile?.role ?? "Owner") as Role;
   const fullName =
     profile?.full_name ?? user.user_metadata?.full_name ?? user.email ?? "";
 
