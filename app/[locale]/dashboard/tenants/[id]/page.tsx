@@ -6,6 +6,7 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 import { deleteTenantAction } from "../actions";
 
 export default async function TenantDetailPage({
@@ -57,15 +58,12 @@ export default async function TenantDetailPage({
             <form action={deleteTenantAction}>
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="id" value={id} />
-              <button
-                type="submit"
-                onClick={(e) => {
-                  if (!confirm(dict.tenants.confirmDelete)) e.preventDefault();
-                }}
+              <ConfirmSubmit
+                message={dict.tenants.confirmDelete}
                 className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
               >
                 {dict.tenants.deleteTenant}
-              </button>
+              </ConfirmSubmit>
             </form>
           </div>
         </div>

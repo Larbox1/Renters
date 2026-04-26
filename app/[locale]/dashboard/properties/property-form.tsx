@@ -12,12 +12,19 @@ import {
 
 type Property = {
   id: string;
+  owner_id?: string;
   label: string | null;
   address: string;
   city: string;
   postal_code: string | null;
   country: string | null;
   monthly_rent_cents: number | null;
+};
+
+export type OwnerOption = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
 };
 
 function SubmitButton({ labels }: { labels: { idle: string; busy: string } }) {
@@ -37,13 +44,16 @@ export function PropertyForm({
   locale,
   dict,
   property,
+  owners,
 }: {
   locale: Locale;
   dict: Dictionary["properties"];
   property?: Property;
+  owners?: OwnerOption[];
 }) {
   const action = property ? updatePropertyAction : createPropertyAction;
   const [state, formAction] = useActionState<PropertyState, FormData>(action, {});
+  const showOwnerSelect = Boolean(owners && owners.length > 0);
 
   const centsToEuros = (cents: number | null) =>
     cents != null ? (cents / 100).toFixed(2) : "";
@@ -52,6 +62,29 @@ export function PropertyForm({
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
       {property && <input type="hidden" name="id" value={property.id} />}
+
+      {showOwnerSelect && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            {dict.fields.owner} <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="owner_id"
+            required
+            defaultValue={property?.owner_id ?? ""}
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          >
+            <option value="" disabled>
+              —
+            </option>
+            {owners!.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.full_name ?? o.email ?? o.id}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-slate-700">

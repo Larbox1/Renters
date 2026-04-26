@@ -10,6 +10,7 @@ import {
   isOwnerOrAdmin,
   type Role,
 } from "@/lib/auth/current-user";
+import { ConfirmSubmit } from "@/components/confirm-submit";
 import { deleteUserAction, toggleSuspendUserAction } from "./actions";
 
 type UserRow = {
@@ -164,34 +165,28 @@ export default async function UsersPage({
                               name="isSuspended"
                               value={String(suspended)}
                             />
-                            <button
-                              type="submit"
-                              onClick={(e) => {
-                                const msg = suspended
+                            <ConfirmSubmit
+                              message={
+                                suspended
                                   ? dict.users.confirmUnsuspend
-                                  : dict.users.confirmSuspend;
-                                if (!confirm(msg)) e.preventDefault();
-                              }}
+                                  : dict.users.confirmSuspend
+                              }
                               className="rounded border border-amber-200 bg-white px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50"
                             >
                               {suspended
                                 ? dict.users.actions.unsuspend
                                 : dict.users.actions.suspend}
-                            </button>
+                            </ConfirmSubmit>
                           </form>
                           <form action={deleteUserAction}>
                             <input type="hidden" name="locale" value={locale} />
                             <input type="hidden" name="id" value={u.id} />
-                            <button
-                              type="submit"
-                              onClick={(e) => {
-                                if (!confirm(dict.users.confirmDelete))
-                                  e.preventDefault();
-                              }}
+                            <ConfirmSubmit
+                              message={dict.users.confirmDelete}
                               className="rounded border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
                             >
                               {dict.users.actions.delete}
-                            </button>
+                            </ConfirmSubmit>
                           </form>
                         </div>
                       </td>

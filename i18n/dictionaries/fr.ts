@@ -179,6 +179,7 @@ export const fr: Dictionary = {
       countryPlaceholder: "FR",
       monthlyRent: "Loyer mensuel (€)",
       monthlyRentPlaceholder: "1000",
+      owner: "Propriétaire",
     },
     form: {
       createTitle: "Nouveau bien",
@@ -205,6 +206,7 @@ export const fr: Dictionary = {
       phonePlaceholder: "+33 6 00 00 00 00",
       notes: "Notes",
       notesPlaceholder: "Toute information utile…",
+      owner: "Propriétaire",
     },
     form: {
       createTitle: "Nouveau locataire",

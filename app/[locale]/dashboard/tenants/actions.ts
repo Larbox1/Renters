@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { isLocale, defaultLocale } from "@/i18n/config";
+import { getCurrentSession } from "@/lib/auth/current-user";
 
 export type TenantState = { error?: string };
 
@@ -17,12 +17,18 @@ export async function createTenantAction(
   formData: FormData,
 ): Promise<TenantState> {
   const locale = getLocale(formData);
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`/${locale}/login`);
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
 
-  const { error } = await supabase.from("tenants").insert({
-    owner_id: user.id,
+  // Admins can pick any owner; everyone else owns the tenant they create.
+  const requestedOwnerId = String(formData.get("owner_id") ?? "").trim();
+  const ownerId =
+    session.role === "admin" && requestedOwnerId
+      ? requestedOwnerId
+      : session.user.id;
+
+  const { error } = await session.supabase.from("tenants").insert({
+    owner_id: ownerId,
     full_name: String(formData.get("full_name") ?? "").trim(),
     email: String(formData.get("email") ?? "").trim() || null,
     phone: String(formData.get("phone") ?? "").trim() || null,
@@ -41,20 +47,26 @@ export async function updateTenantAction(
 ): Promise<TenantState> {
   const locale = getLocale(formData);
   const id = String(formData.get("id") ?? "");
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`/${locale}/login`);
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
 
-  const { error } = await supabase
+  const updates: Record<string, unknown> = {
+    full_name: String(formData.get("full_name") ?? "").trim(),
+    email: String(formData.get("email") ?? "").trim() || null,
+    phone: String(formData.get("phone") ?? "").trim() || null,
+    notes: String(formData.get("notes") ?? "").trim() || null,
+  };
+
+  // Only admins can reassign ownership.
+  const requestedOwnerId = String(formData.get("owner_id") ?? "").trim();
+  if (session.role === "admin" && requestedOwnerId) {
+    updates.owner_id = requestedOwnerId;
+  }
+
+  const { error } = await session.supabase
     .from("tenants")
-    .update({
-      full_name: String(formData.get("full_name") ?? "").trim(),
-      email: String(formData.get("email") ?? "").trim() || null,
-      phone: String(formData.get("phone") ?? "").trim() || null,
-      notes: String(formData.get("notes") ?? "").trim() || null,
-    })
-    .eq("id", id)
-    .eq("owner_id", user.id);
+    .update(updates)
+    .eq("id", id);
 
   if (error) return { error: error.message };
 
@@ -65,15 +77,10 @@ export async function updateTenantAction(
 export async function deleteTenantAction(formData: FormData) {
   const locale = getLocale(formData);
   const id = String(formData.get("id") ?? "");
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`/${locale}/login`);
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
 
-  await supabase
-    .from("tenants")
-    .delete()
-    .eq("id", id)
-    .eq("owner_id", user.id);
+  await session.supabase.from("tenants").delete().eq("id", id);
 
   revalidatePath(`/${locale}/dashboard/tenants`);
   redirect(`/${locale}/dashboard/tenants`);

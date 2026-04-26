@@ -12,10 +12,17 @@ import {
 
 type Tenant = {
   id: string;
+  owner_id?: string;
   full_name: string;
   email: string | null;
   phone: string | null;
   notes: string | null;
+};
+
+export type OwnerOption = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
 };
 
 function SubmitButton({ labels }: { labels: { idle: string; busy: string } }) {
@@ -35,18 +42,44 @@ export function TenantForm({
   locale,
   dict,
   tenant,
+  owners,
 }: {
   locale: Locale;
   dict: Dictionary["tenants"];
   tenant?: Tenant;
+  owners?: OwnerOption[];
 }) {
   const action = tenant ? updateTenantAction : createTenantAction;
   const [state, formAction] = useActionState<TenantState, FormData>(action, {});
+  const showOwnerSelect = Boolean(owners && owners.length > 0);
 
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
       {tenant && <input type="hidden" name="id" value={tenant.id} />}
+
+      {showOwnerSelect && (
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            {dict.fields.owner} <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="owner_id"
+            required
+            defaultValue={tenant?.owner_id ?? ""}
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          >
+            <option value="" disabled>
+              —
+            </option>
+            {owners!.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.full_name ?? o.email ?? o.id}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-slate-700">

@@ -169,6 +169,7 @@ export const en = {
       countryPlaceholder: "FR",
       monthlyRent: "Monthly rent (€)",
       monthlyRentPlaceholder: "1000",
+      owner: "Owner",
     },
     form: {
       createTitle: "New property",
@@ -195,6 +196,7 @@ export const en = {
       phonePlaceholder: "+33 6 00 00 00 00",
       notes: "Notes",
       notesPlaceholder: "Any relevant notes…",
+      owner: "Owner",
     },
     form: {
       createTitle: "New tenant",

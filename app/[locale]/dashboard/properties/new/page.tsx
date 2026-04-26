@@ -6,7 +6,14 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
-import { PropertyForm } from "../property-form";
+import { PropertyForm, type OwnerOption } from "../property-form";
+
+type ListedUser = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  role: string;
+};
 
 export default async function NewPropertyPage({
   params,
@@ -25,6 +32,14 @@ export default async function NewPropertyPage({
     return <AccessDenied dict={dict.accessDenied} />;
   }
 
+  let owners: OwnerOption[] | undefined;
+  if (session.role === "admin") {
+    const { data } = await session.supabase.rpc("list_users");
+    owners = ((data ?? []) as ListedUser[])
+      .filter((u) => u.role === "owner")
+      .map((u) => ({ id: u.id, full_name: u.full_name, email: u.email }));
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <div className="mb-6">
@@ -39,7 +54,11 @@ export default async function NewPropertyPage({
         </h1>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <PropertyForm locale={locale as Locale} dict={dict.properties} />
+        <PropertyForm
+          locale={locale as Locale}
+          dict={dict.properties}
+          owners={owners}
+        />
       </div>
     </div>
   );
