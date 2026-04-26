@@ -3,8 +3,9 @@ import Link from "next/link";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
 import { SetupNotice } from "@/components/setup-notice";
+import { AccessDenied } from "@/components/access-denied";
+import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { TenantForm } from "../../tenant-form";
 
 export default async function EditTenantPage({
@@ -18,25 +19,12 @@ export default async function EditTenantPage({
 
   if (!hasSupabaseEnv()) return <SetupNotice locale={locale as Locale} />;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`/${locale}/login`);
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const role = profile?.role ?? "tenant";
-  if (role !== "owner" && role !== "admin") {
-    return (
-      <div className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="text-2xl font-bold text-slate-900">{dict.accessDenied.title}</h1>
-        <p className="mt-2 text-slate-600">{dict.accessDenied.message}</p>
-      </div>
-    );
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
+  if (!isOwnerOrAdmin(session.role)) {
+    return <AccessDenied dict={dict.accessDenied} />;
   }
+  const { supabase } = session;
 
   const { data: tenant } = await supabase
     .from("tenants")

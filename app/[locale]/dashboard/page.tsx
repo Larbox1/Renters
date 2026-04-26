@@ -3,11 +3,9 @@ import Link from "next/link";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
 import { SetupNotice } from "@/components/setup-notice";
 import { logoutAction } from "@/lib/actions/auth";
-
-type Role = "admin" | "owner" | "tenant" | "service_provider";
+import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 
 export default async function DashboardPage({
   params,
@@ -23,24 +21,10 @@ export default async function DashboardPage({
     return <SetupNotice locale={locale as Locale} />;
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
 
-  if (!user) {
-    redirect(`/${locale}/login`);
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, full_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const role = (profile?.role ?? "tenant") as Role;
-  const fullName =
-    profile?.full_name ?? user.user_metadata?.full_name ?? user.email ?? "";
+  const { user, role, fullName } = session;
 
   const lastSignIn = user.last_sign_in_at
     ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
@@ -49,7 +33,7 @@ export default async function DashboardPage({
       }).format(new Date(user.last_sign_in_at))
     : dict.dashboard.never;
 
-  const isOwnerOrAdmin = role === "owner" || role === "admin";
+  const showOwnerNav = isOwnerOrAdmin(role);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
@@ -95,7 +79,7 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {isOwnerOrAdmin ? (
+      {showOwnerNav ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <Link
             href={`/${locale}/dashboard/properties`}
