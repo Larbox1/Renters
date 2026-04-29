@@ -12,6 +12,8 @@ import {
   type SignedPhoto,
 } from "@/lib/properties/photos";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { ConfirmSubmit } from "@/components/confirm-submit";
+import { deletePropertyAction } from "./actions";
 
 type View = "cards" | "table";
 
@@ -48,12 +50,40 @@ export default async function PropertiesPage({
   const sp = await searchParams;
   const view: View = sp.view === "table" ? "table" : "cards";
 
-  const { data } = await supabase
-    .from("properties")
-    .select("id, label, address, city, postal_code, monthly_rent_cents, photos")
-    .order("created_at", { ascending: false });
+  // Run the list query alongside the lightweight stats queries.
+  const [listRes, valuesRes, activeLeasesRes] = await Promise.all([
+    supabase
+      .from("properties")
+      .select(
+        "id, label, address, city, postal_code, monthly_rent_cents, photos",
+      )
+      .order("created_at", { ascending: false }),
+    supabase.from("properties").select("value_cents"),
+    supabase
+      .from("leases")
+      .select("monthly_rent_cents, property_id")
+      .eq("status", "active"),
+  ]);
 
-  const properties = (data ?? []) as PropertyRow[];
+  const properties = (listRes.data ?? []) as PropertyRow[];
+  const propertiesCount = properties.length;
+  const portfolioValueCents = (valuesRes.data ?? []).reduce(
+    (s, p) => s + (p.value_cents ?? 0),
+    0,
+  );
+  const activeLeases = activeLeasesRes.data ?? [];
+  const monthlyRentCents = activeLeases.reduce(
+    (s, l) => s + (l.monthly_rent_cents ?? 0),
+    0,
+  );
+  const rentedCount = new Set(activeLeases.map((l) => l.property_id)).size;
+
+  const fmtCurrency = (cents: number) =>
+    new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0,
+    }).format(cents / 100);
 
   // Sign only the first photo per property — we just need a thumbnail.
   const photoCovers: Map<string, SignedPhoto> = new Map();
@@ -81,10 +111,52 @@ export default async function PropertiesPage({
         </div>
       </div>
 
+      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {dict.dashboard.stats.properties}
+          </p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">
+            {propertiesCount}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {dict.dashboard.stats.portfolioValue}
+          </p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">
+            {fmtCurrency(portfolioValueCents)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {dict.dashboard.stats.monthlyRent}
+          </p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">
+            {fmtCurrency(monthlyRentCents)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {dict.properties.rentedStat}
+          </p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">
+            {rentedCount}
+            <span className="ml-1 text-sm font-normal text-slate-500">
+              / {propertiesCount}
+            </span>
+          </p>
+        </div>
+      </div>
+
       {properties.length === 0 ? (
         <p className="text-sm text-slate-600">{dict.properties.noProperties}</p>
       ) : view === "table" ? (
-        <TableView locale={locale as Locale} properties={properties} />
+        <TableView
+          locale={locale as Locale}
+          properties={properties}
+          dict={dict.properties}
+        />
       ) : (
         <CardsView
           locale={locale as Locale}
@@ -191,9 +263,11 @@ function CardsView({
 function TableView({
   locale,
   properties,
+  dict,
 }: {
   locale: Locale;
   properties: PropertyRow[];
+  dict: Dictionary["properties"];
 }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -211,6 +285,9 @@ function TableView({
             </th>
             <th className="px-4 py-3 text-right font-semibold text-slate-600">
               Rent
+            </th>
+            <th className="px-4 py-3 text-right font-semibold text-slate-600">
+              {dict.actions.label}
             </th>
           </tr>
         </thead>
@@ -234,6 +311,26 @@ function TableView({
                 {p.monthly_rent_cents != null
                   ? `${(p.monthly_rent_cents / 100).toFixed(2)} €`
                   : "—"}
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex items-center justify-end gap-2">
+                  <Link
+                    href={`/${locale}/dashboard/properties/${p.id}/edit`}
+                    className="rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {dict.actions.edit}
+                  </Link>
+                  <form action={deletePropertyAction}>
+                    <input type="hidden" name="locale" value={locale} />
+                    <input type="hidden" name="id" value={p.id} />
+                    <ConfirmSubmit
+                      message={dict.confirmDelete}
+                      className="rounded border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+                    >
+                      {dict.actions.delete}
+                    </ConfirmSubmit>
+                  </form>
+                </div>
               </td>
             </tr>
           ))}

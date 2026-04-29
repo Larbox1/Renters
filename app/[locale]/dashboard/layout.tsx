@@ -36,7 +36,7 @@ export default async function DashboardLayout({
   return (
     <div className="mx-auto flex max-w-7xl flex-col md:flex-row">
       {session && (
-        <aside className="border-b border-slate-200 bg-slate-50 md:w-56 md:shrink-0 md:border-b-0 md:border-r">
+        <aside className="border-b border-slate-200 bg-slate-50 md:w-56 md:shrink-0 md:border-b-0 md:border-r md:min-h-[calc(100vh-65px)]">
           <DashboardSidebar
             locale={locale as Locale}
             role={session.role}

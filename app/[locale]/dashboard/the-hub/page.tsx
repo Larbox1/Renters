@@ -115,9 +115,6 @@ export default async function TheHubPage({
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
           The Hub
         </h1>
-        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-          For sale
-        </span>
       </div>
       <p className="mb-6 text-sm text-slate-600">
         Properties listed for sale across all owners.

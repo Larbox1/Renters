@@ -17,6 +17,7 @@ export const fr: Dictionary = {
     dashboard: "Tableau de bord",
     logout: "Se déconnecter",
     languageLabel: "Langue",
+    searchPlaceholder: "Rechercher biens, locataires, baux…",
   },
   auth: {
     login: {
@@ -108,6 +109,17 @@ export const fr: Dictionary = {
       monthlyRent: "Loyer mensuel",
       portfolioValue: "Valeur du portefeuille",
     },
+    calendar: {
+      heading: "Calendrier",
+      empty: "Aucun événement ce mois-ci.",
+      previous: "Mois précédent",
+      next: "Mois suivant",
+      today: "Aujourd'hui",
+      events: {
+        lease_start: "Début de bail",
+        lease_end: "Fin de bail",
+      },
+    },
     sidebar: {
       overview: "Vue d'ensemble",
       messages: "Messages",
@@ -116,6 +128,18 @@ export const fr: Dictionary = {
       leases: "Baux",
       users: "Utilisateurs",
       settings: "Paramètres",
+      logout: "Se déconnecter",
+    },
+  },
+  search: {
+    title: "Recherche",
+    heading: "Résultats pour « {q} »",
+    empty: "Aucun résultat.",
+    emptyQuery: "Saisissez une requête dans la barre de recherche pour commencer.",
+    sections: {
+      properties: "Biens",
+      tenants: "Locataires",
+      leases: "Baux",
     },
   },
   settings: {
@@ -225,6 +249,12 @@ export const fr: Dictionary = {
     noLeases: "Aucun bail pour ce bien pour l'instant.",
     viewTable: "Tableau",
     viewCards: "Cartes",
+    rentedStat: "Loués",
+    actions: {
+      label: "Actions",
+      edit: "Modifier",
+      delete: "Supprimer",
+    },
     photos: {
       label: "Photos",
       hint: "Jusqu'à 6 photos, 15 Mo au total.",
@@ -253,7 +283,32 @@ export const fr: Dictionary = {
       sellPrice: "Prix de vente (€)",
       sellPriceHint: "À renseigner uniquement si le bien est en vente.",
       forSaleBadge: "À vendre",
+      forRentBadge: "À louer",
       owner: "Propriétaire",
+      description: "Description",
+      descriptionPlaceholder: "Brève description du bien…",
+      type: "Type",
+      typePlaceholder: "Choisir un type",
+      surface: "Surface (m²)",
+      rooms: "Pièces",
+      bedrooms: "Chambres",
+      parking: "Parking",
+      basement: "Cave",
+      toSell: "À vendre",
+      toRent: "À louer",
+    },
+    types: {
+      apartment: "Appartement",
+      house: "Maison",
+      studio: "Studio",
+      commercial: "Local commercial",
+      land: "Terrain",
+      other: "Autre",
+    },
+    sections: {
+      characteristics: "Caractéristiques",
+      amenities: "Équipements",
+      status: "Statut de l'annonce",
     },
     form: {
       createTitle: "Nouveau bien",

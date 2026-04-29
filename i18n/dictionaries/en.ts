@@ -15,6 +15,7 @@ export const en = {
     dashboard: "Dashboard",
     logout: "Log out",
     languageLabel: "Language",
+    searchPlaceholder: "Search properties, tenants, leases…",
   },
   auth: {
     login: {
@@ -101,6 +102,17 @@ export const en = {
       monthlyRent: "Monthly rent",
       portfolioValue: "Portfolio value",
     },
+    calendar: {
+      heading: "Calendar",
+      empty: "No events this month.",
+      previous: "Previous month",
+      next: "Next month",
+      today: "Today",
+      events: {
+        lease_start: "Lease start",
+        lease_end: "Lease end",
+      },
+    },
     sidebar: {
       overview: "Overview",
       messages: "Messages",
@@ -109,6 +121,18 @@ export const en = {
       leases: "Leases",
       users: "Users",
       settings: "Settings",
+      logout: "Log out",
+    },
+  },
+  search: {
+    title: "Search",
+    heading: "Results for \"{q}\"",
+    empty: "No results found.",
+    emptyQuery: "Type something in the search box to start.",
+    sections: {
+      properties: "Properties",
+      tenants: "Tenants",
+      leases: "Leases",
     },
   },
   settings: {
@@ -215,6 +239,12 @@ export const en = {
     noLeases: "No leases for this property yet.",
     viewTable: "Table",
     viewCards: "Cards",
+    rentedStat: "Rented",
+    actions: {
+      label: "Actions",
+      edit: "Edit",
+      delete: "Delete",
+    },
     photos: {
       label: "Photos",
       hint: "Up to 6 photos, 15 MB total.",
@@ -243,7 +273,32 @@ export const en = {
       sellPrice: "Sell price (€)",
       sellPriceHint: "Set only if the property is for sale.",
       forSaleBadge: "For sale",
+      forRentBadge: "For rent",
       owner: "Owner",
+      description: "Description",
+      descriptionPlaceholder: "Short description of the property…",
+      type: "Type",
+      typePlaceholder: "Select a type",
+      surface: "Surface (m²)",
+      rooms: "Rooms",
+      bedrooms: "Bedrooms",
+      parking: "Parking",
+      basement: "Basement",
+      toSell: "Listed for sale",
+      toRent: "Listed for rent",
+    },
+    types: {
+      apartment: "Apartment",
+      house: "House",
+      studio: "Studio",
+      commercial: "Commercial",
+      land: "Land",
+      other: "Other",
+    },
+    sections: {
+      characteristics: "Characteristics",
+      amenities: "Amenities",
+      status: "Listing status",
     },
     form: {
       createTitle: "New property",

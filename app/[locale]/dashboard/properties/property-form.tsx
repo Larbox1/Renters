@@ -12,6 +12,23 @@ import {
   type PropertyState,
 } from "./actions";
 
+export type PropertyTypeValue =
+  | "apartment"
+  | "house"
+  | "studio"
+  | "commercial"
+  | "land"
+  | "other";
+
+const PROPERTY_TYPES: PropertyTypeValue[] = [
+  "apartment",
+  "house",
+  "studio",
+  "commercial",
+  "land",
+  "other",
+];
+
 type Property = {
   id: string;
   owner_id?: string;
@@ -23,6 +40,15 @@ type Property = {
   monthly_rent_cents: number | null;
   value_cents: number | null;
   sell_price_cents: number | null;
+  description: string | null;
+  type: PropertyTypeValue | null;
+  surface_sqm: number | null;
+  rooms: number | null;
+  bedrooms: number | null;
+  parking: boolean | null;
+  basement: boolean | null;
+  to_rent: boolean | null;
+  to_sell: boolean | null;
 };
 
 export type OwnerOption = {
@@ -219,6 +245,133 @@ export function PropertyForm({
           className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
         <p className="mt-1 text-xs text-slate-500">{dict.fields.sellPriceHint}</p>
+      </div>
+
+      {/* Listing status */}
+      <fieldset className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {dict.sections.status}
+        </legend>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1">
+          <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              name="to_rent"
+              defaultChecked={property?.to_rent ?? true}
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            />
+            {dict.fields.toRent}
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              name="to_sell"
+              defaultChecked={property?.to_sell ?? false}
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            />
+            {dict.fields.toSell}
+          </label>
+        </div>
+      </fieldset>
+
+      {/* Characteristics */}
+      <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {dict.sections.characteristics}
+        </legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.type}
+            </label>
+            <select
+              name="type"
+              defaultValue={property?.type ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">{dict.fields.typePlaceholder}</option>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {dict.types[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.surface}
+            </label>
+            <input
+              name="surface_sqm"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={property?.surface_sqm ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.rooms}
+            </label>
+            <input
+              name="rooms"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={property?.rooms ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.bedrooms}
+            </label>
+            <input
+              name="bedrooms"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={property?.bedrooms ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1">
+          <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              name="parking"
+              defaultChecked={property?.parking ?? false}
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            />
+            {dict.fields.parking}
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              name="basement"
+              defaultChecked={property?.basement ?? false}
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            />
+            {dict.fields.basement}
+          </label>
+        </div>
+      </fieldset>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          {dict.fields.description}
+        </label>
+        <textarea
+          name="description"
+          rows={4}
+          defaultValue={property?.description ?? ""}
+          placeholder={dict.fields.descriptionPlaceholder}
+          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        />
       </div>
 
       <PhotoManager

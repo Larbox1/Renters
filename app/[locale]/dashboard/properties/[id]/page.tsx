@@ -57,13 +57,18 @@ export default async function PropertyDetailPage({
         </Link>
         <div className="mt-2 flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                 {property.label ?? `${property.address}, ${property.city}`}
               </h1>
-              {property.sell_price_cents != null && (
+              {property.to_sell && (
                 <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
                   {dict.properties.fields.forSaleBadge}
+                </span>
+              )}
+              {property.to_rent && (
+                <span className="inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                  {dict.properties.fields.forRentBadge}
                 </span>
               )}
             </div>
@@ -116,6 +121,90 @@ export default async function PropertyDetailPage({
               </a>
             ) : null,
           )}
+        </div>
+      )}
+
+      {property.description && (
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {dict.properties.fields.description}
+          </p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+            {property.description}
+          </p>
+        </div>
+      )}
+
+      {(property.type ||
+        property.surface_sqm != null ||
+        property.rooms != null ||
+        property.bedrooms != null ||
+        property.parking ||
+        property.basement) && (
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {dict.properties.sections.characteristics}
+          </p>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
+            {property.type && (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {dict.properties.fields.type}
+                </dt>
+                <dd className="text-sm font-medium text-slate-900">
+                  {dict.properties.types[
+                    property.type as keyof typeof dict.properties.types
+                  ] ?? property.type}
+                </dd>
+              </div>
+            )}
+            {property.surface_sqm != null && (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {dict.properties.fields.surface}
+                </dt>
+                <dd className="text-sm font-medium text-slate-900">
+                  {property.surface_sqm} m²
+                </dd>
+              </div>
+            )}
+            {property.rooms != null && (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {dict.properties.fields.rooms}
+                </dt>
+                <dd className="text-sm font-medium text-slate-900">
+                  {property.rooms}
+                </dd>
+              </div>
+            )}
+            {property.bedrooms != null && (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {dict.properties.fields.bedrooms}
+                </dt>
+                <dd className="text-sm font-medium text-slate-900">
+                  {property.bedrooms}
+                </dd>
+              </div>
+            )}
+            {property.parking && (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {dict.properties.fields.parking}
+                </dt>
+                <dd className="text-sm font-medium text-emerald-700">✓</dd>
+              </div>
+            )}
+            {property.basement && (
+              <div>
+                <dt className="text-xs text-slate-500">
+                  {dict.properties.fields.basement}
+                </dt>
+                <dd className="text-sm font-medium text-emerald-700">✓</dd>
+              </div>
+            )}
+          </dl>
         </div>
       )}
 

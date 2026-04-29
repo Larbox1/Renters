@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
-import { logoutAction } from "@/lib/actions/auth";
 
 export function Navbar({
   locale,
@@ -22,7 +21,7 @@ export function Navbar({
           <span className="text-xl font-semibold text-slate-900">renters</span>
         </Link>
 
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-6 md:flex">
           <Link
             href={`/${locale}`}
             className="text-sm font-medium text-slate-600 hover:text-slate-900"
@@ -43,28 +42,31 @@ export function Navbar({
               {dict.dashboard}
             </Link>
           )}
+          {userEmail && (
+            <form
+              action={`/${locale}/dashboard/search`}
+              method="get"
+              className="relative ml-2"
+            >
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400"
+              >
+                🔎
+              </span>
+              <input
+                type="search"
+                name="q"
+                placeholder={dict.searchPlaceholder}
+                aria-label={dict.searchPlaceholder}
+                className="w-64 rounded-lg border border-slate-300 bg-white py-1.5 pl-9 pr-3 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+            </form>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
-          {userEmail ? (
-            <>
-              <span
-                className="hidden max-w-[12rem] truncate text-sm text-slate-600 lg:inline-block"
-                title={userEmail}
-              >
-                {userEmail}
-              </span>
-              <form action={logoutAction}>
-                <input type="hidden" name="locale" value={locale} />
-                <button
-                  type="submit"
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                >
-                  {dict.logout}
-                </button>
-              </form>
-            </>
-          ) : (
+          {!userEmail && (
             <>
               <Link
                 href={`/${locale}/login`}

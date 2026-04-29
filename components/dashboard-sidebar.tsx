@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { Locale } from "@/i18n/config";
 import type { Role } from "@/lib/auth/current-user";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { logoutAction } from "@/lib/actions/auth";
 
 type SidebarItem = { href: string; label: string; badge?: number };
 
@@ -55,7 +56,7 @@ export function DashboardSidebar({
   const overviewHref = `/${locale}/dashboard`;
 
   return (
-    <nav className="flex gap-1 overflow-x-auto p-3 md:flex-col md:overflow-visible md:p-4">
+    <nav className="flex gap-1 overflow-x-auto p-3 md:h-full md:flex-col md:overflow-visible md:p-4">
       {items.map((item) => {
         const isActive =
           item.href === overviewHref
@@ -82,6 +83,21 @@ export function DashboardSidebar({
           </Link>
         );
       })}
+
+      {/* Logout: appears at the end of the horizontal nav on mobile, pinned to
+          the bottom of the column on desktop with a divider above it. */}
+      <form
+        action={logoutAction}
+        className="md:mt-auto md:border-t md:border-slate-200 md:pt-3"
+      >
+        <input type="hidden" name="locale" value={locale} />
+        <button
+          type="submit"
+          className="w-full whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+        >
+          {dict.logout}
+        </button>
+      </form>
     </nav>
   );
 }

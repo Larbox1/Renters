@@ -25,6 +25,47 @@ function eurosToCents(raw: string): number | null {
   return Math.round(n * 100);
 }
 
+function parsePositiveInt(raw: string): number | null {
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  if (isNaN(n) || n < 0) return null;
+  return n;
+}
+
+function parseBool(formData: FormData, name: string): boolean {
+  return formData.get(name) === "on";
+}
+
+const ALLOWED_TYPES = [
+  "apartment",
+  "house",
+  "studio",
+  "commercial",
+  "land",
+  "other",
+] as const;
+
+function parseType(raw: string): string | null {
+  return (ALLOWED_TYPES as readonly string[]).includes(raw) ? raw : null;
+}
+
+function readExtendedFields(formData: FormData) {
+  return {
+    description:
+      String(formData.get("description") ?? "").trim() || null,
+    type: parseType(String(formData.get("type") ?? "").trim()),
+    surface_sqm: parsePositiveInt(
+      String(formData.get("surface_sqm") ?? "").trim(),
+    ),
+    rooms: parsePositiveInt(String(formData.get("rooms") ?? "").trim()),
+    bedrooms: parsePositiveInt(String(formData.get("bedrooms") ?? "").trim()),
+    parking: parseBool(formData, "parking"),
+    basement: parseBool(formData, "basement"),
+    to_rent: parseBool(formData, "to_rent"),
+    to_sell: parseBool(formData, "to_sell"),
+  };
+}
+
 function readNewPhotos(formData: FormData): File[] {
   return formData
     .getAll("photos")
@@ -96,6 +137,7 @@ export async function createPropertyAction(
     value_cents: valueCents,
     sell_price_cents: sellPriceCents,
     photos: uploaded,
+    ...readExtendedFields(formData),
   });
 
   if (error) {
@@ -169,6 +211,7 @@ export async function updatePropertyAction(
     value_cents: valueCents,
     sell_price_cents: sellPriceCents,
     photos: [...kept, ...uploaded],
+    ...readExtendedFields(formData),
   };
 
   // Only admins can reassign ownership.
