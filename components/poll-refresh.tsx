@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
  * pull fresh data. The browser performs a soft refetch — no page reload,
  * no scroll jump.
  */
-export function PollRefresh({ intervalMs = 30000 }: { intervalMs?: number }) {
+export function PollRefresh({ intervalMs = 10000 }: { intervalMs?: number }) {
   const router = useRouter();
   useEffect(() => {
     const id = setInterval(() => router.refresh(), intervalMs);

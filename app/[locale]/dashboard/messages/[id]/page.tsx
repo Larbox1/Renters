@@ -13,6 +13,7 @@ import {
 import { markConversationReadAction } from "../actions";
 import { ReplyForm } from "./reply-form";
 import { MessageBubble } from "./message-bubble";
+import { ScrollAnchor } from "./scroll-anchor";
 
 type Counterpart = {
   id: string;
@@ -106,19 +107,18 @@ export default async function ConversationPage({
     }).format(new Date(iso));
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-3xl flex-col px-6 py-6">
-      <div className="mb-3">
+    <>
+      {/* Header — back link only on small screens since the list is the
+          left pane on lg+. */}
+      <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
         <Link
           href={`/${locale}/dashboard/messages`}
-          className="text-sm text-brand-600 hover:underline"
+          aria-label={dict.messages.backToList}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 lg:hidden"
         >
-          ← {dict.messages.backToList}
+          ←
         </Link>
-      </div>
-
-      {/* Header */}
-      <header className="flex items-center gap-3 rounded-t-2xl border border-b-0 border-slate-200 bg-white px-5 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold uppercase text-brand-700">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold uppercase text-brand-700">
           {cpName.charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
@@ -137,7 +137,7 @@ export default async function ConversationPage({
       </header>
 
       {/* Message bubbles */}
-      <div className="flex-1 space-y-3 overflow-y-auto border-x border-slate-200 bg-slate-50 px-4 py-5">
+      <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-4 py-5">
         {messages.length === 0 ? (
           <p className="py-12 text-center text-sm text-slate-500">
             {dict.messages.empty}
@@ -163,16 +163,18 @@ export default async function ConversationPage({
             />
           ))
         )}
+        <ScrollAnchor
+          conversationId={counterpartId}
+          messageCount={messages.length}
+        />
       </div>
 
       {/* Inline reply form */}
-      <div className="rounded-b-2xl border border-t-0 border-slate-200">
-        <ReplyForm
-          locale={locale as Locale}
-          recipientId={counterpartId}
-          dict={dict.messages}
-        />
-      </div>
-    </div>
+      <ReplyForm
+        locale={locale as Locale}
+        recipientId={counterpartId}
+        dict={dict.messages}
+      />
+    </>
   );
 }

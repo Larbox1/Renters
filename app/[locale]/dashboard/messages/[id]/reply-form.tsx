@@ -105,6 +105,13 @@ export function ReplyForm({
         required
         rows={2}
         placeholder={dict.bodyPlaceholder}
+        onKeyDown={(e) => {
+          // Enter sends; Shift+Enter inserts a newline (standard chat UX).
+          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            formRef.current?.requestSubmit();
+          }
+        }}
         className="block w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
       />
 

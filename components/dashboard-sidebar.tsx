@@ -7,7 +7,12 @@ import type { Role } from "@/lib/auth/current-user";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { logoutAction } from "@/lib/actions/auth";
 
-type SidebarItem = { href: string; label: string; badge?: number };
+type SidebarItem = {
+  href: string;
+  label: string;
+  icon: string;
+  badge?: number;
+};
 
 function buildItems(
   role: Role,
@@ -16,27 +21,63 @@ function buildItems(
   unreadMessages: number,
 ): SidebarItem[] {
   const items: SidebarItem[] = [
-    { href: `/${locale}/dashboard`, label: dict.overview },
+    {
+      href: `/${locale}/dashboard`,
+      label: dict.overview,
+      icon: "🏠",
+    },
     {
       href: `/${locale}/dashboard/messages`,
       label: dict.messages,
+      icon: "💬",
       badge: unreadMessages > 0 ? unreadMessages : undefined,
     },
   ];
   if (role === "owner" || role === "admin") {
     items.push(
-      { href: `/${locale}/dashboard/properties`, label: dict.properties },
-      { href: `/${locale}/dashboard/tenants`, label: dict.tenants },
-      { href: `/${locale}/dashboard/leases`, label: dict.leases },
+      {
+        href: `/${locale}/dashboard/properties`,
+        label: dict.properties,
+        icon: "🏢",
+      },
+      {
+        href: `/${locale}/dashboard/tenants`,
+        label: dict.tenants,
+        icon: "👥",
+      },
+      {
+        href: `/${locale}/dashboard/leases`,
+        label: dict.leases,
+        icon: "📄",
+      },
     );
   }
+  if (role === "owner") {
+    items.push({
+      href: `/${locale}/dashboard/finance`,
+      label: dict.finance,
+      icon: "💰",
+    });
+  }
   if (role === "admin") {
-    items.push({ href: `/${locale}/dashboard/users`, label: dict.users });
+    items.push({
+      href: `/${locale}/dashboard/users`,
+      label: dict.users,
+      icon: "🛡️",
+    });
     // The Hub: admin-only, no translation (same in EN and FR).
-    items.push({ href: `/${locale}/dashboard/the-hub`, label: "The Hub" });
+    items.push({
+      href: `/${locale}/dashboard/the-hub`,
+      label: "The Hub",
+      icon: "🌐",
+    });
   }
   // Settings goes last and is visible to everyone.
-  items.push({ href: `/${locale}/dashboard/settings`, label: dict.settings });
+  items.push({
+    href: `/${locale}/dashboard/settings`,
+    label: dict.settings,
+    icon: "⚙️",
+  });
   return items;
 }
 
@@ -68,13 +109,16 @@ export function DashboardSidebar({
             key={item.href}
             href={item.href}
             aria-current={isActive ? "page" : undefined}
-            className={`flex items-center justify-between gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition ${
+            className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition ${
               isActive
                 ? "bg-brand-50 text-brand-700"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
-            <span>{item.label}</span>
+            <span aria-hidden className="text-base leading-none">
+              {item.icon}
+            </span>
+            <span className="flex-1">{item.label}</span>
             {item.badge !== undefined && (
               <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold text-white">
                 {item.badge > 99 ? "99+" : item.badge}
@@ -93,9 +137,12 @@ export function DashboardSidebar({
         <input type="hidden" name="locale" value={locale} />
         <button
           type="submit"
-          className="w-full whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
         >
-          {dict.logout}
+          <span aria-hidden className="text-base leading-none">
+            ↩️
+          </span>
+          <span className="flex-1">{dict.logout}</span>
         </button>
       </form>
     </nav>

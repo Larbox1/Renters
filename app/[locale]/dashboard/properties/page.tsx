@@ -17,6 +17,14 @@ import { deletePropertyAction } from "./actions";
 
 type View = "cards" | "table";
 
+type PropertyTypeValue =
+  | "apartment"
+  | "house"
+  | "studio"
+  | "commercial"
+  | "land"
+  | "other";
+
 type PropertyRow = {
   id: string;
   label: string | null;
@@ -24,7 +32,16 @@ type PropertyRow = {
   city: string;
   postal_code: string | null;
   monthly_rent_cents: number | null;
+  sell_price_cents: number | null;
   photos: PropertyPhoto[] | null;
+  type: PropertyTypeValue | null;
+  surface_sqm: number | null;
+  rooms: number | null;
+  bedrooms: number | null;
+  parking: boolean;
+  basement: boolean;
+  to_rent: boolean;
+  to_sell: boolean;
 };
 
 export default async function PropertiesPage({
@@ -55,7 +72,7 @@ export default async function PropertiesPage({
     supabase
       .from("properties")
       .select(
-        "id, label, address, city, postal_code, monthly_rent_cents, photos",
+        "id, label, address, city, postal_code, monthly_rent_cents, sell_price_cents, photos, type, surface_sqm, rooms, bedrooms, parking, basement, to_rent, to_sell",
       )
       .order("created_at", { ascending: false }),
     supabase.from("properties").select("value_cents"),
@@ -156,12 +173,15 @@ export default async function PropertiesPage({
           locale={locale as Locale}
           properties={properties}
           dict={dict.properties}
+          fmtCurrency={fmtCurrency}
         />
       ) : (
         <CardsView
           locale={locale as Locale}
           properties={properties}
           photoCovers={photoCovers}
+          dict={dict.properties}
+          fmtCurrency={fmtCurrency}
         />
       )}
     </div>
@@ -209,22 +229,39 @@ function CardsView({
   locale,
   properties,
   photoCovers,
+  dict,
+  fmtCurrency,
 }: {
   locale: Locale;
   properties: PropertyRow[];
   photoCovers: Map<string, SignedPhoto>;
+  dict: Dictionary["properties"];
+  fmtCurrency: (cents: number) => string;
 }) {
   return (
     <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {properties.map((p) => {
         const cover = photoCovers.get(p.id);
+        const specs: string[] = [];
+        if (p.type) specs.push(dict.types[p.type]);
+        if (p.surface_sqm != null) specs.push(`${p.surface_sqm} m²`);
+        if (p.rooms != null)
+          specs.push(`${p.rooms} ${dict.fields.rooms.toLowerCase()}`);
+        if (p.bedrooms != null)
+          specs.push(
+            `${p.bedrooms} ${dict.fields.bedrooms.toLowerCase()}`,
+          );
+        const amenities: string[] = [];
+        if (p.parking) amenities.push(`🅿 ${dict.fields.parking}`);
+        if (p.basement) amenities.push(`📦 ${dict.fields.basement}`);
+
         return (
           <li key={p.id}>
             <Link
               href={`/${locale}/dashboard/properties/${p.id}`}
-              className="group block h-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-md"
+              className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-md"
             >
-              <div className="aspect-[4/3] w-full overflow-hidden bg-slate-100">
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
                 {cover?.signedUrl ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
@@ -237,20 +274,56 @@ function CardsView({
                     🏠
                   </div>
                 )}
+                {/* Status badges over the photo */}
+                <div className="absolute left-2 top-2 flex flex-wrap gap-1">
+                  {p.to_rent && (
+                    <span className="inline-block rounded-full bg-emerald-100/90 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 backdrop-blur">
+                      {dict.fields.forRentBadge}
+                    </span>
+                  )}
+                  {p.to_sell && (
+                    <span className="inline-block rounded-full bg-amber-100/90 px-2 py-0.5 text-[11px] font-semibold text-amber-800 backdrop-blur">
+                      {dict.fields.forSaleBadge}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="p-4">
-                <p className="font-medium text-slate-900">
+
+              <div className="flex flex-1 flex-col p-4">
+                <p className="font-semibold text-slate-900 group-hover:text-brand-700">
                   {p.label ?? `${p.address}, ${p.city}`}
                 </p>
                 <p className="mt-0.5 text-sm text-slate-500">
                   {p.address}, {p.city}
                   {p.postal_code ? ` ${p.postal_code}` : ""}
                 </p>
-                {p.monthly_rent_cents != null && (
-                  <p className="mt-2 text-sm font-semibold text-slate-700">
-                    {(p.monthly_rent_cents / 100).toFixed(2)} €/mo
+
+                {specs.length > 0 && (
+                  <p className="mt-2 text-xs text-slate-600">
+                    {specs.join(" · ")}
                   </p>
                 )}
+                {amenities.length > 0 && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {amenities.join(" · ")}
+                  </p>
+                )}
+
+                <div className="mt-auto flex items-end justify-between gap-2 pt-3 text-sm">
+                  {p.monthly_rent_cents != null && p.to_rent && (
+                    <p className="font-semibold text-slate-900">
+                      {fmtCurrency(p.monthly_rent_cents)}
+                      <span className="ml-1 text-xs font-normal text-slate-500">
+                        /mo
+                      </span>
+                    </p>
+                  )}
+                  {p.sell_price_cents != null && p.to_sell && (
+                    <p className="text-right text-sm font-semibold text-amber-700">
+                      {fmtCurrency(p.sell_price_cents)}
+                    </p>
+                  )}
+                </div>
               </div>
             </Link>
           </li>
@@ -264,10 +337,12 @@ function TableView({
   locale,
   properties,
   dict,
+  fmtCurrency,
 }: {
   locale: Locale;
   properties: PropertyRow[];
   dict: Dictionary["properties"];
+  fmtCurrency: (cents: number) => string;
 }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -275,16 +350,25 @@ function TableView({
         <thead className="bg-slate-50">
           <tr>
             <th className="px-4 py-3 text-left font-semibold text-slate-600">
-              Label
+              {dict.fields.label.replace(/\s*\(.*\)\s*$/, "")}
             </th>
             <th className="px-4 py-3 text-left font-semibold text-slate-600">
-              Address
+              {dict.fields.type}
             </th>
             <th className="px-4 py-3 text-left font-semibold text-slate-600">
-              City
+              {dict.fields.surface}
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              {dict.fields.rooms} / {dict.fields.bedrooms}
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              {dict.fields.city}
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600">
+              Status
             </th>
             <th className="px-4 py-3 text-right font-semibold text-slate-600">
-              Rent
+              {dict.fields.monthlyRent.replace(/\s*\(.*\)\s*$/, "")}
             </th>
             <th className="px-4 py-3 text-right font-semibold text-slate-600">
               {dict.actions.label}
@@ -292,48 +376,92 @@ function TableView({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {properties.map((p) => (
-            <tr key={p.id} className="hover:bg-slate-50">
-              <td className="px-4 py-3 font-medium text-slate-900">
-                <Link
-                  href={`/${locale}/dashboard/properties/${p.id}`}
-                  className="hover:text-brand-700 hover:underline"
-                >
-                  {p.label ?? "—"}
-                </Link>
-              </td>
-              <td className="px-4 py-3 text-slate-700">
-                {p.address}
-                {p.postal_code ? `, ${p.postal_code}` : ""}
-              </td>
-              <td className="px-4 py-3 text-slate-700">{p.city}</td>
-              <td className="px-4 py-3 text-right font-medium text-slate-700">
-                {p.monthly_rent_cents != null
-                  ? `${(p.monthly_rent_cents / 100).toFixed(2)} €`
-                  : "—"}
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center justify-end gap-2">
+          {properties.map((p) => {
+            const amenities: string[] = [];
+            if (p.parking) amenities.push("🅿");
+            if (p.basement) amenities.push("📦");
+
+            return (
+              <tr key={p.id} className="hover:bg-slate-50 align-top">
+                <td className="px-4 py-3">
                   <Link
-                    href={`/${locale}/dashboard/properties/${p.id}/edit`}
-                    className="rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    href={`/${locale}/dashboard/properties/${p.id}`}
+                    className="font-medium text-slate-900 hover:text-brand-700 hover:underline"
                   >
-                    {dict.actions.edit}
+                    {p.label ?? p.address}
                   </Link>
-                  <form action={deletePropertyAction}>
-                    <input type="hidden" name="locale" value={locale} />
-                    <input type="hidden" name="id" value={p.id} />
-                    <ConfirmSubmit
-                      message={dict.confirmDelete}
-                      className="rounded border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {p.address}
+                    {p.postal_code ? `, ${p.postal_code}` : ""}
+                  </p>
+                </td>
+                <td className="px-4 py-3 text-slate-700">
+                  {p.type ? dict.types[p.type] : "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-700">
+                  {p.surface_sqm != null ? `${p.surface_sqm} m²` : "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-700">
+                  {p.rooms ?? "—"} / {p.bedrooms ?? "—"}
+                  {amenities.length > 0 && (
+                    <span className="ml-2 text-xs text-slate-500">
+                      {amenities.join(" ")}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-slate-700">{p.city}</td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1">
+                    {p.to_rent && (
+                      <span className="inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+                        {dict.fields.forRentBadge}
+                      </span>
+                    )}
+                    {p.to_sell && (
+                      <span className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                        {dict.fields.forSaleBadge}
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  {p.monthly_rent_cents != null && (
+                    <p className="font-medium text-slate-700">
+                      {fmtCurrency(p.monthly_rent_cents)}
+                    </p>
+                  )}
+                  {p.sell_price_cents != null && p.to_sell && (
+                    <p className="text-xs font-medium text-amber-700">
+                      {fmtCurrency(p.sell_price_cents)}
+                    </p>
+                  )}
+                  {p.monthly_rent_cents == null &&
+                    !(p.sell_price_cents != null && p.to_sell) &&
+                    "—"}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/${locale}/dashboard/properties/${p.id}/edit`}
+                      className="rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
                     >
-                      {dict.actions.delete}
-                    </ConfirmSubmit>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          ))}
+                      {dict.actions.edit}
+                    </Link>
+                    <form action={deletePropertyAction}>
+                      <input type="hidden" name="locale" value={locale} />
+                      <input type="hidden" name="id" value={p.id} />
+                      <ConfirmSubmit
+                        message={dict.confirmDelete}
+                        className="rounded border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+                      >
+                        {dict.actions.delete}
+                      </ConfirmSubmit>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
