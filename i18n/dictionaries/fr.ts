@@ -191,6 +191,14 @@ export const fr: Dictionary = {
       total: "Total",
       empty: "Aucun fichier stocké.",
     },
+    dangerZone: {
+      heading: "Zone de danger",
+      deleteAccount: "Supprimer mon compte",
+      deleteAccountDescription:
+        "Cette action supprime définitivement votre compte ainsi que tous vos biens, locataires, baux, messages et fichiers téléversés. Cette action est irréversible.",
+      confirmDeleteAccount:
+        "Supprimer définitivement votre compte et toutes les données associées ? Cette action est irréversible.",
+    },
   },
   messages: {
     title: "Messages",
@@ -495,6 +503,8 @@ export const fr: Dictionary = {
     deleteLease: "Supprimer le bail",
     confirmDelete: "Voulez-vous vraiment supprimer ce bail ? Cette action est irréversible.",
     backToList: "Retour aux baux",
+    generateContract: "Générer le contrat",
+    printContract: "Imprimer",
     fields: {
       property: "Bien",
       propertyPlaceholder: "Sélectionnez un bien",

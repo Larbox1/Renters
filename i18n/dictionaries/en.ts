@@ -184,6 +184,14 @@ export const en = {
       total: "Total",
       empty: "No files stored yet.",
     },
+    dangerZone: {
+      heading: "Danger zone",
+      deleteAccount: "Delete my account",
+      deleteAccountDescription:
+        "This permanently deletes your account along with all your properties, tenants, leases, messages, and uploaded files. This action cannot be undone.",
+      confirmDeleteAccount:
+        "Permanently delete your account and all associated data? This cannot be undone.",
+    },
   },
   messages: {
     title: "Messages",
@@ -485,6 +493,8 @@ export const en = {
     deleteLease: "Delete lease",
     confirmDelete: "Are you sure you want to delete this lease? This action cannot be undone.",
     backToList: "Back to leases",
+    generateContract: "Generate contract",
+    printContract: "Print",
     fields: {
       property: "Property",
       propertyPlaceholder: "Select a property",

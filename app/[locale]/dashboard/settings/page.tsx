@@ -9,6 +9,8 @@ import {
   StorageUsageTable,
   type StorageUsageRow,
 } from "@/components/storage-usage-table";
+import { ConfirmSubmit } from "@/components/confirm-submit";
+import { deleteOwnAccountAction } from "./actions";
 
 export default async function SettingsPage({
   params,
@@ -87,6 +89,24 @@ export default async function SettingsPage({
           dict={dict.settings.storage}
         />
       )}
+
+      <section className="mt-6 rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm">
+        <h2 className="mb-1 text-lg font-semibold text-red-800">
+          {dict.settings.dangerZone.heading}
+        </h2>
+        <p className="mb-4 text-sm text-red-700">
+          {dict.settings.dangerZone.deleteAccountDescription}
+        </p>
+        <form action={deleteOwnAccountAction}>
+          <input type="hidden" name="locale" value={locale} />
+          <ConfirmSubmit
+            message={dict.settings.dangerZone.confirmDeleteAccount}
+            className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-100"
+          >
+            {dict.settings.dangerZone.deleteAccount}
+          </ConfirmSubmit>
+        </form>
+      </section>
     </div>
   );
 }

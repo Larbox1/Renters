@@ -59,7 +59,16 @@ export default async function LeaseDetailPage({
             </h1>
             <p className="mt-1 text-slate-600">{tenant?.full_name}</p>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {lease.type === "bail_vide" && (
+              <Link
+                href={`/${locale}/dashboard/leases/${id}/contract`}
+                target="_blank"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+              >
+                {dict.leases.generateContract}
+              </Link>
+            )}
             <Link
               href={`/${locale}/dashboard/leases/${id}/edit`}
               className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
