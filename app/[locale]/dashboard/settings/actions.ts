@@ -1,14 +1,60 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { isLocale, defaultLocale } from "@/i18n/config";
 import { getCurrentSession } from "@/lib/auth/current-user";
 import { createAdminClient, hasServiceRoleKey } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+export type ProfileState = { error?: string; saved?: boolean };
+
 function getLocale(formData: FormData) {
   const raw = String(formData.get("locale") ?? "");
   return isLocale(raw) ? raw : defaultLocale;
+}
+
+function nullableString(raw: string): string | null {
+  const trimmed = raw.trim();
+  return trimmed || null;
+}
+
+export async function updateProfileAction(
+  _prev: ProfileState,
+  formData: FormData,
+): Promise<ProfileState> {
+  const locale = getLocale(formData);
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
+
+  const firstName = nullableString(String(formData.get("first_name") ?? ""));
+  const lastName = nullableString(String(formData.get("last_name") ?? ""));
+
+  // Keep full_name in sync when both halves are present, since other
+  // surfaces (lease contract, tenant invite emails) still read it.
+  const full_name =
+    firstName && lastName
+      ? `${firstName} ${lastName}`
+      : (firstName ?? lastName ?? null);
+
+  const { error } = await session.supabase
+    .from("profiles")
+    .update({
+      first_name: firstName,
+      last_name: lastName,
+      full_name,
+      address: nullableString(String(formData.get("address") ?? "")),
+      city: nullableString(String(formData.get("city") ?? "")),
+      postal_code: nullableString(String(formData.get("postal_code") ?? "")),
+      country: nullableString(String(formData.get("country") ?? "")),
+      phone: nullableString(String(formData.get("phone") ?? "")),
+    })
+    .eq("id", session.user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${locale}/dashboard/settings`);
+  return { saved: true };
 }
 
 /**

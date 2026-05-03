@@ -11,6 +11,17 @@ import {
 } from "@/components/storage-usage-table";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { deleteOwnAccountAction } from "./actions";
+import { ProfileForm } from "./profile-form";
+
+type ProfileRow = {
+  first_name: string | null;
+  last_name: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  country: string | null;
+  phone: string | null;
+};
 
 export default async function SettingsPage({
   params,
@@ -27,6 +38,21 @@ export default async function SettingsPage({
   if (!session) redirect(`/${locale}/login`);
 
   const isAdmin = session.role === "admin";
+
+  const { data: profileRow } = await session.supabase
+    .from("profiles")
+    .select("first_name, last_name, address, city, postal_code, country, phone")
+    .eq("id", session.user.id)
+    .maybeSingle<ProfileRow>();
+  const profile: ProfileRow = profileRow ?? {
+    first_name: null,
+    last_name: null,
+    address: null,
+    city: null,
+    postal_code: null,
+    country: null,
+    phone: null,
+  };
 
   // Personal storage usage — non-admins only. Admin's global storage now
   // lives on the dashboard overview.
@@ -70,6 +96,17 @@ export default async function SettingsPage({
             </dd>
           </div>
         </dl>
+      </section>
+
+      <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+          {dict.settings.profile.heading}
+        </h2>
+        <ProfileForm
+          locale={locale as Locale}
+          dict={dict.settings.profile}
+          profile={profile}
+        />
       </section>
 
       <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
