@@ -7,6 +7,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { TenantForm, type OwnerOption } from "../../tenant-form";
+import { signTenantDocument } from "@/lib/tenants/documents";
 
 type ListedUser = {
   id: string;
@@ -49,6 +50,16 @@ export default async function EditTenantPage({
       .map((u) => ({ id: u.id, full_name: u.full_name, email: u.email }));
   }
 
+  const existingDocument = tenant.id_document_path
+    ? await signTenantDocument({
+        path: tenant.id_document_path as string,
+        name:
+          (tenant.id_document_name as string | null) ??
+          (tenant.id_document_path as string).split("/").pop() ??
+          "document",
+      })
+    : null;
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <div className="mb-6">
@@ -68,6 +79,7 @@ export default async function EditTenantPage({
           dict={dict.tenants}
           tenant={tenant}
           owners={owners}
+          existingDocument={existingDocument}
         />
       </div>
     </div>
