@@ -32,7 +32,7 @@ export default async function NewLeasePage({
   const [{ data: properties }, { data: tenants }] = await Promise.all([
     supabase
       .from("properties")
-      .select("id, label, address, city")
+      .select("id, label, address, city, monthly_rent_cents")
       .order("created_at", { ascending: false }),
     supabase
       .from("tenants")

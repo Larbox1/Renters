@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isLocale, type Locale } from "@/i18n/config";
@@ -20,6 +21,14 @@ export default async function HomePage({
       <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 to-white">
         <div className="mx-auto max-w-7xl px-6 py-24 md:py-32">
           <div className="mx-auto max-w-3xl text-center">
+            <Image
+              src="/logo.png"
+              alt="Renters"
+              width={320}
+              height={400}
+              priority
+              className="mx-auto mb-8 h-auto w-48 md:w-64"
+            />
             <span className="inline-flex items-center rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-medium text-brand-700">
               {dict.hero.badge}
             </span>

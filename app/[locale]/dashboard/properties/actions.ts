@@ -32,6 +32,12 @@ function parsePositiveInt(raw: string): number | null {
   return n;
 }
 
+function parseSignedInt(raw: string): number | null {
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  return isNaN(n) ? null : n;
+}
+
 function parseBool(formData: FormData, name: string): boolean {
   return formData.get(name) === "on";
 }
@@ -59,10 +65,112 @@ function readExtendedFields(formData: FormData) {
     ),
     rooms: parsePositiveInt(String(formData.get("rooms") ?? "").trim()),
     bedrooms: parsePositiveInt(String(formData.get("bedrooms") ?? "").trim()),
+    bathrooms: parsePositiveInt(
+      String(formData.get("bathrooms") ?? "").trim(),
+    ),
+    floor: parseSignedInt(String(formData.get("floor") ?? "").trim()),
+    building: String(formData.get("building") ?? "").trim() || null,
+    construction_year: parsePositiveInt(
+      String(formData.get("construction_year") ?? "").trim(),
+    ),
     parking: parseBool(formData, "parking"),
     basement: parseBool(formData, "basement"),
     to_rent: parseBool(formData, "to_rent"),
     to_sell: parseBool(formData, "to_sell"),
+  };
+}
+
+const AMENITY_FIELDS = [
+  "elevator",
+  "disabled_access",
+  "concierge",
+  "bike_storage",
+  "fiber_optic",
+  "laundry_room",
+  "caretaker",
+  "digicode",
+  "intercom",
+  "reinforced_door",
+  "cctv",
+  "ev_charger",
+  "double_glazing",
+  "cable_tv",
+  "air_conditioning",
+  "smoke_detector",
+  "balcony",
+  "terrace",
+  "garden",
+  "gym",
+  "playground",
+  "green_space",
+] as const;
+
+function readAmenityFields(formData: FormData) {
+  const out: Record<string, boolean> = {};
+  for (const f of AMENITY_FIELDS) {
+    out[f] = parseBool(formData, f);
+  }
+  // rolling_shutters_electric only meaningful when rolling_shutters is true.
+  const shutters = parseBool(formData, "rolling_shutters");
+  out.rolling_shutters = shutters;
+  out.rolling_shutters_electric =
+    shutters && parseBool(formData, "rolling_shutters_electric");
+  return out;
+}
+
+const DPE_CLASS_VALUES = ["A", "B", "C", "D", "E", "F", "G"] as const;
+
+function parseDpeClass(raw: string): string | null {
+  return (DPE_CLASS_VALUES as readonly string[]).includes(raw) ? raw : null;
+}
+
+function readDpeFields(formData: FormData) {
+  const optionalCents = (raw: string): number | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    return eurosToCents(trimmed);
+  };
+  return {
+    dpe_class: parseDpeClass(String(formData.get("dpe_class") ?? "").trim()),
+    dpe_energy_consumption: parsePositiveInt(
+      String(formData.get("dpe_energy_consumption") ?? "").trim(),
+    ),
+    dpe_ghg_emissions: parsePositiveInt(
+      String(formData.get("dpe_ghg_emissions") ?? "").trim(),
+    ),
+    annual_energy_cost_min_cents: optionalCents(
+      String(formData.get("annual_energy_cost_min_cents") ?? ""),
+    ),
+    annual_energy_cost_max_cents: optionalCents(
+      String(formData.get("annual_energy_cost_max_cents") ?? ""),
+    ),
+    annual_energy_cost_year: parsePositiveInt(
+      String(formData.get("annual_energy_cost_year") ?? "").trim(),
+    ),
+  };
+}
+
+function readFinancialFields(formData: FormData) {
+  const optionalCents = (raw: string): number | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    return eurosToCents(trimmed);
+  };
+  return {
+    acquisition_date:
+      String(formData.get("acquisition_date") ?? "").trim() || null,
+    acquisition_fees_cents: optionalCents(
+      String(formData.get("acquisition_fees_cents") ?? ""),
+    ),
+    brokerage_fees_cents: optionalCents(
+      String(formData.get("brokerage_fees_cents") ?? ""),
+    ),
+    housing_tax_cents: optionalCents(
+      String(formData.get("housing_tax_cents") ?? ""),
+    ),
+    property_tax_cents: optionalCents(
+      String(formData.get("property_tax_cents") ?? ""),
+    ),
   };
 }
 
@@ -138,6 +246,9 @@ export async function createPropertyAction(
     sell_price_cents: sellPriceCents,
     photos: uploaded,
     ...readExtendedFields(formData),
+    ...readFinancialFields(formData),
+    ...readAmenityFields(formData),
+    ...readDpeFields(formData),
   });
 
   if (error) {
@@ -212,6 +323,9 @@ export async function updatePropertyAction(
     sell_price_cents: sellPriceCents,
     photos: [...kept, ...uploaded],
     ...readExtendedFields(formData),
+    ...readFinancialFields(formData),
+    ...readAmenityFields(formData),
+    ...readDpeFields(formData),
   };
 
   // Only admins can reassign ownership.

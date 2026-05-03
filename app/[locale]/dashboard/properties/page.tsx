@@ -25,6 +25,58 @@ type PropertyTypeValue =
   | "land"
   | "other";
 
+const PROPERTY_TYPES: PropertyTypeValue[] = [
+  "apartment",
+  "house",
+  "studio",
+  "commercial",
+  "land",
+  "other",
+];
+
+type StatusFilter = "all" | "for_rent" | "for_sale";
+type OccupancyFilter = "all" | "rented" | "vacant";
+
+type Filters = {
+  q: string;
+  type: PropertyTypeValue | "all";
+  status: StatusFilter;
+  occupancy: OccupancyFilter;
+};
+
+function parseFilters(sp: Record<string, string | undefined>): Filters {
+  const type = sp.type as PropertyTypeValue | "all" | undefined;
+  const status = sp.status as StatusFilter | undefined;
+  const occupancy = sp.occupancy as OccupancyFilter | undefined;
+  return {
+    q: (sp.q ?? "").trim(),
+    type:
+      type && (type === "all" || PROPERTY_TYPES.includes(type as PropertyTypeValue))
+        ? type
+        : "all",
+    status:
+      status === "for_rent" || status === "for_sale" ? status : "all",
+    occupancy:
+      occupancy === "rented" || occupancy === "vacant" ? occupancy : "all",
+  };
+}
+
+function buildQueryString(
+  view: View,
+  filters: Filters,
+  overrides: Partial<{ view: View } & Filters> = {},
+): string {
+  const merged = { view, ...filters, ...overrides };
+  const params = new URLSearchParams();
+  if (merged.view === "table") params.set("view", "table");
+  if (merged.q) params.set("q", merged.q);
+  if (merged.type !== "all") params.set("type", merged.type);
+  if (merged.status !== "all") params.set("status", merged.status);
+  if (merged.occupancy !== "all") params.set("occupancy", merged.occupancy);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
 type PropertyRow = {
   id: string;
   label: string | null;
@@ -49,7 +101,13 @@ export default async function PropertiesPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{
+    view?: string;
+    q?: string;
+    type?: string;
+    status?: string;
+    occupancy?: string;
+  }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
@@ -66,34 +124,65 @@ export default async function PropertiesPage({
 
   const sp = await searchParams;
   const view: View = sp.view === "table" ? "table" : "cards";
+  const filters = parseFilters(sp);
+
+  // Build the filtered list query.
+  let listQuery = supabase
+    .from("properties")
+    .select(
+      "id, label, address, city, postal_code, monthly_rent_cents, sell_price_cents, photos, type, surface_sqm, rooms, bedrooms, parking, basement, to_rent, to_sell",
+    )
+    .order("created_at", { ascending: false });
+
+  if (filters.type !== "all") listQuery = listQuery.eq("type", filters.type);
+  if (filters.status === "for_rent") listQuery = listQuery.eq("to_rent", true);
+  if (filters.status === "for_sale") listQuery = listQuery.eq("to_sell", true);
+  if (filters.q) {
+    const escaped = filters.q.replace(/[%_,]/g, (c) => `\\${c}`);
+    listQuery = listQuery.or(
+      `label.ilike.%${escaped}%,address.ilike.%${escaped}%,city.ilike.%${escaped}%`,
+    );
+  }
 
   // Run the list query alongside the lightweight stats queries.
-  const [listRes, valuesRes, activeLeasesRes] = await Promise.all([
-    supabase
-      .from("properties")
-      .select(
-        "id, label, address, city, postal_code, monthly_rent_cents, sell_price_cents, photos, type, surface_sqm, rooms, bedrooms, parking, basement, to_rent, to_sell",
-      )
-      .order("created_at", { ascending: false }),
+  const [listRes, valuesRes, activeLeasesRes, totalCountRes] = await Promise.all([
+    listQuery,
     supabase.from("properties").select("value_cents"),
     supabase
       .from("leases")
       .select("monthly_rent_cents, property_id")
       .eq("status", "active"),
+    supabase
+      .from("properties")
+      .select("id", { count: "exact", head: true }),
   ]);
 
-  const properties = (listRes.data ?? []) as PropertyRow[];
-  const propertiesCount = properties.length;
+  const activeLeases = activeLeasesRes.data ?? [];
+  const rentedSet = new Set(activeLeases.map((l) => l.property_id));
+
+  let properties = (listRes.data ?? []) as PropertyRow[];
+  if (filters.occupancy === "rented") {
+    properties = properties.filter((p) => rentedSet.has(p.id));
+  } else if (filters.occupancy === "vacant") {
+    properties = properties.filter((p) => !rentedSet.has(p.id));
+  }
+
+  const propertiesCount = totalCountRes.count ?? 0;
+  const shownCount = properties.length;
+  const filtersActive =
+    filters.q !== "" ||
+    filters.type !== "all" ||
+    filters.status !== "all" ||
+    filters.occupancy !== "all";
   const portfolioValueCents = (valuesRes.data ?? []).reduce(
     (s, p) => s + (p.value_cents ?? 0),
     0,
   );
-  const activeLeases = activeLeasesRes.data ?? [];
   const monthlyRentCents = activeLeases.reduce(
     (s, l) => s + (l.monthly_rent_cents ?? 0),
     0,
   );
-  const rentedCount = new Set(activeLeases.map((l) => l.property_id)).size;
+  const rentedCount = rentedSet.size;
 
   const fmtCurrency = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
@@ -118,7 +207,12 @@ export default async function PropertiesPage({
           {dict.properties.title}
         </h1>
         <div className="flex items-center gap-3">
-          <ViewToggle locale={locale as Locale} view={view} dict={dict.properties} />
+          <ViewToggle
+            locale={locale as Locale}
+            view={view}
+            filters={filters}
+            dict={dict.properties}
+          />
           <Link
             href={`/${locale}/dashboard/properties/new`}
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
@@ -166,8 +260,24 @@ export default async function PropertiesPage({
         </div>
       </div>
 
-      {properties.length === 0 ? (
+      {propertiesCount > 0 && (
+        <FilterBar
+          locale={locale as Locale}
+          view={view}
+          filters={filters}
+          filtersActive={filtersActive}
+          shownCount={shownCount}
+          totalCount={propertiesCount}
+          dict={dict.properties}
+        />
+      )}
+
+      {propertiesCount === 0 ? (
         <p className="text-sm text-slate-600">{dict.properties.noProperties}</p>
+      ) : properties.length === 0 ? (
+        <p className="text-sm text-slate-600">
+          {dict.properties.filters.noMatches}
+        </p>
       ) : view === "table" ? (
         <TableView
           locale={locale as Locale}
@@ -191,18 +301,22 @@ export default async function PropertiesPage({
 function ViewToggle({
   locale,
   view,
+  filters,
   dict,
 }: {
   locale: Locale;
   view: View;
+  filters: Filters;
   dict: Dictionary["properties"];
 }) {
   const base =
     "inline-flex items-center px-3 py-1.5 text-xs font-semibold transition";
+  const cardsHref = `/${locale}/dashboard/properties${buildQueryString(view, filters, { view: "cards" })}`;
+  const tableHref = `/${locale}/dashboard/properties${buildQueryString(view, filters, { view: "table" })}`;
   return (
     <div className="inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white">
       <Link
-        href={`/${locale}/dashboard/properties?view=cards`}
+        href={cardsHref}
         className={`${base} ${
           view === "cards"
             ? "bg-brand-600 text-white"
@@ -212,7 +326,7 @@ function ViewToggle({
         {dict.viewCards}
       </Link>
       <Link
-        href={`/${locale}/dashboard/properties?view=table`}
+        href={tableHref}
         className={`${base} border-l border-slate-300 ${
           view === "table"
             ? "bg-brand-600 text-white"
@@ -222,6 +336,117 @@ function ViewToggle({
         {dict.viewTable}
       </Link>
     </div>
+  );
+}
+
+function FilterBar({
+  locale,
+  view,
+  filters,
+  filtersActive,
+  shownCount,
+  totalCount,
+  dict,
+}: {
+  locale: Locale;
+  view: View;
+  filters: Filters;
+  filtersActive: boolean;
+  shownCount: number;
+  totalCount: number;
+  dict: Dictionary["properties"];
+}) {
+  const f = dict.filters;
+  return (
+    <form
+      action={`/${locale}/dashboard/properties`}
+      method="get"
+      className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+    >
+      {view === "table" && <input type="hidden" name="view" value="table" />}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <label className="block">
+          <span className="block text-xs font-medium text-slate-600">
+            {f.search}
+          </span>
+          <input
+            type="search"
+            name="q"
+            defaultValue={filters.q}
+            placeholder={f.searchPlaceholder}
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+        </label>
+        <label className="block">
+          <span className="block text-xs font-medium text-slate-600">
+            {f.type}
+          </span>
+          <select
+            name="type"
+            defaultValue={filters.type}
+            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          >
+            <option value="all">{f.anyType}</option>
+            {PROPERTY_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {dict.types[t]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="block text-xs font-medium text-slate-600">
+            {f.status}
+          </span>
+          <select
+            name="status"
+            defaultValue={filters.status}
+            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          >
+            <option value="all">{f.anyStatus}</option>
+            <option value="for_rent">{f.forRent}</option>
+            <option value="for_sale">{f.forSale}</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="block text-xs font-medium text-slate-600">
+            {f.occupancy}
+          </span>
+          <select
+            name="occupancy"
+            defaultValue={filters.occupancy}
+            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          >
+            <option value="all">{f.anyOccupancy}</option>
+            <option value="rented">{f.rented}</option>
+            <option value="vacant">{f.vacant}</option>
+          </select>
+        </label>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-slate-500">
+          {f.resultCount
+            .replace("{shown}", String(shownCount))
+            .replace("{total}", String(totalCount))}
+        </p>
+        <div className="flex items-center gap-2">
+          {filtersActive && (
+            <Link
+              href={`/${locale}/dashboard/properties${view === "table" ? "?view=table" : ""}`}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              {f.reset}
+            </Link>
+          )}
+          <button
+            type="submit"
+            className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-700"
+          >
+            {f.apply}
+          </button>
+        </div>
+      </div>
+    </form>
   );
 }
 

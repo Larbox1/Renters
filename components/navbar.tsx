@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
@@ -24,10 +25,15 @@ export function Navbar({
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href={`/${locale}`} className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-t-full rounded-b-lg bg-brand-600 text-white font-bold">
-            R
-          </span>
-          <span className="text-xl font-semibold text-slate-900">renters</span>
+          <Image
+            src="/logo-icon.png"
+            alt="Renters"
+            width={36}
+            height={36}
+            priority
+            className="h-9 w-9 rounded-lg"
+          />
+          <span className="text-xl font-semibold text-slate-900">Renters</span>
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">

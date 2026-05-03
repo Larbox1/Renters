@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
@@ -29,6 +29,17 @@ const PROPERTY_TYPES: PropertyTypeValue[] = [
   "other",
 ];
 
+const DPE_CLASSES = ["A", "B", "C", "D", "E", "F", "G"] as const;
+
+// Year range covers the typical span of DPE issuance (current year back ~15
+// years). Computed lazily in the component so the list is recent on render.
+function buildYearOptions(): number[] {
+  const current = new Date().getFullYear();
+  const years: number[] = [];
+  for (let y = current; y >= current - 15; y--) years.push(y);
+  return years;
+}
+
 type Property = {
   id: string;
   owner_id?: string;
@@ -45,11 +56,102 @@ type Property = {
   surface_sqm: number | null;
   rooms: number | null;
   bedrooms: number | null;
+  bathrooms: number | null;
+  floor: number | null;
+  building: string | null;
+  construction_year: number | null;
   parking: boolean | null;
   basement: boolean | null;
   to_rent: boolean | null;
   to_sell: boolean | null;
+  acquisition_date: string | null;
+  acquisition_fees_cents: number | null;
+  brokerage_fees_cents: number | null;
+  housing_tax_cents: number | null;
+  property_tax_cents: number | null;
+  dpe_class: "A" | "B" | "C" | "D" | "E" | "F" | "G" | null;
+  dpe_energy_consumption: number | null;
+  dpe_ghg_emissions: number | null;
+  annual_energy_cost_min_cents: number | null;
+  annual_energy_cost_max_cents: number | null;
+  annual_energy_cost_year: number | null;
+  elevator: boolean | null;
+  disabled_access: boolean | null;
+  concierge: boolean | null;
+  bike_storage: boolean | null;
+  fiber_optic: boolean | null;
+  laundry_room: boolean | null;
+  caretaker: boolean | null;
+  digicode: boolean | null;
+  intercom: boolean | null;
+  reinforced_door: boolean | null;
+  cctv: boolean | null;
+  ev_charger: boolean | null;
+  double_glazing: boolean | null;
+  cable_tv: boolean | null;
+  rolling_shutters: boolean | null;
+  rolling_shutters_electric: boolean | null;
+  air_conditioning: boolean | null;
+  smoke_detector: boolean | null;
+  balcony: boolean | null;
+  terrace: boolean | null;
+  garden: boolean | null;
+  gym: boolean | null;
+  playground: boolean | null;
+  green_space: boolean | null;
 };
+
+type AmenityKey =
+  | "elevator"
+  | "disabled_access"
+  | "concierge"
+  | "bike_storage"
+  | "fiber_optic"
+  | "laundry_room"
+  | "caretaker"
+  | "digicode"
+  | "intercom"
+  | "reinforced_door"
+  | "cctv"
+  | "ev_charger"
+  | "double_glazing"
+  | "cable_tv"
+  | "air_conditioning"
+  | "smoke_detector"
+  | "balcony"
+  | "terrace"
+  | "garden"
+  | "gym"
+  | "playground"
+  | "green_space";
+
+// Order matches the user-facing list; rolling shutters is rendered separately
+// because of its conditional sub-checkbox.
+const AMENITIES: { key: AmenityKey; dictKey: keyof Dictionary["properties"]["fields"]["amenities"] }[] = [
+  { key: "elevator", dictKey: "elevator" },
+  { key: "disabled_access", dictKey: "disabledAccess" },
+  { key: "concierge", dictKey: "concierge" },
+  { key: "bike_storage", dictKey: "bikeStorage" },
+  { key: "fiber_optic", dictKey: "fiberOptic" },
+  { key: "laundry_room", dictKey: "laundryRoom" },
+  { key: "caretaker", dictKey: "caretaker" },
+  { key: "digicode", dictKey: "digicode" },
+  { key: "intercom", dictKey: "intercom" },
+  { key: "reinforced_door", dictKey: "reinforcedDoor" },
+  { key: "cctv", dictKey: "cctv" },
+  { key: "ev_charger", dictKey: "evCharger" },
+  { key: "double_glazing", dictKey: "doubleGlazing" },
+  { key: "cable_tv", dictKey: "cableTv" },
+  // rolling_shutters rendered separately
+  { key: "air_conditioning", dictKey: "airConditioning" },
+  { key: "smoke_detector", dictKey: "smokeDetector" },
+  { key: "balcony", dictKey: "balcony" },
+  { key: "terrace", dictKey: "terrace" },
+  { key: "garden", dictKey: "garden" },
+  { key: "gym", dictKey: "gym" },
+  { key: "playground", dictKey: "playground" },
+  { key: "green_space", dictKey: "greenSpace" },
+];
 
 export type OwnerOption = {
   id: string;
@@ -87,6 +189,9 @@ export function PropertyForm({
   const [state, formAction] = useActionState<PropertyState, FormData>(action, {});
   const showOwnerSelect = Boolean(owners && owners.length > 0);
   const photoHandle = useRef<PhotoManagerHandle | null>(null);
+  const [hasRollingShutters, setHasRollingShutters] = useState<boolean>(
+    property?.rolling_shutters ?? false,
+  );
 
   const centsToEuros = (cents: number | null) =>
     cents != null ? (cents / 100).toFixed(2) : "";
@@ -274,6 +379,82 @@ export function PropertyForm({
         </div>
       </fieldset>
 
+      {/* Financial information */}
+      <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {dict.sections.financials}
+        </legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.acquisitionDate}
+            </label>
+            <input
+              name="acquisition_date"
+              type="date"
+              defaultValue={property?.acquisition_date ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.acquisitionFees}
+            </label>
+            <input
+              name="acquisition_fees_cents"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={centsToEuros(property?.acquisition_fees_cents ?? null)}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.brokerageFees}
+            </label>
+            <input
+              name="brokerage_fees_cents"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={centsToEuros(property?.brokerage_fees_cents ?? null)}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.housingTax}
+            </label>
+            <input
+              name="housing_tax_cents"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={centsToEuros(property?.housing_tax_cents ?? null)}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.propertyTax}
+            </label>
+            <input
+              name="property_tax_cents"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={centsToEuros(property?.property_tax_cents ?? null)}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </div>
+      </fieldset>
+
       {/* Characteristics */}
       <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
         <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -339,6 +520,60 @@ export function PropertyForm({
             />
           </div>
         </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.bathrooms}
+            </label>
+            <input
+              name="bathrooms"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={property?.bathrooms ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.floor}
+            </label>
+            <input
+              name="floor"
+              type="number"
+              step="1"
+              defaultValue={property?.floor ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.building}
+            </label>
+            <input
+              name="building"
+              type="text"
+              defaultValue={property?.building ?? ""}
+              placeholder={dict.fields.buildingPlaceholder}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.constructionYear}
+            </label>
+            <input
+              name="construction_year"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={property?.construction_year ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </div>
         <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1">
           <label className="inline-flex items-center gap-2 text-sm text-slate-700">
             <input
@@ -358,6 +593,174 @@ export function PropertyForm({
             />
             {dict.fields.basement}
           </label>
+        </div>
+      </fieldset>
+
+      {/* Energy diagnostic (DPE) */}
+      <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {dict.sections.dpe}
+        </legend>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.dpeClass}
+            </label>
+            <select
+              name="dpe_class"
+              defaultValue={property?.dpe_class ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">{dict.fields.dpeClassPlaceholder}</option>
+              {DPE_CLASSES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.dpeEnergyConsumption}
+            </label>
+            <input
+              name="dpe_energy_consumption"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={property?.dpe_energy_consumption ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.dpeGhgEmissions}
+            </label>
+            <input
+              name="dpe_ghg_emissions"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={property?.dpe_ghg_emissions ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-sm font-medium text-slate-700">
+            {dict.fields.annualEnergyCost}
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-xs text-slate-600">
+                {dict.fields.annualEnergyCostMin}
+              </label>
+              <input
+                name="annual_energy_cost_min_cents"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={centsToEuros(
+                  property?.annual_energy_cost_min_cents ?? null,
+                )}
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-600">
+                {dict.fields.annualEnergyCostMax}
+              </label>
+              <input
+                name="annual_energy_cost_max_cents"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={centsToEuros(
+                  property?.annual_energy_cost_max_cents ?? null,
+                )}
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-600">
+                {dict.fields.annualEnergyCostYear}
+              </label>
+              <select
+                name="annual_energy_cost_year"
+                defaultValue={property?.annual_energy_cost_year ?? ""}
+                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              >
+                <option value="">
+                  {dict.fields.annualEnergyCostYearPlaceholder}
+                </option>
+                {buildYearOptions().map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      {/* Amenities */}
+      <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {dict.sections.amenities}
+        </legend>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+          {AMENITIES.slice(0, 14).map(({ key, dictKey }) => (
+            <label
+              key={key}
+              className="inline-flex items-center gap-2 text-sm text-slate-700"
+            >
+              <input
+                type="checkbox"
+                name={key}
+                defaultChecked={property?.[key] ?? false}
+                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              />
+              {dict.fields.amenities[dictKey]}
+            </label>
+          ))}
+          <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-2 sm:col-span-3">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                name="rolling_shutters"
+                checked={hasRollingShutters}
+                onChange={(e) => setHasRollingShutters(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              />
+              {dict.fields.amenities.rollingShutters}
+            </label>
+            {hasRollingShutters && (
+              <label className="inline-flex items-center gap-2 pl-6 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  name="rolling_shutters_electric"
+                  defaultChecked={property?.rolling_shutters_electric ?? false}
+                  className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                {dict.fields.amenities.rollingShuttersElectric}
+              </label>
+            )}
+          </div>
+          {AMENITIES.slice(14).map(({ key, dictKey }) => (
+            <label
+              key={key}
+              className="inline-flex items-center gap-2 text-sm text-slate-700"
+            >
+              <input
+                type="checkbox"
+                name={key}
+                defaultChecked={property?.[key] ?? false}
+                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              />
+              {dict.fields.amenities[dictKey]}
+            </label>
+          ))}
         </div>
       </fieldset>
 

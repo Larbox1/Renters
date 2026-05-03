@@ -30,7 +30,7 @@ export default async function EditLeasePage({
     supabase.from("leases").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("properties")
-      .select("id, label, address, city")
+      .select("id, label, address, city, monthly_rent_cents")
       .order("created_at", { ascending: false }),
     supabase
       .from("tenants")
