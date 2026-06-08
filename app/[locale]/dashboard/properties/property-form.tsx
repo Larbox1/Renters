@@ -60,6 +60,10 @@ type Property = {
   floor: number | null;
   building: string | null;
   construction_year: number | null;
+  housing_kind: "collective" | "individual" | null;
+  ownership_kind: "single_ownership" | "co_ownership" | null;
+  heating_mode: "individual" | "collective" | null;
+  hot_water_mode: "individual" | "collective" | null;
   parking: boolean | null;
   basement: boolean | null;
   to_rent: boolean | null;
@@ -574,6 +578,66 @@ export function PropertyForm({
             />
           </div>
         </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.housingKind}
+            </label>
+            <select
+              name="housing_kind"
+              defaultValue={property?.housing_kind ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">{dict.fields.anyChoice}</option>
+              <option value="collective">{dict.fields.housingKindCollective}</option>
+              <option value="individual">{dict.fields.housingKindIndividual}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.ownershipKind}
+            </label>
+            <select
+              name="ownership_kind"
+              defaultValue={property?.ownership_kind ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">{dict.fields.anyChoice}</option>
+              <option value="single_ownership">{dict.fields.ownershipKindSingle}</option>
+              <option value="co_ownership">{dict.fields.ownershipKindCo}</option>
+            </select>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.heatingMode}
+            </label>
+            <select
+              name="heating_mode"
+              defaultValue={property?.heating_mode ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">{dict.fields.anyChoice}</option>
+              <option value="individual">{dict.fields.modeIndividual}</option>
+              <option value="collective">{dict.fields.modeCollective}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.hotWaterMode}
+            </label>
+            <select
+              name="hot_water_mode"
+              defaultValue={property?.hot_water_mode ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="">{dict.fields.anyChoice}</option>
+              <option value="individual">{dict.fields.modeIndividual}</option>
+              <option value="collective">{dict.fields.modeCollective}</option>
+            </select>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1">
           <label className="inline-flex items-center gap-2 text-sm text-slate-700">
             <input
@@ -787,8 +851,14 @@ export function PropertyForm({
 
       {state.error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          <p className="font-medium">{dict.form.errorGeneric}</p>
-          <p className="mt-1 text-xs text-red-600">{state.error}</p>
+          {state.error === "plan_limit" ? (
+            <p className="font-medium">{dict.form.planLimit}</p>
+          ) : (
+            <>
+              <p className="font-medium">{dict.form.errorGeneric}</p>
+              <p className="mt-1 text-xs text-red-600">{state.error}</p>
+            </>
+          )}
         </div>
       )}
 

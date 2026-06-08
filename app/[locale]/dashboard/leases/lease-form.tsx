@@ -36,7 +36,12 @@ const LEASE_TYPES: LeaseTypeValue[] = [
   "bail_commercial",
 ];
 
-type LeaseDuration = "3_years" | "6_years" | "reduced";
+type LeaseDuration =
+  | "3_years"
+  | "6_years"
+  | "1_year"
+  | "9_months_student"
+  | "reduced";
 type ChargesMethod = "provisions" | "periodic" | "flat_rate";
 type PaymentTiming = "in_advance" | "arrears";
 type DpeClass = "A" | "B" | "C" | "D" | "E" | "F" | "G";
@@ -127,8 +132,27 @@ export function LeaseForm({
     lease?.is_zone_tendue ?? false,
   );
 
-  const showBailVide = selectedType === "bail_vide";
+  const showContractDetails =
+    selectedType === "bail_vide" || selectedType === "bail_meuble";
+  const isMeuble = selectedType === "bail_meuble";
   const bv = dict.fields.bailVide;
+  const durationOptions: LeaseDuration[] = isMeuble
+    ? ["1_year", "9_months_student", "reduced"]
+    : ["3_years", "6_years", "reduced"];
+  const durationLabel = (d: LeaseDuration) => {
+    switch (d) {
+      case "3_years":
+        return bv.duration3y;
+      case "6_years":
+        return bv.duration6y;
+      case "1_year":
+        return bv.duration1y;
+      case "9_months_student":
+        return bv.duration9mStudent;
+      case "reduced":
+        return bv.durationReduced;
+    }
+  };
 
   const inputClass =
     "mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
@@ -241,6 +265,11 @@ export function LeaseForm({
             placeholder={dict.fields.depositPlaceholder}
             className={inputClass}
           />
+          {showContractDetails && (
+            <p className="mt-1 text-xs text-slate-500">
+              {isMeuble ? bv.depositHintMeuble : bv.depositHintVide}
+            </p>
+          )}
         </div>
       </div>
 
@@ -277,16 +306,16 @@ export function LeaseForm({
         </div>
       </div>
 
-      {showBailVide && (
+      {showContractDetails && (
         <div className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-5">
           <h2 className="text-base font-semibold text-slate-900">
-            {bv.sectionTitle}
+            {isMeuble ? bv.sectionTitleMeuble : bv.sectionTitle}
           </h2>
 
           <div className="space-y-3">
             <p className={subheadingClass}>{bv.durationGroup}</p>
             <div className="flex flex-wrap gap-4 text-sm text-slate-700">
-              {(["3_years", "6_years", "reduced"] as const).map((d) => (
+              {durationOptions.map((d) => (
                 <label key={d} className="flex items-center gap-2">
                   <input
                     type="radio"
@@ -296,11 +325,7 @@ export function LeaseForm({
                     onChange={() => setDuration(d)}
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500"
                   />
-                  {d === "3_years"
-                    ? bv.duration3y
-                    : d === "6_years"
-                      ? bv.duration6y
-                      : bv.durationReduced}
+                  {durationLabel(d)}
                 </label>
               ))}
             </div>

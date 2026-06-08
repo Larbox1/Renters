@@ -44,7 +44,7 @@ export default async function LeaseDetailPage({
     : (lease.tenants as { id: string; full_name: string; email: string | null; phone: string | null } | null);
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12">
+    <div className="px-6 py-12">
       <div className="mb-6">
         <Link
           href={`/${locale}/dashboard/leases`}
@@ -60,7 +60,7 @@ export default async function LeaseDetailPage({
             <p className="mt-1 text-slate-600">{tenant?.full_name}</p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
-            {lease.type === "bail_vide" && (
+            {(lease.type === "bail_vide" || lease.type === "bail_meuble") && (
               <Link
                 href={`/${locale}/dashboard/leases/${id}/contract`}
                 target="_blank"
@@ -173,7 +173,7 @@ export default async function LeaseDetailPage({
         )}
       </div>
 
-      {lease.type === "bail_vide" && (
+      {(lease.type === "bail_vide" || lease.type === "bail_meuble") && (
         <BailVideDetails lease={lease} dict={dict.leases.fields.bailVide} />
       )}
     </div>
@@ -181,7 +181,13 @@ export default async function LeaseDetailPage({
 }
 
 type BailVideLease = {
-  duration: "3_years" | "6_years" | "reduced" | null;
+  duration:
+    | "3_years"
+    | "6_years"
+    | "1_year"
+    | "9_months_student"
+    | "reduced"
+    | null;
   reduced_duration_months: number | null;
   reduced_duration_reason: string | null;
   irl_reference: string | null;
@@ -214,13 +220,17 @@ function BailVideDetails({
       ? dict.duration3y
       : lease.duration === "6_years"
         ? dict.duration6y
-        : lease.duration === "reduced"
-          ? `${dict.durationReduced}${
-              lease.reduced_duration_months
-                ? ` · ${lease.reduced_duration_months} ${dict.reducedDurationMonths.toLowerCase()}`
-                : ""
-            }`
-          : null;
+        : lease.duration === "1_year"
+          ? dict.duration1y
+          : lease.duration === "9_months_student"
+            ? dict.duration9mStudent
+            : lease.duration === "reduced"
+              ? `${dict.durationReduced}${
+                  lease.reduced_duration_months
+                    ? ` · ${lease.reduced_duration_months} ${dict.reducedDurationMonths.toLowerCase()}`
+                    : ""
+                }`
+              : null;
 
   const chargesMethodLabel =
     lease.charges_method === "provisions"

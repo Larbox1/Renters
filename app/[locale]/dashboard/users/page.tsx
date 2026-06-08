@@ -56,7 +56,7 @@ export default async function UsersPage({
   const users = (data ?? []) as UserRow[];
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="px-6 py-12">
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
           {dict.users.title}

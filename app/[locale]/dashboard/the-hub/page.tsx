@@ -110,7 +110,7 @@ export default async function TheHubPage({
   const hasFilters = Boolean(q || city || minCents !== null || maxCents !== null);
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="px-6 py-12">
       <div className="mb-2 flex items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
           The Hub

@@ -48,14 +48,20 @@ function optionalEnum<T extends string>(
     : null;
 }
 
-const DURATION_VALUES = ["3_years", "6_years", "reduced"] as const;
+const DURATION_VALUES = [
+  "3_years",
+  "6_years",
+  "1_year",
+  "9_months_student",
+  "reduced",
+] as const;
 const CHARGES_METHODS = ["provisions", "periodic", "flat_rate"] as const;
 const PAYMENT_TIMINGS = ["in_advance", "arrears"] as const;
 const DPE_CLASSES = ["A", "B", "C", "D", "E", "F", "G"] as const;
 
-function buildBailVidePayload(formData: FormData, isBailVide: boolean) {
-  if (!isBailVide) {
-    // Clear bail-vide-only fields when the lease isn't a bail vide.
+function buildBailVidePayload(formData: FormData, includeDetails: boolean) {
+  if (!includeDetails) {
+    // Clear contract-detail fields when the lease isn't a bail vide / meublé.
     return {
       duration: null,
       reduced_duration_months: null,
@@ -155,7 +161,10 @@ export async function createLeaseAction(
       deposit_cents: eurosToCents(String(formData.get("deposit_cents") ?? "0")),
       status: String(formData.get("status") ?? "pending"),
       type: typeRaw || null,
-      ...buildBailVidePayload(formData, typeRaw === "bail_vide"),
+      ...buildBailVidePayload(
+        formData,
+        typeRaw === "bail_vide" || typeRaw === "bail_meuble",
+      ),
     })
     .select("id")
     .single();
@@ -190,7 +199,10 @@ export async function updateLeaseAction(
       deposit_cents: eurosToCents(String(formData.get("deposit_cents") ?? "0")),
       status: String(formData.get("status") ?? "pending"),
       type: typeRaw || null,
-      ...buildBailVidePayload(formData, typeRaw === "bail_vide"),
+      ...buildBailVidePayload(
+        formData,
+        typeRaw === "bail_vide" || typeRaw === "bail_meuble",
+      ),
     })
     .eq("id", id);
 

@@ -134,8 +134,37 @@ export default async function PropertyDetailPage({
     property.floor != null ||
     property.building ||
     property.construction_year != null ||
+    property.housing_kind ||
+    property.ownership_kind ||
+    property.heating_mode ||
+    property.hot_water_mode ||
     property.parking ||
     property.basement;
+
+  const housingKindLabel =
+    property.housing_kind === "collective"
+      ? propDict.fields.housingKindCollective
+      : property.housing_kind === "individual"
+        ? propDict.fields.housingKindIndividual
+        : null;
+  const ownershipKindLabel =
+    property.ownership_kind === "single_ownership"
+      ? propDict.fields.ownershipKindSingle
+      : property.ownership_kind === "co_ownership"
+        ? propDict.fields.ownershipKindCo
+        : null;
+  const heatingModeLabel =
+    property.heating_mode === "individual"
+      ? propDict.fields.modeIndividual
+      : property.heating_mode === "collective"
+        ? propDict.fields.modeCollective
+        : null;
+  const hotWaterModeLabel =
+    property.hot_water_mode === "individual"
+      ? propDict.fields.modeIndividual
+      : property.hot_water_mode === "collective"
+        ? propDict.fields.modeCollective
+        : null;
 
   const hasDpe =
     property.dpe_class ||
@@ -156,7 +185,7 @@ export default async function PropertyDetailPage({
     property.property_tax_cents != null;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
+    <div className="px-6 py-12">
       {/* Header */}
       <div className="mb-8">
         <Link
@@ -348,6 +377,30 @@ export default async function PropertyDetailPage({
               <DlRow
                 label={propDict.fields.constructionYear}
                 value={String(property.construction_year)}
+              />
+            )}
+            {housingKindLabel && (
+              <DlRow
+                label={propDict.fields.housingKind}
+                value={housingKindLabel}
+              />
+            )}
+            {ownershipKindLabel && (
+              <DlRow
+                label={propDict.fields.ownershipKind}
+                value={ownershipKindLabel}
+              />
+            )}
+            {heatingModeLabel && (
+              <DlRow
+                label={propDict.fields.heatingMode}
+                value={heatingModeLabel}
+              />
+            )}
+            {hotWaterModeLabel && (
+              <DlRow
+                label={propDict.fields.hotWaterMode}
+                value={hotWaterModeLabel}
               />
             )}
             {property.parking && (

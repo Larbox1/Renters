@@ -8,108 +8,150 @@ import {
   type NotificationItem,
 } from "@/components/notifications-bell";
 
+const Chevron = () => (
+  <svg className="h-2.5 w-2.5 text-ink-4" viewBox="0 0 16 16" fill="none">
+    <path
+      d="M4 6l4 4 4-4"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const Arrow = () => (
+  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+    <path
+      d="M3 8h10m0 0L9 4m4 4-4 4"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export function Navbar({
   locale,
   dict,
   userEmail,
   addItems = [],
   notifications = [],
+  utility,
 }: {
   locale: Locale;
   dict: Dictionary["nav"];
   userEmail: string | null;
   addItems?: AddMenuItem[];
   notifications?: NotificationItem[];
+  utility?: Dictionary["home"]["utility"];
 }) {
+  const navLinks = [
+    { href: `/${locale}#features`, label: dict.features, chevron: true },
+    { href: `/${locale}#audience`, label: dict.audience, chevron: false },
+    { href: `/${locale}#pricing`, label: dict.pricing, chevron: false },
+    { href: `/${locale}#resources`, label: dict.resources, chevron: true },
+    { href: `/${locale}#cta`, label: dict.contact, chevron: false },
+  ];
+
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href={`/${locale}`} className="flex items-center gap-2">
-          <Image
-            src="/logo-icon.png"
-            alt="Renters"
-            width={36}
-            height={36}
-            priority
-            className="h-9 w-9 rounded-lg"
-          />
-          <span className="text-xl font-semibold text-slate-900">Renters</span>
-        </Link>
-
-        <div className="hidden items-center gap-6 md:flex">
-          <Link
-            href={`/${locale}`}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            {dict.home}
-          </Link>
-          <Link
-            href={`/${locale}/pricing`}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            {dict.pricing}
-          </Link>
-          {userEmail && (
-            <Link
-              href={`/${locale}/dashboard`}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              {dict.dashboard}
-            </Link>
-          )}
-          {userEmail && (
-            <form
-              action={`/${locale}/dashboard/search`}
-              method="get"
-              className="relative ml-2"
-            >
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400"
-              >
-                🔎
+    <>
+      {/* Utility bar — marketing only, scrolls away above the sticky nav. */}
+      {!userEmail && utility && (
+        <div className="border-b border-line bg-paper text-[12.5px] text-ink-3">
+          <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                {utility.status}
               </span>
-              <input
-                type="search"
-                name="q"
-                placeholder={dict.searchPlaceholder}
-                aria-label={dict.searchPlaceholder}
-                className="w-64 rounded-lg border border-slate-300 bg-white py-1.5 pl-9 pr-3 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              />
-            </form>
-          )}
+              <span className="hidden text-ink-4 md:inline">·</span>
+              <span className="hidden text-ink-3 md:inline">{utility.version}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link href="/fr" className="hover:text-ink">
+                FR
+              </Link>
+              <Link href="/en" className="hover:text-ink">
+                EN
+              </Link>
+              <span className="text-ink-4">·</span>
+              <a href="#" className="hover:text-ink">
+                {utility.statusLink}
+              </a>
+              <a href="#" className="hover:text-ink">
+                {utility.help}
+              </a>
+            </div>
+          </div>
         </div>
+      )}
 
-        <div className="flex items-center gap-3">
-          {userEmail ? (
-            <>
-              <AddMenu items={addItems} ariaLabel={dict.addMenu} />
-              <NotificationsBell
-                items={notifications}
-                ariaLabel={dict.notifications}
-                emptyLabel={dict.notificationsEmpty}
-                viewAllLabel={dict.notificationsViewAll}
-                viewAllHref={`/${locale}/dashboard/messages`}
-              />
-            </>
-          ) : (
-            <>
-              <Link
-                href={`/${locale}/login`}
-                className="hidden rounded-lg px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 sm:inline-block"
-              >
-                {dict.login}
-              </Link>
-              <Link
-                href={`/${locale}/signup`}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
-              >
-                {dict.signup}
-              </Link>
-            </>
+      <header className="sticky top-0 z-50 h-16 shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur">
+        <nav
+          className={`mx-auto flex h-full items-center justify-between px-6 ${
+            userEmail ? "max-w-none" : "max-w-7xl"
+          }`}
+        >
+          <Link href={`/${locale}`} className="flex items-center">
+            <Image
+              src={locale === "fr" ? "/meskasas_logo_fr.png" : "/meskasas_logo_en.png"}
+              alt="Meskasas"
+              width={1493}
+              height={374}
+              priority
+              className="h-9 w-auto"
+            />
+          </Link>
+
+          {!userEmail && (
+            <div className="hidden items-center gap-1.5 md:flex">
+              {navLinks.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[14.5px] text-ink-2 transition hover:bg-paper-sunk hover:text-ink"
+                >
+                  {l.label}
+                  {l.chevron && <Chevron />}
+                </Link>
+              ))}
+            </div>
           )}
-        </div>
-      </nav>
-    </header>
+
+          <div className="flex items-center gap-2">
+            {userEmail ? (
+              <>
+                <AddMenu items={addItems} ariaLabel={dict.addMenu} />
+                <NotificationsBell
+                  items={notifications}
+                  ariaLabel={dict.notifications}
+                  emptyLabel={dict.notificationsEmpty}
+                  viewAllLabel={dict.notificationsViewAll}
+                  viewAllHref={`/${locale}/dashboard/messages`}
+                />
+              </>
+            ) : (
+              <>
+                <Link
+                  href={`/${locale}/login`}
+                  className="hidden rounded-lg px-3.5 py-2 text-sm font-medium text-ink-2 transition hover:bg-paper-sunk hover:text-ink sm:inline-block"
+                >
+                  {dict.login}
+                </Link>
+                <Link
+                  href={`/${locale}/signup`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-ink px-3.5 py-2 text-sm font-medium text-paper transition hover:bg-ink-2"
+                >
+                  {dict.freeTrial}
+                  <Arrow />
+                </Link>
+              </>
+            )}
+          </div>
+        </nav>
+      </header>
+    </>
   );
 }

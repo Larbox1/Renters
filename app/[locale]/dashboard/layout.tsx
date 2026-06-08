@@ -4,6 +4,7 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { getCurrentSession } from "@/lib/auth/current-user";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { DashboardSidebarShell } from "@/components/dashboard-sidebar-shell";
 import { PollRefresh } from "@/components/poll-refresh";
 
 export default async function DashboardLayout({
@@ -34,18 +35,18 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col md:flex-row">
+    <div className="flex w-full flex-col md:h-[calc(100vh-4rem)] md:flex-row md:overflow-hidden">
       {session && (
-        <aside className="border-b border-slate-200 bg-slate-50 md:w-56 md:shrink-0 md:border-b-0 md:border-r md:min-h-[calc(100vh-65px)] print:hidden">
+        <DashboardSidebarShell toggleLabel={dict.dashboard.sidebar.toggleSidebar}>
           <DashboardSidebar
             locale={locale as Locale}
             role={session.role}
             dict={dict.dashboard.sidebar}
             unreadMessages={unreadMessages}
           />
-        </aside>
+        </DashboardSidebarShell>
       )}
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1 md:h-full md:overflow-y-auto">{children}</div>
       {session && <PollRefresh />}
     </div>
   );

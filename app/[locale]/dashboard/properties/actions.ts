@@ -11,6 +11,7 @@ import {
   MAX_TOTAL_BYTES,
   type PropertyPhoto,
 } from "@/lib/properties/photos";
+import { isPlanId, planPropertyLimit, type PlanId } from "@/lib/plans";
 
 export type PropertyState = { error?: string };
 
@@ -55,6 +56,20 @@ function parseType(raw: string): string | null {
   return (ALLOWED_TYPES as readonly string[]).includes(raw) ? raw : null;
 }
 
+const HOUSING_KIND = ["collective", "individual"] as const;
+const OWNERSHIP_KIND = ["single_ownership", "co_ownership"] as const;
+const MODE_IND_COL = ["individual", "collective"] as const;
+
+function parseEnumValue<T extends string>(
+  raw: string,
+  allowed: readonly T[],
+): T | null {
+  const trimmed = raw.trim();
+  return (allowed as readonly string[]).includes(trimmed)
+    ? (trimmed as T)
+    : null;
+}
+
 function readExtendedFields(formData: FormData) {
   return {
     description:
@@ -72,6 +87,22 @@ function readExtendedFields(formData: FormData) {
     building: String(formData.get("building") ?? "").trim() || null,
     construction_year: parsePositiveInt(
       String(formData.get("construction_year") ?? "").trim(),
+    ),
+    housing_kind: parseEnumValue(
+      String(formData.get("housing_kind") ?? ""),
+      HOUSING_KIND,
+    ),
+    ownership_kind: parseEnumValue(
+      String(formData.get("ownership_kind") ?? ""),
+      OWNERSHIP_KIND,
+    ),
+    heating_mode: parseEnumValue(
+      String(formData.get("heating_mode") ?? ""),
+      MODE_IND_COL,
+    ),
+    hot_water_mode: parseEnumValue(
+      String(formData.get("hot_water_mode") ?? ""),
+      MODE_IND_COL,
     ),
     parking: parseBool(formData, "parking"),
     basement: parseBool(formData, "basement"),
@@ -211,6 +242,28 @@ export async function createPropertyAction(
     session.role === "admin" && requestedOwnerId
       ? requestedOwnerId
       : session.user.id;
+
+  // Enforce the owner's plan property limit (admins bypass). Checked before
+  // any photo upload so we don't leave orphaned files when blocking.
+  if (session.role === "owner") {
+    const { data: planRow } = await session.supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", session.user.id)
+      .maybeSingle<{ plan: string }>();
+    const plan: PlanId = isPlanId(planRow?.plan ?? "")
+      ? (planRow!.plan as PlanId)
+      : "free";
+    const limit = planPropertyLimit(plan);
+    if (limit !== null) {
+      const { count } = await session.supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true });
+      if ((count ?? 0) >= limit) {
+        return { error: "plan_limit" };
+      }
+    }
+  }
 
   // Photos: pre-allocate the property id so storage paths are scoped to it.
   const newFiles = readNewPhotos(formData);

@@ -10,7 +10,8 @@ import {
   type StorageUsageRow,
 } from "@/components/storage-usage-table";
 import { ConfirmSubmit } from "@/components/confirm-submit";
-import { deleteOwnAccountAction } from "./actions";
+import { PLANS, planPriceCents, type PlanId } from "@/lib/plans";
+import { deleteOwnAccountAction, updatePlanAction } from "./actions";
 import { ProfileForm } from "./profile-form";
 
 type ProfileRow = {
@@ -38,6 +39,26 @@ export default async function SettingsPage({
   if (!session) redirect(`/${locale}/login`);
 
   const isAdmin = session.role === "admin";
+  const isOwner = session.role === "owner";
+
+  // Current subscription plan (owners only).
+  let currentPlan: PlanId = "free";
+  if (isOwner) {
+    const { data: planRow } = await session.supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", session.user.id)
+      .maybeSingle<{ plan: PlanId }>();
+    currentPlan = planRow?.plan ?? "free";
+  }
+  const currentPriceCents = planPriceCents(currentPlan);
+
+  const fmtPlanPrice = (cents: number) =>
+    new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+    }).format(cents / 100);
 
   const { data: profileRow } = await session.supabase
     .from("profiles")
@@ -69,7 +90,7 @@ export default async function SettingsPage({
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12">
+    <div className="px-6 py-12">
       <h1 className="mb-6 text-3xl font-bold tracking-tight text-slate-900">
         {dict.settings.title}
       </h1>
@@ -97,6 +118,81 @@ export default async function SettingsPage({
           </div>
         </dl>
       </section>
+
+      {isOwner && (
+        <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-1 text-lg font-semibold text-slate-900">
+            {dict.settings.plan.heading}
+          </h2>
+          <p className="mb-4 text-sm text-slate-500">
+            {dict.settings.plan.subtitle}
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {PLANS.map((p) => {
+              const isCurrent = p.id === currentPlan;
+              const isUpgrade = p.priceCents > currentPriceCents;
+              return (
+                <div
+                  key={p.id}
+                  className={`relative flex flex-col rounded-xl border p-5 ${
+                    isCurrent
+                      ? "border-brand-500 bg-brand-50/40 ring-1 ring-brand-500"
+                      : "border-slate-200 bg-white"
+                  }`}
+                >
+                  {isCurrent && (
+                    <span className="absolute right-4 top-4 rounded-full bg-brand-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+                      {dict.settings.plan.currentBadge}
+                    </span>
+                  )}
+                  <p className="text-sm font-semibold text-slate-900">
+                    {dict.settings.plan.names[p.id]}
+                  </p>
+                  <p className="mt-2 flex items-baseline gap-1">
+                    <span className="text-2xl font-bold tracking-tight text-slate-900">
+                      {fmtPlanPrice(p.priceCents)}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      {dict.settings.plan.perMonth}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {dict.settings.plan.scopes[p.id]}
+                  </p>
+                  <div className="mt-4">
+                    {isCurrent ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full cursor-default rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-400"
+                      >
+                        {dict.settings.plan.currentBadge}
+                      </button>
+                    ) : (
+                      <form action={updatePlanAction}>
+                        <input type="hidden" name="locale" value={locale} />
+                        <input type="hidden" name="plan" value={p.id} />
+                        <button
+                          type="submit"
+                          className={`w-full rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                            isUpgrade
+                              ? "bg-brand-600 text-white hover:bg-brand-700"
+                              : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {isUpgrade
+                            ? dict.settings.plan.upgrade
+                            : dict.settings.plan.switchPlan}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-lg font-semibold text-slate-900">

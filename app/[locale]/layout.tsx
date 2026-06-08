@@ -1,7 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+  display: "swap",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
 import { locales, isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -153,7 +172,10 @@ export default async function LocaleLayout({
   }
 
   return (
-    <html lang={locale}>
+    <html
+      lang={locale}
+      className={`${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
+    >
       <body className="flex min-h-screen flex-col bg-white text-slate-900 antialiased">
         <Navbar
           locale={locale as Locale}
@@ -161,9 +183,10 @@ export default async function LocaleLayout({
           userEmail={userEmail}
           addItems={addItems}
           notifications={notifications}
+          utility={dict.home.utility}
         />
         <main className="flex-1">{children}</main>
-        <Footer locale={locale as Locale} dict={dict.footer} />
+        {!userEmail && <Footer locale={locale as Locale} dict={dict.footer} />}
       </body>
     </html>
   );

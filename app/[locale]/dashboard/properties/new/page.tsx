@@ -6,6 +6,7 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
+import { isPlanId, planPropertyLimit, type PlanId } from "@/lib/plans";
 import { PropertyForm, type OwnerOption } from "../property-form";
 
 type ListedUser = {
@@ -40,6 +41,26 @@ export default async function NewPropertyPage({
       .map((u) => ({ id: u.id, full_name: u.full_name, email: u.email }));
   }
 
+  // Owners are capped by their plan; admins are not.
+  let atPlanLimit = false;
+  if (session.role === "owner") {
+    const { data: planRow } = await session.supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", session.user.id)
+      .maybeSingle<{ plan: string }>();
+    const plan: PlanId = isPlanId(planRow?.plan ?? "")
+      ? (planRow!.plan as PlanId)
+      : "free";
+    const limit = planPropertyLimit(plan);
+    if (limit !== null) {
+      const { count } = await session.supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true });
+      atPlanLimit = (count ?? 0) >= limit;
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
       <div className="mb-6">
@@ -53,13 +74,27 @@ export default async function NewPropertyPage({
           {dict.properties.form.createTitle}
         </h1>
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <PropertyForm
-          locale={locale as Locale}
-          dict={dict.properties}
-          owners={owners}
-        />
-      </div>
+      {atPlanLimit ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
+          <p className="text-sm font-medium text-amber-800">
+            {dict.properties.form.planLimit}
+          </p>
+          <Link
+            href={`/${locale}/dashboard/settings`}
+            className="mt-4 inline-flex rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+          >
+            {dict.properties.form.upgrade}
+          </Link>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <PropertyForm
+            locale={locale as Locale}
+            dict={dict.properties}
+            owners={owners}
+          />
+        </div>
+      )}
     </div>
   );
 }

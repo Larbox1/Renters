@@ -55,16 +55,9 @@ export default async function DashboardPage({
   const session = await getCurrentSession();
   if (!session) redirect(`/${locale}/login`);
 
-  const { user, role, fullName } = session;
+  const { role, fullName } = session;
   const showOwnerNav = isOwnerOrAdmin(role);
   const showCalendar = role !== "admin";
-
-  const lastSignIn = user.last_sign_in_at
-    ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
-        dateStyle: "long",
-        timeStyle: "short",
-      }).format(new Date(user.last_sign_in_at))
-    : dict.dashboard.never;
 
   // Stats — fetched in parallel. RLS already restricts what each role sees.
   let propertiesCount = 0;
@@ -154,7 +147,7 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12">
+    <div className="px-6 py-12">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
@@ -170,29 +163,8 @@ export default async function DashboardPage({
         </form>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            {dict.dashboard.emailLabel}
-          </p>
-          <p className="mt-1 text-sm text-slate-900">{user.email}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            {dict.dashboard.roleLabel}
-          </p>
-          <p className="mt-1 text-sm text-slate-900">{dict.roles[role]}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            {dict.dashboard.lastSignInLabel}
-          </p>
-          <p className="mt-1 text-sm text-slate-900">{lastSignIn}</p>
-        </div>
-      </div>
-
       {showOwnerNav && (
-        <div className="mt-8 grid gap-4 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
           <Link
             href={`/${locale}/dashboard/properties`}
             className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"

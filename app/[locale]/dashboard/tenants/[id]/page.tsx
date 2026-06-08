@@ -35,8 +35,15 @@ export default async function TenantDetailPage({
 
   if (!tenant) notFound();
 
+  // A tenant linked to a lease can't be deleted (FK is ON DELETE RESTRICT).
+  const { count: leaseCount } = await supabase
+    .from("leases")
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_id", id);
+  const hasLease = (leaseCount ?? 0) > 0;
+
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12">
+    <div className="px-6 py-12">
       <div className="mb-6">
         <Link
           href={`/${locale}/dashboard/tenants`}
@@ -55,18 +62,32 @@ export default async function TenantDetailPage({
             >
               {dict.tenants.editTenant}
             </Link>
-            <form action={deleteTenantAction}>
-              <input type="hidden" name="locale" value={locale} />
-              <input type="hidden" name="id" value={id} />
-              <ConfirmSubmit
-                message={dict.tenants.confirmDelete}
-                className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
+            {hasLease ? (
+              <button
+                type="button"
+                disabled
+                title={dict.tenants.cannotDelete}
+                className="cursor-not-allowed rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-400 shadow-sm"
               >
                 {dict.tenants.deleteTenant}
-              </ConfirmSubmit>
-            </form>
+              </button>
+            ) : (
+              <form action={deleteTenantAction}>
+                <input type="hidden" name="locale" value={locale} />
+                <input type="hidden" name="id" value={id} />
+                <ConfirmSubmit
+                  message={dict.tenants.confirmDelete}
+                  className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
+                >
+                  {dict.tenants.deleteTenant}
+                </ConfirmSubmit>
+              </form>
+            )}
           </div>
         </div>
+        {hasLease && (
+          <p className="mt-3 text-sm text-slate-500">{dict.tenants.cannotDelete}</p>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

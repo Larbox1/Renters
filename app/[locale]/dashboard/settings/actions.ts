@@ -6,6 +6,7 @@ import { isLocale, defaultLocale } from "@/i18n/config";
 import { getCurrentSession } from "@/lib/auth/current-user";
 import { createAdminClient, hasServiceRoleKey } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isPlanId } from "@/lib/plans";
 
 export type ProfileState = { error?: string; saved?: boolean };
 
@@ -55,6 +56,29 @@ export async function updateProfileAction(
 
   revalidatePath(`/${locale}/dashboard/settings`);
   return { saved: true };
+}
+
+/**
+ * Switches the owner's subscription plan. No billing integration yet — this
+ * simply records the chosen tier on the profile so the rest of the app can
+ * read it. Owner-only; other roles are silently no-oped.
+ */
+export async function updatePlanAction(formData: FormData) {
+  const locale = getLocale(formData);
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
+
+  const plan = String(formData.get("plan") ?? "");
+  if (session.role === "owner" && isPlanId(plan)) {
+    const { error } = await session.supabase
+      .from("profiles")
+      .update({ plan })
+      .eq("id", session.user.id);
+    if (error) console.error("[settings.updatePlan] failed:", error);
+  }
+
+  revalidatePath(`/${locale}/dashboard/settings`);
+  redirect(`/${locale}/dashboard/settings`);
 }
 
 /**

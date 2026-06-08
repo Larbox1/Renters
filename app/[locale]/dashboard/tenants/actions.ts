@@ -353,6 +353,17 @@ export async function deleteTenantAction(formData: FormData) {
   const session = await getCurrentSession();
   if (!session) redirect(`/${locale}/login`);
 
+  // A tenant linked to any lease cannot be deleted (leases.tenant_id is
+  // ON DELETE RESTRICT). Guard here so the user gets a clear redirect instead
+  // of a silent FK failure.
+  const { count: leaseCount } = await session.supabase
+    .from("leases")
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_id", id);
+  if ((leaseCount ?? 0) > 0) {
+    redirect(`/${locale}/dashboard/tenants/${id}`);
+  }
+
   // Grab the document path so we can clean up storage after the row is gone.
   const { data: current } = await session.supabase
     .from("tenants")

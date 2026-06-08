@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
@@ -9,72 +10,68 @@ export function Footer({
   locale: Locale;
   dict: Dictionary["footer"];
 }) {
+  const columns = [
+    { title: dict.product, links: dict.productLinks },
+    { title: dict.audience, links: dict.audienceLinks },
+    { title: dict.resources, links: dict.resourcesLinks },
+    { title: dict.company, links: dict.companyLinks },
+  ];
+
   return (
-    <footer className="border-t border-slate-200 bg-slate-50">
-      <div className="mx-auto max-w-7xl px-6 py-12">
-        <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+    <footer className="bg-paper">
+      <div className="mx-auto max-w-7xl px-6 py-16">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div>
-            <Link href={`/${locale}`} className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white font-bold">
-                R
-              </span>
-              <span className="text-xl font-semibold text-slate-900">
-                renters
-              </span>
+            <Link href={`/${locale}`} className="flex items-center">
+              <Image
+                src={
+                  locale === "fr"
+                    ? "/meskasas_logo_fr.png"
+                    : "/meskasas_logo_en.png"
+                }
+                alt="Meskasas"
+                width={1493}
+                height={374}
+                className="h-[42px] w-auto"
+              />
             </Link>
-            <p className="mt-3 max-w-md text-sm text-slate-600">
+            <p className="mt-4 max-w-[30ch] text-[13.5px] text-ink-3">
               {dict.tagline}
             </p>
           </div>
 
-          <div className="flex gap-10 text-sm">
-            <div>
-              <h4 className="font-semibold text-slate-900">{dict.product}</h4>
-              <ul className="mt-3 space-y-2 text-slate-600">
-                <li>
-                  <Link
-                    href={`/${locale}`}
-                    className="hover:text-slate-900"
-                  >
-                    {dict.features}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={`/${locale}/pricing`}
-                    className="hover:text-slate-900"
-                  >
-                    {dict.pricing}
-                  </Link>
-                </li>
+          {columns.map((col) => (
+            <div key={col.title}>
+              <h5 className="mb-3.5 text-xs font-medium uppercase tracking-[0.08em] text-ink-3">
+                {col.title}
+              </h5>
+              <ul className="flex flex-col gap-2">
+                {col.links.map((label) => (
+                  <li key={label}>
+                    <a
+                      href="#"
+                      className="text-[13.5px] text-ink-2 transition hover:text-accent-deep"
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold text-slate-900">{dict.account}</h4>
-              <ul className="mt-3 space-y-2 text-slate-600">
-                <li>
-                  <Link
-                    href={`/${locale}/login`}
-                    className="hover:text-slate-900"
-                  >
-                    {dict.login}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={`/${locale}/signup`}
-                    className="hover:text-slate-900"
-                  >
-                    {dict.signup}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="mt-10 border-t border-slate-200 pt-6 text-xs text-slate-500">
-          © {new Date().getFullYear()} renters. {dict.rights}
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-[12.5px] text-ink-3">
+          <span>
+            © {new Date().getFullYear()} Meskasas SAS · {dict.rights}
+          </span>
+          <div className="flex flex-wrap gap-[18px]">
+            {dict.legal.map((label) => (
+              <a key={label} href="#" className="transition hover:text-accent-deep">
+                {label}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

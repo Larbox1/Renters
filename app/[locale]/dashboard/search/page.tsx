@@ -158,7 +158,7 @@ export default async function SearchPage({
   const totalHits = properties.length + tenants.length + leases.length;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
+    <div className="px-6 py-12">
       <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">
         {dict.search.title}
       </h1>

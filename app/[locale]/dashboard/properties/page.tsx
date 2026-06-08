@@ -201,7 +201,7 @@ export default async function PropertiesPage({
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
+    <div className="px-6 py-12">
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
           {dict.properties.title}
@@ -464,7 +464,7 @@ function CardsView({
   fmtCurrency: (cents: number) => string;
 }) {
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="flex flex-wrap gap-4">
       {properties.map((p) => {
         const cover = photoCovers.get(p.id);
         const specs: string[] = [];
@@ -481,7 +481,7 @@ function CardsView({
         if (p.basement) amenities.push(`📦 ${dict.fields.basement}`);
 
         return (
-          <li key={p.id}>
+          <li key={p.id} className="w-full sm:w-[350px]">
             <Link
               href={`/${locale}/dashboard/properties/${p.id}`}
               className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-md"
