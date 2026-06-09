@@ -11,6 +11,7 @@ import {
   type StoredAttachment,
 } from "@/lib/messages/attachments";
 import { createAdminClient, hasServiceRoleKey } from "@/lib/supabase/admin";
+import { checkStorageQuota } from "@/lib/storage/quota";
 
 export type SendMessageState = { error?: string };
 
@@ -45,6 +46,10 @@ export async function sendMessageAction(
   if (files.length > MAX_FILES_PER_MESSAGE) {
     return { error: "too_many_files" };
   }
+
+  const attachmentBytes = files.reduce((sum, f) => sum + f.size, 0);
+  const quotaError = await checkStorageQuota(session, attachmentBytes);
+  if (quotaError) return { error: quotaError };
 
   // Pre-allocate the message id so file paths can be scoped to it.
   const messageId = randomMessageId();

@@ -124,7 +124,9 @@ export function UploadDocumentForm({
               ? dict.upload.propertyRequired
               : state.error === "file_required"
                 ? dict.upload.fileRequired
-                : dict.upload.errorGeneric}
+                : state.error === "storage_limit"
+                  ? dict.upload.storageLimit
+                  : dict.upload.errorGeneric}
         </div>
       )}
 

@@ -227,14 +227,16 @@ export default async function DashboardPage({
       )}
 
       {showCalendar && (
-        <div className="mt-8">
-          <Calendar
-            locale={locale as Locale}
-            monthDate={monthDate}
-            events={calendarEvents}
-            baseUrl={`/${locale}/dashboard`}
-            dict={dict.dashboard.calendar}
-          />
+        <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <div className="col-span-2 lg:col-span-3">
+            <Calendar
+              locale={locale as Locale}
+              monthDate={monthDate}
+              events={calendarEvents}
+              baseUrl={`/${locale}/dashboard`}
+              dict={dict.dashboard.calendar}
+            />
+          </div>
         </div>
       )}
 

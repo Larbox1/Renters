@@ -10,6 +10,7 @@ import {
   deleteTenantDocument,
   MAX_DOC_BYTES,
 } from "@/lib/tenants/documents";
+import { checkStorageQuota } from "@/lib/storage/quota";
 
 export type TenantState = { error?: string };
 
@@ -231,6 +232,10 @@ export async function createTenantAction(
   if (file && file.size > MAX_DOC_BYTES) {
     return { error: "document_too_large" };
   }
+  if (file) {
+    const quotaError = await checkStorageQuota(session, file.size);
+    if (quotaError) return { error: quotaError };
+  }
 
   // Pre-allocate the tenant id so the storage path can include it before
   // the row exists (matches the property-photos pattern).
@@ -286,6 +291,10 @@ export async function updateTenantAction(
   const file = readUploadedFile(formData);
   if (file && file.size > MAX_DOC_BYTES) {
     return { error: "document_too_large" };
+  }
+  if (file) {
+    const quotaError = await checkStorageQuota(session, file.size);
+    if (quotaError) return { error: quotaError };
   }
 
   // Look up the existing path so we can replace it cleanly.

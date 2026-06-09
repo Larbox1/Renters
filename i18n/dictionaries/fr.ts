@@ -141,6 +141,13 @@ export const fr: Dictionary = {
       users: "Utilisateurs",
       settings: "Paramètres",
       logout: "Se déconnecter",
+      profile: "Profil",
+      plan: {
+        label: "Forfait",
+        unit: "biens",
+        upgrade: "Mettre à niveau",
+        quotaHint: "Vous approchez de votre quota.",
+      },
       search: "Rechercher…",
       toggleSidebar: "Afficher/masquer le menu",
       groups: {
@@ -243,13 +250,9 @@ export const fr: Dictionary = {
   },
   settings: {
     title: "Paramètres",
-    account: {
-      heading: "Compte",
-      email: "E-mail",
-      role: "Rôle",
-    },
     profile: {
       heading: "Informations personnelles",
+      email: "E-mail",
       firstName: "Prénom",
       lastName: "Nom",
       address: "Adresse",
@@ -295,6 +298,9 @@ export const fr: Dictionary = {
       size: "Taille",
       total: "Total",
       empty: "Aucun fichier stocké.",
+      limit: "Limite",
+      usedOfLimit: "{used} sur {limit}",
+      percentUsed: "{pct}% utilisé",
     },
     dangerZone: {
       heading: "Zone de danger",
@@ -323,6 +329,8 @@ export const fr: Dictionary = {
     addFiles: "Ajouter des fichiers",
     fileTooLarge: "Fichier trop volumineux (max {size} Mo).",
     tooManyFiles: "Trop de fichiers (max {n}).",
+    storageLimit:
+      "Limite de stockage atteinte. Améliorez votre forfait pour téléverser davantage.",
     bodyPlaceholder: "Écrivez un message…",
     send: "Envoyer",
     sending: "Envoi…",
@@ -537,6 +545,8 @@ export const fr: Dictionary = {
       errorGeneric: "Impossible d'enregistrer le bien. Veuillez réessayer.",
       planLimit:
         "Vous avez atteint la limite de biens de votre forfait. Mettez à niveau pour en ajouter.",
+      storageLimit:
+        "Vous avez atteint la limite de stockage de votre forfait. Mettez à niveau pour téléverser davantage de fichiers.",
       upgrade: "Mettre à niveau le forfait",
     },
   },
@@ -719,6 +729,8 @@ export const fr: Dictionary = {
       pickFile: "Choisir un fichier",
       fileRequired: "Veuillez choisir un fichier.",
       fileTooLarge: "Fichier trop volumineux (max 25 Mo).",
+      storageLimit:
+        "Vous avez atteint la limite de stockage de votre forfait. Mettez à niveau pour téléverser davantage de fichiers.",
       submit: "Téléverser",
       submitting: "Téléversement…",
       noProperties: "Ajoutez d'abord un bien pour y associer un document.",

@@ -132,8 +132,11 @@ export function ReplyForm({
 
       {(clientError || state.error) && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-          {clientError ?? dict.errorGeneric}
-          {state.error && !clientError && (
+          {clientError ??
+            (state.error === "storage_limit"
+              ? dict.storageLimit
+              : dict.errorGeneric)}
+          {state.error && !clientError && state.error !== "storage_limit" && (
             <span className="ml-1 text-red-600">({state.error})</span>
           )}
         </div>

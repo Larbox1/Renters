@@ -12,6 +12,7 @@ import {
   type PropertyPhoto,
 } from "@/lib/properties/photos";
 import { isPlanId, planPropertyLimit, type PlanId } from "@/lib/plans";
+import { checkStorageQuota } from "@/lib/storage/quota";
 
 export type PropertyState = { error?: string };
 
@@ -273,6 +274,8 @@ export async function createPropertyAction(
   if (totalBytes([], newFiles) > MAX_TOTAL_BYTES) {
     return { error: "photos_too_large" };
   }
+  const quotaError = await checkStorageQuota(session, totalBytes([], newFiles));
+  if (quotaError) return { error: quotaError };
   const propertyId = crypto.randomUUID();
   let uploaded: PropertyPhoto[] = [];
   if (newFiles.length > 0) {
@@ -352,6 +355,9 @@ export async function updatePropertyAction(
   if (totalBytes(kept, newFiles) > MAX_TOTAL_BYTES) {
     return { error: "photos_too_large" };
   }
+  // Only the newly added files add to stored usage; kept files already count.
+  const quotaError = await checkStorageQuota(session, totalBytes([], newFiles));
+  if (quotaError) return { error: quotaError };
 
   let uploaded: PropertyPhoto[] = [];
   if (newFiles.length > 0) {

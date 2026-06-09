@@ -134,6 +134,13 @@ export const en = {
       users: "Users",
       settings: "Settings",
       logout: "Log out",
+      profile: "Profile",
+      plan: {
+        label: "Plan",
+        unit: "properties",
+        upgrade: "Upgrade",
+        quotaHint: "You're approaching your quota.",
+      },
       search: "Search…",
       toggleSidebar: "Toggle menu",
       groups: {
@@ -236,13 +243,9 @@ export const en = {
   },
   settings: {
     title: "Settings",
-    account: {
-      heading: "Account",
-      email: "Email",
-      role: "Role",
-    },
     profile: {
       heading: "Personal information",
+      email: "Email",
       firstName: "First name",
       lastName: "Last name",
       address: "Address",
@@ -288,6 +291,9 @@ export const en = {
       size: "Size",
       total: "Total",
       empty: "No files stored yet.",
+      limit: "Limit",
+      usedOfLimit: "{used} of {limit}",
+      percentUsed: "{pct}% used",
     },
     dangerZone: {
       heading: "Danger zone",
@@ -316,6 +322,7 @@ export const en = {
     addFiles: "Add files",
     fileTooLarge: "File too large (max {size} MB).",
     tooManyFiles: "Too many files (max {n}).",
+    storageLimit: "Storage limit reached. Upgrade your plan to upload more.",
     bodyPlaceholder: "Write a message…",
     send: "Send",
     sending: "Sending…",
@@ -527,6 +534,8 @@ export const en = {
       errorGeneric: "Could not save property. Please try again.",
       planLimit:
         "You've reached your plan's property limit. Upgrade to add more properties.",
+      storageLimit:
+        "You've reached your plan's storage limit. Upgrade to upload more files.",
       upgrade: "Upgrade your plan",
     },
   },
@@ -708,6 +717,8 @@ export const en = {
       pickFile: "Choose a file",
       fileRequired: "Please choose a file.",
       fileTooLarge: "File too large (max 25 MB).",
+      storageLimit:
+        "You've reached your plan's storage limit. Upgrade to upload more files.",
       submit: "Upload",
       submitting: "Uploading…",
       noProperties: "Add a property first to attach documents to it.",

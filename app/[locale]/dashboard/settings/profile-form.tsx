@@ -40,10 +40,12 @@ export function ProfileForm({
   locale,
   dict,
   profile,
+  email,
 }: {
   locale: Locale;
   dict: Dictionary["settings"]["profile"];
   profile: Profile;
+  email: string;
 }) {
   const [state, formAction] = useActionState<ProfileState, FormData>(
     updateProfileAction,
@@ -53,6 +55,17 @@ export function ProfileForm({
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="locale" value={locale} />
+
+      <div>
+        <label className={labelClass}>{dict.email}</label>
+        <input
+          type="email"
+          value={email}
+          readOnly
+          disabled
+          className={`${inputClass} cursor-not-allowed bg-slate-50 text-slate-500`}
+        />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>

@@ -9,6 +9,7 @@ import {
   deleteDocument,
   MAX_DOC_BYTES,
 } from "@/lib/documents/storage";
+import { checkStorageQuota } from "@/lib/storage/quota";
 
 export type DocumentState = { error?: string };
 
@@ -43,6 +44,9 @@ export async function uploadDocumentAction(
     .eq("id", propertyId)
     .maybeSingle();
   if (!prop) return { error: "property_not_found" };
+
+  const quotaError = await checkStorageQuota(session, file.size);
+  if (quotaError) return { error: quotaError };
 
   const customName = String(formData.get("name") ?? "").trim();
   const filename = customName || file.name;

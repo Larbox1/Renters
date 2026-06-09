@@ -33,3 +33,17 @@ const PROPERTY_LIMITS: Record<PlanId, number | null> = {
 export function planPropertyLimit(id: PlanId): number | null {
   return PROPERTY_LIMITS[id];
 }
+
+// Maximum total storage (in bytes) an owner may use across all buckets on
+// each tier. Enforced on upload (documents, property photos, attachments)
+// and surfaced on the Settings storage panel.
+const STORAGE_LIMITS: Record<PlanId, number> = {
+  free: 50 * 1024 * 1024, // 50 MB
+  plus: 500 * 1024 * 1024, // 500 MB
+  pro: 2 * 1024 * 1024 * 1024, // 2 GB
+  unlimited: 10 * 1024 * 1024 * 1024, // 10 GB
+};
+
+export function planStorageLimit(id: PlanId): number {
+  return STORAGE_LIMITS[id];
+}

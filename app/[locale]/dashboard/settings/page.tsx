@@ -10,7 +10,12 @@ import {
   type StorageUsageRow,
 } from "@/components/storage-usage-table";
 import { ConfirmSubmit } from "@/components/confirm-submit";
-import { PLANS, planPriceCents, type PlanId } from "@/lib/plans";
+import {
+  PLANS,
+  planPriceCents,
+  planStorageLimit,
+  type PlanId,
+} from "@/lib/plans";
 import { deleteOwnAccountAction, updatePlanAction } from "./actions";
 import { ProfileForm } from "./profile-form";
 
@@ -52,6 +57,12 @@ export default async function SettingsPage({
     currentPlan = planRow?.plan ?? "free";
   }
   const currentPriceCents = planPriceCents(currentPlan);
+
+  // Plan descriptions reuse the copy shown on the public landing page
+  // (pricing section), keyed by the plan id stored in each plan's `dot`.
+  const planDescriptions = Object.fromEntries(
+    dict.home.pricing.plans.map((pl) => [pl.dot, pl.desc]),
+  ) as Record<PlanId, string>;
 
   const fmtPlanPrice = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
@@ -95,30 +106,6 @@ export default async function SettingsPage({
         {dict.settings.title}
       </h1>
 
-      <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
-          {dict.settings.account.heading}
-        </h2>
-        <dl className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {dict.settings.account.email}
-            </dt>
-            <dd className="mt-1 text-sm text-slate-900">
-              {session.user.email}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {dict.settings.account.role}
-            </dt>
-            <dd className="mt-1 text-sm text-slate-900">
-              {dict.roles[session.role]}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
       {isOwner && (
         <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-1 text-lg font-semibold text-slate-900">
@@ -145,9 +132,27 @@ export default async function SettingsPage({
                       {dict.settings.plan.currentBadge}
                     </span>
                   )}
-                  <p className="text-sm font-semibold text-slate-900">
-                    {dict.settings.plan.names[p.id]}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {dict.settings.plan.names[p.id]}
+                    </p>
+                    <span className="group relative inline-flex">
+                      <span
+                        tabIndex={0}
+                        role="img"
+                        aria-label={planDescriptions[p.id]}
+                        className="flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold leading-none text-slate-600"
+                      >
+                        ?
+                      </span>
+                      <span
+                        role="tooltip"
+                        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-52 -translate-x-1/2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-normal leading-snug text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+                      >
+                        {planDescriptions[p.id]}
+                      </span>
+                    </span>
+                  </div>
                   <p className="mt-2 flex items-baseline gap-1">
                     <span className="text-2xl font-bold tracking-tight text-slate-900">
                       {fmtPlanPrice(p.priceCents)}
@@ -202,6 +207,7 @@ export default async function SettingsPage({
           locale={locale as Locale}
           dict={dict.settings.profile}
           profile={profile}
+          email={session.user.email ?? ""}
         />
       </section>
 
@@ -220,6 +226,7 @@ export default async function SettingsPage({
           heading={dict.settings.storage.myHeading}
           rows={personalStorage}
           dict={dict.settings.storage}
+          limitBytes={isOwner ? planStorageLimit(currentPlan) : undefined}
         />
       )}
 
