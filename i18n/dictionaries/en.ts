@@ -268,8 +268,27 @@ export const en = {
         "Your current subscription. Upgrade any time as your portfolio grows.",
       currentBadge: "Current plan",
       perMonth: "/ month",
+      perYear: "/ year",
+      billingMonthly: "Monthly",
+      billingAnnual: "Annual",
+      billingSave: "Save 15%",
+      monthlyEquivalent: "≈ {price}/mo, billed annually",
       upgrade: "Upgrade",
       switchPlan: "Switch",
+      manageBilling: "Manage billing",
+      manageHint: "Update your card, switch tiers, or cancel anytime.",
+      cancelSubscription: "Cancel subscription",
+      resumeSubscription: "Resume subscription",
+      confirmCancel:
+        "Cancel your subscription? You'll keep your current plan until the end of the billing period, then move to Free.",
+      renewsOn: "Renews on {date}.",
+      cancelsOn: "Cancels on {date} — you'll move to Free then.",
+      billingSuccess: "You're all set — your subscription is active.",
+      billingCanceled: "Checkout canceled. Your plan is unchanged.",
+      billingError: "Something went wrong with billing. Please try again.",
+      cancelScheduled:
+        "Your subscription will be canceled at the end of the billing period.",
+      resumed: "Your subscription has been resumed.",
       names: {
         free: "Free",
         plus: "Plus",
@@ -342,6 +361,7 @@ export const en = {
       name: "Name",
       email: "Email",
       role: "Role",
+      plan: "Plan",
       status: "Status",
       lastSignIn: "Last sign-in",
       createdAt: "Joined",
@@ -362,6 +382,20 @@ export const en = {
     confirmDelete:
       "Permanently delete this user and all their data? This cannot be undone.",
     never: "Never",
+    planChart: {
+      title: "Plan distribution",
+      subtitle: "Owners by subscription tier",
+      unit: "owners",
+      empty: "No owners yet.",
+    },
+    cityChart: {
+      title: "Users by city",
+      subtitle: "Where your users are located",
+      city: "City",
+      users: "Users",
+      unspecified: "Not specified",
+      empty: "No users yet.",
+    },
     form: {
       createTitle: "New user",
       editTitle: "Edit user",
@@ -466,6 +500,10 @@ export const en = {
       annualEnergyCostMax: "Max",
       annualEnergyCostYear: "Reference year",
       annualEnergyCostYearPlaceholder: "Year",
+      commercialActivity: "Authorized activity",
+      commercialActivityPlaceholder: "e.g. retail clothing store",
+      commercialEquipment: "Equipment included",
+      commercialEquipmentPlaceholder: "e.g. fitted kitchen, storefront, A/C…",
       amenities: {
         elevator: "Elevator",
         disabledAccess: "Disabled access",
@@ -507,6 +545,7 @@ export const en = {
       status: "Listing status",
       financials: "Financial information",
       dpe: "Energy diagnostic",
+      commercial: "Commercial lease details",
     },
     filters: {
       search: "Search",
@@ -704,6 +743,12 @@ export const en = {
       submitting: "Saving…",
       errorGeneric: "Could not save lease. Please try again.",
     },
+  },
+  myLease: {
+    title: "My Lease",
+    empty: "You don't have a lease yet.",
+    documents: "Documents",
+    noDocuments: "No documents available yet.",
   },
   documents: {
     title: "My Documents",
@@ -1022,12 +1067,17 @@ export const en = {
       lede:
         "Every module is in the free plan, with no time limit. You pay only as your portfolio grows — never to unlock an essential feature.",
       badgePopular: "Most popular",
+      billingMonthly: "Monthly",
+      billingAnnual: "Annual",
+      billingSave: "Save 15%",
       plans: [
         {
           name: "Free",
           dot: "free",
           price: "€0",
           per: "/ month · 1 property",
+          priceAnnual: "€0",
+          perAnnual: "/ year · 1 property",
           desc: "Everything you need to manage your first rental.",
           cta: "Start free",
           features: [
@@ -1043,6 +1093,8 @@ export const en = {
           dot: "plus",
           price: "€9.90",
           per: "/ month · up to 5 properties",
+          priceAnnual: "€100.98",
+          perAnnual: "/ year · up to 5 properties",
           desc: "For growing landlords building a small portfolio.",
           cta: "Start free",
           features: [
@@ -1059,6 +1111,8 @@ export const en = {
           dot: "pro",
           price: "€14.90",
           per: "/ month · up to 10 properties",
+          priceAnnual: "€151.98",
+          perAnnual: "/ year · up to 10 properties",
           desc: "For serious landlords scaling their rentals.",
           cta: "Start free",
           features: [
@@ -1073,6 +1127,8 @@ export const en = {
           dot: "unlimited",
           price: "€39.90",
           per: "/ month · unlimited properties",
+          priceAnnual: "€406.98",
+          perAnnual: "/ year · unlimited properties",
           desc: "For multi-owners, SCIs and professional managers.",
           cta: "Talk to the team",
           features: [

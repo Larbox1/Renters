@@ -76,6 +76,10 @@ function readExtendedFields(formData: FormData) {
     description:
       String(formData.get("description") ?? "").trim() || null,
     type: parseType(String(formData.get("type") ?? "").trim()),
+    commercial_activity:
+      String(formData.get("commercial_activity") ?? "").trim() || null,
+    commercial_equipment:
+      String(formData.get("commercial_equipment") ?? "").trim() || null,
     surface_sqm: parsePositiveInt(
       String(formData.get("surface_sqm") ?? "").trim(),
     ),

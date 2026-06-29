@@ -53,6 +53,8 @@ type Property = {
   sell_price_cents: number | null;
   description: string | null;
   type: PropertyTypeValue | null;
+  commercial_activity: string | null;
+  commercial_equipment: string | null;
   surface_sqm: number | null;
   rooms: number | null;
   bedrooms: number | null;
@@ -196,6 +198,7 @@ export function PropertyForm({
   const [hasRollingShutters, setHasRollingShutters] = useState<boolean>(
     property?.rolling_shutters ?? false,
   );
+  const [type, setType] = useState<string>(property?.type ?? "");
 
   const centsToEuros = (cents: number | null) =>
     cents != null ? (cents / 100).toFixed(2) : "";
@@ -471,7 +474,8 @@ export function PropertyForm({
             </label>
             <select
               name="type"
-              defaultValue={property?.type ?? ""}
+              value={type}
+              onChange={(e) => setType(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="">{dict.fields.typePlaceholder}</option>
@@ -659,6 +663,39 @@ export function PropertyForm({
           </label>
         </div>
       </fieldset>
+
+      {/* Commercial lease details — only relevant for commercial premises */}
+      {type === "commercial" && (
+        <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {dict.sections.commercial}
+          </legend>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.commercialActivity}
+            </label>
+            <input
+              name="commercial_activity"
+              type="text"
+              defaultValue={property?.commercial_activity ?? ""}
+              placeholder={dict.fields.commercialActivityPlaceholder}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.commercialEquipment}
+            </label>
+            <textarea
+              name="commercial_equipment"
+              rows={3}
+              defaultValue={property?.commercial_equipment ?? ""}
+              placeholder={dict.fields.commercialEquipmentPlaceholder}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+        </fieldset>
+      )}
 
       {/* Energy diagnostic (DPE) */}
       <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">

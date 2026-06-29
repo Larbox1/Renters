@@ -7,6 +7,9 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, type Role } from "@/lib/auth/current-user";
 import { ConfirmSubmit } from "@/components/confirm-submit";
+import { isPlanId, PLAN_IDS, type PlanId } from "@/lib/plans";
+import { PlanDistribution } from "@/components/plan-distribution";
+import { CityBreakdown } from "@/components/city-breakdown";
 import { deleteUserAction, toggleSuspendUserAction } from "./actions";
 
 type UserRow = {
@@ -14,6 +17,8 @@ type UserRow = {
   email: string | null;
   role: Role;
   full_name: string | null;
+  plan: PlanId | null;
+  city: string | null;
   created_at: string;
   last_sign_in_at: string | null;
   banned_until: string | null;
@@ -55,6 +60,26 @@ export default async function UsersPage({
   }
   const users = (data ?? []) as UserRow[];
 
+  // Plan repartition across owners (the only role a subscription applies to).
+  // A missing/invalid plan falls back to "free", matching the DB default.
+  const planCounts = Object.fromEntries(
+    PLAN_IDS.map((id) => [id, 0]),
+  ) as Record<PlanId, number>;
+  for (const u of users) {
+    if (u.role !== "owner") continue;
+    const plan = u.plan && isPlanId(u.plan) ? u.plan : "free";
+    planCounts[plan] += 1;
+  }
+
+  // Users per city (all roles). Blank cities are bucketed under "Not specified".
+  const cityCounts = new Map<string, number>();
+  for (const u of users) {
+    const city = u.city?.trim() || dict.users.cityChart.unspecified;
+    cityCounts.set(city, (cityCounts.get(city) ?? 0) + 1);
+  }
+  const cityRows = Array.from(cityCounts, ([city, count]) => ({ city, count }))
+    .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
+
   return (
     <div className="px-6 py-12">
       <div className="mb-6 flex items-center justify-between gap-4">
@@ -86,6 +111,9 @@ export default async function UsersPage({
                   {dict.users.columns.role}
                 </th>
                 <th className="px-4 py-3 text-left font-semibold text-slate-600">
+                  {dict.users.columns.plan}
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-600">
                   {dict.users.columns.status}
                 </th>
                 <th className="px-4 py-3 text-left font-semibold text-slate-600">
@@ -114,6 +142,15 @@ export default async function UsersPage({
                       <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                         {dict.roles[u.role]}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {u.role === "owner" && u.plan && isPlanId(u.plan) ? (
+                        <span className="inline-block rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                          {dict.settings.plan.names[u.plan]}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -184,6 +221,28 @@ export default async function UsersPage({
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {users.length > 0 && (
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <PlanDistribution
+            counts={planCounts}
+            names={dict.settings.plan.names}
+            title={dict.users.planChart.title}
+            subtitle={dict.users.planChart.subtitle}
+            unit={dict.users.planChart.unit}
+            emptyLabel={dict.users.planChart.empty}
+            locale={locale as Locale}
+          />
+          <CityBreakdown
+            rows={cityRows}
+            title={dict.users.cityChart.title}
+            subtitle={dict.users.cityChart.subtitle}
+            cityHeader={dict.users.cityChart.city}
+            usersHeader={dict.users.cityChart.users}
+            emptyLabel={dict.users.cityChart.empty}
+          />
         </div>
       )}
     </div>

@@ -1,6 +1,8 @@
-// PDF version of the Bail vide / Bail meublé contract — used by the Save
-// action only. Loaded via dynamic import so @react-pdf/renderer never
-// enters the page's static module graph.
+// PDF version of the Bail vide / Bail meublé contract — a faithful
+// reproduction of the loi Alur bail type (décret du 29 mai 2015). Used by
+// the Save action only. Loaded via dynamic import so @react-pdf/renderer
+// never enters the page's static module graph. Mirrors contract-document.tsx;
+// both share contract-shared.ts to stay in sync.
 
 import {
   Document,
@@ -10,17 +12,34 @@ import {
   StyleSheet,
   renderToBuffer,
 } from "@react-pdf/renderer";
-import type { ContractData } from "./contract-document";
+import {
+  type ContractData,
+  deriveContract,
+  blank,
+  fmt,
+  fmtDate,
+  isCharges,
+  PREAMBLE,
+  DPE_RAPPEL,
+  tacitRenewalText,
+  SOLIDARITE_TEXT,
+  RESOLUTOIRE_TEXT,
+  HONORAIRES_INTRO,
+  ANNEXES,
+} from "./contract-shared";
 
 const styles = StyleSheet.create({
   page: { paddingTop: 36, paddingBottom: 36, paddingHorizontal: 40, fontSize: 9.5, fontFamily: "Helvetica", color: "#0f172a", lineHeight: 1.35 },
   title: { fontSize: 14, fontWeight: 700, textAlign: "center" },
   subtitle: { fontSize: 8, fontStyle: "italic", textAlign: "center", marginTop: 4, color: "#475569" },
   topLine: { fontSize: 9, fontWeight: 700, textAlign: "center", marginTop: 4 },
+  legal: { fontSize: 7.5, fontStyle: "italic", color: "#475569", marginTop: 6, textAlign: "justify" },
+  recital: { fontSize: 8.5, color: "#334155", marginTop: 6, textAlign: "justify" },
   section: { marginTop: 14 },
   h2: { fontSize: 10, fontWeight: 700 },
   h3: { fontSize: 9.5, fontWeight: 700, marginTop: 8 },
   p: { marginTop: 4 },
+  justify: { marginTop: 4, textAlign: "justify" },
   italic: { fontStyle: "italic" },
   bold: { fontWeight: 700 },
   boxed: { marginTop: 4, padding: 6, borderWidth: 0.5, borderColor: "#cbd5e1", backgroundColor: "#f8fafc" },
@@ -30,96 +49,14 @@ const styles = StyleSheet.create({
   small: { fontSize: 7.5, fontStyle: "italic", color: "#64748b", marginTop: 4 },
   bullet: { flexDirection: "row", marginTop: 2 },
   bulletDot: { width: 10 },
-  bulletText: { flex: 1 },
+  bulletText: { flex: 1, textAlign: "justify" },
 });
-
-const blank = (v: string | number | null | undefined): string =>
-  v == null || v === "" ? "_______________________" : String(v);
-
-const fmt = (cents: number | null | undefined) =>
-  cents != null
-    ? new Intl.NumberFormat("fr-FR", {
-        style: "currency",
-        currency: "EUR",
-        minimumFractionDigits: 2,
-      }).format(cents / 100)
-    : "_______________";
-
-const fmtDate = (iso: string | null | undefined) =>
-  iso ? new Intl.DateTimeFormat("fr-FR").format(new Date(iso)) : "__/__/____";
 
 const cb = (checked: boolean) => (checked ? "[X]" : "[ ]");
 
-function constructionPeriod(year: number | null | undefined) {
-  if (year == null) return null;
-  if (year < 1949) return "before_1949";
-  if (year < 1975) return "1949_1974";
-  if (year < 1989) return "1975_1989";
-  if (year < 2005) return "1989_2005";
-  return "since_2005";
-}
-
 function ContractPdfDoc({ data }: { data: ContractData }) {
-  const { lease, property, tenant, ownerProfile } = data;
-  const p = property as Record<string, unknown> | null;
-  const t = tenant as Record<string, unknown> | null;
-  const l = lease as Record<string, unknown>;
-
-  const isMeuble = l.type === "bail_meuble";
-  const period = constructionPeriod(p?.construction_year as number | null);
-  const dpeClass = (p?.dpe_class ?? l.dpe_class ?? null) as string | null;
-  const energyMin = (p?.annual_energy_cost_min_cents ?? null) as number | null;
-  const energyMax = (p?.annual_energy_cost_max_cents ?? null) as number | null;
-  const energyYear = (p?.annual_energy_cost_year ?? null) as number | null;
-
-  const propertyAddress = [
-    p?.address as string | null,
-    p?.building ? `Bât. ${p.building}` : null,
-    p?.floor != null
-      ? (p.floor as number) === 0
-        ? "RDC"
-        : `étage ${p.floor}`
-      : null,
-    [p?.postal_code as string | null, p?.city as string | null]
-      .filter(Boolean)
-      .join(" "),
-    p?.country as string | null,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
-  const ownerName =
-    ownerProfile?.first_name && ownerProfile?.last_name
-      ? `${ownerProfile.first_name} ${ownerProfile.last_name}`
-      : ownerProfile?.full_name ?? null;
-  const ownerAddress =
-    [
-      ownerProfile?.address,
-      [ownerProfile?.postal_code, ownerProfile?.city]
-        .filter(Boolean)
-        .join(" "),
-      ownerProfile?.country,
-    ]
-      .filter((part) => part && (part as string).trim())
-      .join(", ") || null;
-
-  const tenantIsSociete = t?.tenant_type === "societe";
-  const civPrefix = (c: unknown) =>
-    c === "mr" ? "M." : c === "mrs" ? "Mme" : null;
-  const tenantSigningName = tenantIsSociete
-    ? [
-        civPrefix(t?.civilite),
-        t?.legal_rep_first_name as string | null,
-        t?.legal_rep_last_name as string | null,
-      ]
-        .filter(Boolean)
-        .join(" ")
-    : [civPrefix(t?.civilite), t?.full_name as string | null]
-        .filter(Boolean)
-        .join(" ");
-
-  const isCharges = (m: string | null | undefined, value: string) =>
-    m === value;
+  const d = deriveContract(data);
+  const { p, t, l, ownerProfile } = d;
 
   const Bullet = ({ children }: { children: React.ReactNode }) => (
     <View style={styles.bullet}>
@@ -139,10 +76,11 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
           par le décret du 29 mai 2015)
         </Text>
         <Text style={styles.topLine}>
-          {isMeuble
+          {d.isMeuble
             ? "LOCAUX MEUBLÉS À USAGE D'HABITATION"
             : "LOCAUX VIDES À USAGE D'HABITATION"}
         </Text>
+        <Text style={styles.legal}>{PREAMBLE}</Text>
 
         <View style={styles.section}>
           <Text style={styles.h2}>I. Désignation des parties</Text>
@@ -154,14 +92,18 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
           </Text>
           <Text style={styles.p}>
             <Text style={styles.bold}>Nom et prénom du bailleur : </Text>
-            {blank(ownerName)}
+            {blank(d.ownerName)}
           </Text>
           <Text style={styles.p}>
             Dénomination (si personne morale) : _______________________
           </Text>
           <Text style={styles.p}>
+            Société civile constituée exclusivement entre parents et alliés
+            jusqu&apos;au quatrième degré inclus : [ ] oui [ ] non
+          </Text>
+          <Text style={styles.p}>
             <Text style={styles.bold}>Adresse : </Text>
-            {blank(ownerAddress)}
+            {blank(d.ownerAddress)}
           </Text>
           {ownerProfile?.phone && (
             <Text style={styles.p}>
@@ -183,7 +125,15 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
             Nom et prénom du mandataire : ____________________
           </Text>
           <Text style={styles.p}>
+            Dénomination (si personne morale) : ____________________
+          </Text>
+          <Text style={styles.p}>
             Adresse : ___________________________________________
+          </Text>
+          <Text style={styles.p}>Activité exercée : ____________________</Text>
+          <Text style={styles.p}>
+            N° et lieu de délivrance de la carte professionnelle :
+            ____________________
           </Text>
 
           <Text style={styles.p}>
@@ -194,9 +144,9 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
             Nom et prénom du ou des locataires, adresse email (facultatif) :
           </Text>
           <Text style={styles.p}>
-            {tenantIsSociete
-              ? `Société ${blank(t?.full_name as string | null)} — SIREN ${blank(t?.siren as string | null)} — représentée par ${blank(tenantSigningName)}`
-              : blank(tenantSigningName)}
+            {d.tenantIsSociete
+              ? `Société ${blank(t?.full_name as string | null)} — SIREN ${blank(t?.siren as string | null)} — représentée par ${blank(d.tenantSigningName)}`
+              : blank(d.tenantSigningName)}
             {t?.email ? ` — ${t.email as string}` : ""}
           </Text>
           <Text style={[styles.p, styles.italic]}>
@@ -207,103 +157,117 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
         <View style={styles.section}>
           <Text style={styles.h2}>II. Objet du contrat</Text>
           <Text style={styles.p}>
-            Le présent contrat a pour objet la location d'un logement ainsi
+            Le présent contrat a pour objet la location d&apos;un logement ainsi
             déterminé :
           </Text>
 
           <Text style={styles.h3}>A. Consistance du logement</Text>
           <Text style={styles.p}>
             <Text style={styles.bold}>Adresse du logement : </Text>
-            {blank(propertyAddress)}
+            {blank(d.propertyAddress)}
           </Text>
-          <Text style={styles.p}>Identifiant fiscal du logement : ________</Text>
           <Text style={styles.p}>
-            Type d'habitat : {cb(p?.housing_kind === "collective")} collectif{" "}
-            {cb(p?.housing_kind === "individual")} individuel /{" "}
+            Identifiant fiscal du logement : ____________________
+          </Text>
+          <Text style={styles.p}>
+            Type d&apos;habitat, Immeuble : {cb(p?.housing_kind === "collective")}{" "}
+            collectif {cb(p?.housing_kind === "individual")} individuel /{" "}
             {cb(p?.ownership_kind === "single_ownership")} mono propriété{" "}
             {cb(p?.ownership_kind === "co_ownership")} copropriété
           </Text>
           <Text style={styles.p}>
-            Période de construction : {cb(period === "before_1949")} avant 1949{" "}
-            {cb(period === "1949_1974")} 1949–1974{" "}
-            {cb(period === "1975_1989")} 1975–1989{" "}
-            {cb(period === "1989_2005")} 1989–2005{" "}
-            {cb(period === "since_2005")} depuis 2005
+            Période de construction : {cb(d.period === "before_1949")} avant 1949{" "}
+            {cb(d.period === "1949_1974")} de 1949 à 1974{" "}
+            {cb(d.period === "1975_1989")} de 1975 à 1989{" "}
+            {cb(d.period === "1989_2005")} de 1989 à 2005{" "}
+            {cb(d.period === "since_2005")} depuis 2005
           </Text>
           <Text style={styles.p}>
             - surface habitable :{" "}
             <Text style={styles.bold}>
               {blank(p?.surface_sqm as number | null)}
             </Text>{" "}
-            m² — pièces principales :{" "}
+            m² - nombre de pièces principales :{" "}
             <Text style={styles.bold}>{blank(p?.rooms as number | null)}</Text>
           </Text>
           <Text style={styles.p}>
-            - Autres parties : [ ] grenier [ ] comble {cb(!!p?.terrace)}{" "}
-            terrasse {cb(!!p?.balcony)} balcon [ ] loggia {cb(!!p?.garden)}{" "}
-            jardin
+            - autres parties du logement : [ ] grenier [ ] comble{" "}
+            {cb(!!p?.terrace)} terrasse {cb(!!p?.balcony)} balcon [ ] loggia{" "}
+            {cb(!!p?.garden)} jardin
           </Text>
           <Text style={styles.p}>
-            Éléments d'équipements (cuisine, sanitaires, etc.) :
+            Éléments d&apos;équipements du logement (cuisine équipée,
+            installations sanitaires, etc.) :
             ____________________________________
           </Text>
           <Text style={styles.p}>
-            Production de chauffage :{" "}
+            Modalité de production de chauffage :{" "}
             {cb(p?.heating_mode === "individual")} individuel{" "}
             {cb(p?.heating_mode === "collective")} collectif
           </Text>
           <Text style={styles.p}>
-            Production d'eau chaude sanitaire :{" "}
+            Modalité de production d&apos;eau chaude sanitaire :{" "}
             {cb(p?.hot_water_mode === "individual")} individuel{" "}
             {cb(p?.hot_water_mode === "collective")} collectif
           </Text>
 
           <Text style={styles.h3}>B. Destination des locaux</Text>
           <Text style={styles.p}>
-            [X] usage d'habitation [ ] usage mixte professionnel et habitation
+            [X] usage d&apos;habitation [ ] usage mixte professionnel et
+            d&apos;habitation
           </Text>
 
-          <Text style={styles.h3}>C. Locaux et équipements à usage privatif</Text>
+          <Text style={styles.h3}>
+            C. Désignation des locaux et équipements à usage privatif du
+            locataire
+          </Text>
           <Text style={styles.p}>
             {cb(!!p?.basement)} cave {cb(!!p?.parking)} parking [ ] garage [ ]
             Autres
           </Text>
 
-          <Text style={styles.h3}>D. Locaux et équipements à usage commun</Text>
+          <Text style={styles.h3}>
+            D. Énumération des locaux, parties et équipements à usage commun
+          </Text>
           <Text style={styles.p}>
             {cb(!!p?.bike_storage)} garage à vélo {cb(!!p?.elevator)} ascenseur{" "}
-            {cb(!!p?.green_space)} espaces verts {cb(!!p?.playground)} aires de
-            jeux {cb(!!p?.laundry_room)} laverie [ ] local poubelle{" "}
-            {cb(!!p?.caretaker)} gardiennage
+            {cb(!!p?.green_space)} espaces verts {cb(!!p?.playground)} aires et
+            équipements de jeux {cb(!!p?.laundry_room)} laverie [ ] local
+            poubelle {cb(!!p?.caretaker)} gardiennage
           </Text>
 
-          <Text style={styles.h3}>E. Équipement TIC</Text>
+          <Text style={styles.h3}>
+            E. Équipement d&apos;accès aux technologies de l&apos;information et
+            de la communication
+          </Text>
           <Text style={styles.p}>
-            Fibre optique : {cb(!!p?.fiber_optic)} — Câble :{" "}
-            {cb(!!p?.cable_tv)}
+            Fibre optique : {cb(!!p?.fiber_optic)} — Câble : {cb(!!p?.cable_tv)}
           </Text>
 
+          <Text style={styles.legal}>{DPE_RAPPEL}</Text>
           <Text style={styles.p}>
             <Text style={styles.bold}>
-              Niveau de performance énergétique (classe DPE) :{" "}
+              Niveau de performance du logement (classe DPE) :{" "}
             </Text>
-            {blank(dpeClass)}
+            {blank(d.dpeClass)}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.h2}>III. Date de prise d'effet et durée</Text>
+          <Text style={styles.h2}>
+            III. Date de prise d&apos;effet et durée du contrat
+          </Text>
           <Text style={styles.p}>
-            A. Date de prise d'effet :{" "}
+            A. Date de prise d&apos;effet du contrat :{" "}
             <Text style={styles.bold}>
               {fmtDate(l.start_date as string | null)}
             </Text>
           </Text>
           <Text style={styles.p}>
             B. Durée du contrat :{" "}
-            {isMeuble
+            {d.isMeuble
               ? `${cb(l.duration === "1_year")} 1 an ${cb(l.duration === "9_months_student")} 9 mois (étudiant, sans reconduction tacite)`
-              : `${cb(l.duration === "3_years")} 3 ans ${cb(l.duration === "6_years")} 6 ans`}
+              : `${cb(l.duration === "3_years")} 3 ans ${cb(l.duration === "6_years")} 6 ans (minimum 6 ans si le bailleur est une personne morale)`}
           </Text>
           {l.duration === "reduced" && (
             <>
@@ -314,11 +278,12 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
                 </Text>
               </Text>
               <Text style={styles.p}>
-                C. Événement justifiant la durée réduite :{" "}
+                Événement et raison justifiant la durée réduite :{" "}
                 {blank(l.reduced_duration_reason as string | null)}
               </Text>
             </>
           )}
+          <Text style={styles.recital}>{tacitRenewalText(d.isMeuble)}</Text>
         </View>
 
         <View style={styles.section}>
@@ -326,13 +291,16 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
 
           <Text style={styles.h3}>A. Loyer</Text>
           <Text style={styles.p}>
-            1° Montant du loyer mensuel :{" "}
+            1° Fixation du loyer initial — a) Montant du loyer mensuel :{" "}
             <Text style={styles.bold}>{fmt(l.monthly_rent_cents as number)}</Text>
           </Text>
-
+          <Text style={styles.p}>
+            b) Le loyer est-il soumis au loyer de référence majoré fixé par
+            arrêté préfectoral (zone tendue) ? {cb(!!l.is_zone_tendue)} Oui{" "}
+            {cb(!l.is_zone_tendue)} Non
+          </Text>
           {!!l.is_zone_tendue && (
             <View style={styles.boxed}>
-              <Text>Zone tendue : [X] oui</Text>
               <Text>
                 Loyer de référence :{" "}
                 {fmt(l.reference_rent_cents_per_sqm as number | null)} /m² —
@@ -348,10 +316,14 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
               )}
             </View>
           )}
-
           <Text style={styles.p}>
-            2° Date de révision : {fmtDate(l.revision_date as string | null)} ;
-            trimestre IRL :{" "}
+            c) Le cas échéant, informations relatives au loyer du dernier
+            locataire : ____________________________________
+          </Text>
+          <Text style={styles.p}>
+            2° Modalités de révision — a) Date de révision :{" "}
+            {fmtDate(l.revision_date as string | null)} ; b) Date ou trimestre
+            de référence de l&apos;IRL :{" "}
             <Text style={styles.bold}>
               {blank(l.irl_reference as string | null)}
             </Text>
@@ -359,66 +331,88 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
 
           <Text style={styles.h3}>B. Charges récupérables</Text>
           <Text style={styles.p}>
+            1. Modalité de règlement :{" "}
             {cb(isCharges(l.charges_method as string | null, "provisions"))}{" "}
-            Provisions {cb(isCharges(l.charges_method as string | null, "periodic"))}{" "}
-            Paiement périodique{" "}
+            Provisions avec régularisation annuelle{" "}
+            {cb(isCharges(l.charges_method as string | null, "periodic"))}{" "}
+            Paiement périodique sans provision{" "}
             {cb(isCharges(l.charges_method as string | null, "flat_rate"))}{" "}
-            Forfait
+            Forfait de charges
           </Text>
           <Text style={styles.p}>
-            Montant mensuel :{" "}
+            2. Montant des provisions ou du forfait :{" "}
             <Text style={styles.bold}>
               {fmt(l.charges_amount_cents as number | null)}
             </Text>
           </Text>
-
-          <Text style={styles.h3}>E. Modalités de paiement</Text>
           <Text style={styles.p}>
-            Paiement : {cb(l.payment_timing === "in_advance")} à échoir{" "}
+            3. Le cas échéant, modalités de révision du forfait de charges :
+            ____________________________________
+          </Text>
+
+          <Text style={styles.h3}>
+            C. En cas de colocation, assurance souscrite par le bailleur pour le
+            compte des colocataires
+          </Text>
+          <Text style={styles.p}>[ ] Oui [ ] Non</Text>
+          <Text style={styles.p}>
+            Montant total annuel récupérable : ____________________ — Montant
+            récupérable par douzième : ____________________
+          </Text>
+
+          <Text style={styles.h3}>D. Modalités de paiement</Text>
+          <Text style={styles.p}>
+            Périodicité du paiement : mensuel — Paiement :{" "}
+            {cb(l.payment_timing === "in_advance")} à échoir{" "}
             {cb(l.payment_timing === "arrears")} à terme échu
           </Text>
           <Text style={styles.p}>
-            Date de paiement : le{" "}
+            Date ou période de paiement : le{" "}
             <Text style={styles.bold}>
               {blank(l.payment_day_of_month as number | null)}
             </Text>{" "}
-            du mois — Lieu : __________________________
+            du mois — Lieu de paiement : __________________________
           </Text>
           <Text style={styles.p}>
-            Première échéance : Loyer (hors charges){" "}
-            {fmt(l.monthly_rent_cents as number)} ; Charges{" "}
-            {fmt(l.charges_amount_cents as number | null)}
+            Montant total dû à la première échéance : Loyer (hors charges){" "}
+            {fmt(l.monthly_rent_cents as number)} ; Charges récupérables{" "}
+            {fmt(l.charges_amount_cents as number | null)} ; Contribution pour
+            le partage des économies de charges : ____________________
           </Text>
 
-          <Text style={styles.h3}>G. Dépenses énergétiques (info)</Text>
+          <Text style={styles.h3}>
+            E. Le cas échéant, réévaluation d&apos;un loyer manifestement
+            sous-évalué (renouvellement)
+          </Text>
           <Text style={styles.p}>
-            Dépenses annuelles d'énergie :{" "}
-            <Text style={styles.bold}>
-              {energyMin != null && energyMax != null
-                ? `${fmt(energyMin)} – ${fmt(energyMax)}`
-                : energyMin != null
-                  ? fmt(energyMin)
-                  : energyMax != null
-                    ? fmt(energyMax)
-                    : "_______________"}
-            </Text>{" "}
-            — année de référence :{" "}
-            <Text style={styles.bold}>{blank(energyYear)}</Text>
+            Montant de la hausse ou de la baisse mensuelle : ____________________
+            — Modalité d&apos;application annuelle : ____________________
+          </Text>
+
+          <Text style={styles.h3}>
+            F. Dépenses énergétiques (pour information)
+          </Text>
+          <Text style={styles.p}>
+            Montant estimé des dépenses annuelles d&apos;énergie pour un usage
+            standard : <Text style={styles.bold}>{d.energyEstimate}</Text> —
+            année de référence des prix énergétiques :{" "}
+            <Text style={styles.bold}>{blank(d.energyYear)}</Text>
           </Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.h2}>V. Travaux</Text>
           <Text style={styles.p}>
-            A. Travaux d'amélioration / mise en conformité :
+            A. Montant et nature des travaux d&apos;amélioration ou de mise en
+            conformité depuis le dernier contrat ou renouvellement :
             ____________________________________
           </Text>
           <Text style={styles.p}>
-            B. Majoration du loyer pour travaux :
-            ____________________________________
+            B. Majoration du loyer consécutive à des travaux d&apos;amélioration
+            du bailleur : ____________________________________
           </Text>
           <Text style={styles.p}>
-            C. Diminution du loyer pour travaux locataire :
+            C. Diminution du loyer consécutive à des travaux du locataire :
             ____________________________________
           </Text>
         </View>
@@ -426,8 +420,8 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
         <View style={styles.section}>
           <Text style={styles.h2}>VI. Garanties</Text>
           <Text style={styles.p}>
-            Dépôt de garantie (
-            {isMeuble
+            Montant du dépôt de garantie (
+            {d.isMeuble
               ? "≤ 2 mois de loyer hors charges"
               : "≤ 1 mois de loyer hors charges"}
             ) :{" "}
@@ -437,44 +431,31 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
 
         <View style={styles.section}>
           <Text style={styles.h2}>VII. Clause de solidarité</Text>
-          <Text style={styles.p}>
-            En cas de colocation, les locataires sont tenus conjointement,
-            solidairement et indivisiblement à l'égard du bailleur au paiement
-            des loyers, charges et accessoires dus en application du présent
-            bail. La solidarité d'un colocataire et celle de la personne qui
-            s'est portée caution prennent fin à la date d'effet du congé
-            régulièrement délivré et lorsqu'un nouveau colocataire figure au
-            bail. À défaut, la solidarité du colocataire sortant s'éteint au
-            plus tard à l'expiration d'un délai de six mois après la date
-            d'effet du congé.
-          </Text>
+          <Text style={styles.justify}>{SOLIDARITE_TEXT}</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.h2}>VIII. Clause résolutoire</Text>
-          <Text style={styles.p}>
-            Le bail sera résilié de plein droit en cas d'inexécution des
-            obligations du locataire (défaut de paiement des loyers et charges,
-            non-versement du dépôt de garantie, défaut d'assurance, troubles de
-            voisinage). Pour défaut de paiement, un commandement de payer doit
-            préalablement être signifié par acte de commissaire de justice ;
-            si le locataire ne s'acquitte pas des sommes dues dans les six
-            semaines, le bailleur peut assigner pour faire constater la
-            résiliation. En cas de défaut d'assurance, le délai après
-            commandement infructueux est d'un mois.
-          </Text>
+          <Text style={styles.justify}>{RESOLUTOIRE_TEXT}</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.h2}>IX. Honoraires de location</Text>
-          <Text style={styles.p}>
-            Locataire — visite, dossier, rédaction du bail :{" "}
-            <Text style={styles.bold}>
-              {fmt(l.tenant_fees_cents as number | null)}
-            </Text>
+          <Text style={styles.recital}>{HONORAIRES_INTRO}</Text>
+          <Text style={[styles.p, styles.bold]}>
+            B. Détail et répartition des honoraires
           </Text>
           <Text style={styles.p}>
-            Locataire — état des lieux d'entrée :{" "}
+            1. À la charge du bailleur — visite, dossier et rédaction du bail :
+            ____________________ ; état des lieux d&apos;entrée :
+            ____________________
+          </Text>
+          <Text style={styles.p}>
+            2. À la charge du locataire — visite, dossier et rédaction du bail :{" "}
+            <Text style={styles.bold}>
+              {fmt(l.tenant_fees_cents as number | null)}
+            </Text>{" "}
+            ; état des lieux d&apos;entrée :{" "}
             <Text style={styles.bold}>
               {fmt(l.tenant_inventory_fees_cents as number | null)}
             </Text>
@@ -489,23 +470,13 @@ function ContractPdfDoc({ data }: { data: ContractData }) {
 
         <View style={styles.section}>
           <Text style={styles.h2}>XI. Annexes</Text>
-          <Text style={styles.p}>Pièces annexées :</Text>
-          <Bullet>
-            Le cas échéant, un extrait du règlement de copropriété
-          </Bullet>
-          <Bullet>
-            Dossier de diagnostic technique (DPE, plomb, amiante, électricité /
-            gaz, risques naturels et technologiques)
-          </Bullet>
-          <Bullet>
-            Notice d'information sur les droits et obligations des parties
-          </Bullet>
-          <Bullet>
-            {isMeuble
-              ? "État des lieux, inventaire et état détaillé du mobilier"
-              : "État des lieux"}
-          </Bullet>
-          <Bullet>Le cas échéant, autorisation préalable de mise en location</Bullet>
+          <Text style={styles.p}>
+            Sont annexées et jointes au contrat de location les pièces
+            suivantes :
+          </Text>
+          {ANNEXES(d.isMeuble).map((item, i) => (
+            <Bullet key={i}>{item}</Bullet>
+          ))}
         </View>
 
         <View style={styles.section}>

@@ -275,8 +275,28 @@ export const fr: Dictionary = {
         "Votre forfait actuel. Évoluez à tout moment selon la taille de votre patrimoine.",
       currentBadge: "Forfait actuel",
       perMonth: "/ mois",
+      perYear: "/ an",
+      billingMonthly: "Mensuel",
+      billingAnnual: "Annuel",
+      billingSave: "−15 %",
+      monthlyEquivalent: "≈ {price}/mois, facturé annuellement",
       upgrade: "Passer à ce forfait",
       switchPlan: "Changer",
+      manageBilling: "Gérer l'abonnement",
+      manageHint:
+        "Modifiez votre carte, changez de forfait ou résiliez à tout moment.",
+      cancelSubscription: "Résilier l'abonnement",
+      resumeSubscription: "Réactiver l'abonnement",
+      confirmCancel:
+        "Résilier votre abonnement ? Vous conservez votre forfait jusqu'à la fin de la période de facturation, puis passez à Gratuit.",
+      renewsOn: "Renouvellement le {date}.",
+      cancelsOn: "Résiliation le {date} — vous passerez alors à Gratuit.",
+      billingSuccess: "Tout est prêt — votre abonnement est actif.",
+      billingCanceled: "Paiement annulé. Votre forfait est inchangé.",
+      billingError: "Un problème est survenu avec le paiement. Réessayez.",
+      cancelScheduled:
+        "Votre abonnement sera résilié à la fin de la période de facturation.",
+      resumed: "Votre abonnement a été réactivé.",
       names: {
         free: "Gratuit",
         plus: "Plus",
@@ -350,6 +370,7 @@ export const fr: Dictionary = {
       name: "Nom",
       email: "E-mail",
       role: "Rôle",
+      plan: "Forfait",
       status: "Statut",
       lastSignIn: "Dernière connexion",
       createdAt: "Inscrit le",
@@ -371,6 +392,20 @@ export const fr: Dictionary = {
     confirmDelete:
       "Supprimer définitivement cet utilisateur et toutes ses données ? Cette action est irréversible.",
     never: "Jamais",
+    planChart: {
+      title: "Répartition des forfaits",
+      subtitle: "Propriétaires par formule",
+      unit: "propriétaires",
+      empty: "Aucun propriétaire pour l'instant.",
+    },
+    cityChart: {
+      title: "Utilisateurs par ville",
+      subtitle: "Localisation de vos utilisateurs",
+      city: "Ville",
+      users: "Utilisateurs",
+      unspecified: "Non renseigné",
+      empty: "Aucun utilisateur.",
+    },
     form: {
       createTitle: "Nouvel utilisateur",
       editTitle: "Modifier l'utilisateur",
@@ -477,6 +512,10 @@ export const fr: Dictionary = {
       annualEnergyCostMax: "Max",
       annualEnergyCostYear: "Année de référence",
       annualEnergyCostYearPlaceholder: "Année",
+      commercialActivity: "Activité autorisée",
+      commercialActivityPlaceholder: "ex. commerce de détail de vêtements",
+      commercialEquipment: "Équipements présents",
+      commercialEquipmentPlaceholder: "ex. cuisine équipée, vitrine, climatisation…",
       amenities: {
         elevator: "Ascenseur",
         disabledAccess: "Accès handicapé",
@@ -518,6 +557,7 @@ export const fr: Dictionary = {
       status: "Statut de l'annonce",
       financials: "Informations financières",
       dpe: "Diagnostic de performance énergétique",
+      commercial: "Détails du bail commercial",
     },
     filters: {
       search: "Rechercher",
@@ -716,6 +756,12 @@ export const fr: Dictionary = {
       submitting: "Enregistrement…",
       errorGeneric: "Impossible d'enregistrer le bail. Veuillez réessayer.",
     },
+  },
+  myLease: {
+    title: "Mon bail",
+    empty: "Vous n'avez pas encore de bail.",
+    documents: "Documents",
+    noDocuments: "Aucun document disponible pour le moment.",
   },
   documents: {
     title: "Mes Documents",
@@ -1034,12 +1080,17 @@ export const fr: Dictionary = {
       lede:
         "Tous les modules sont inclus dans le forfait gratuit, sans limite de durée. Vous payez seulement quand votre patrimoine grandit, pas pour débloquer une fonctionnalité essentielle.",
       badgePopular: "Le plus populaire",
+      billingMonthly: "Mensuel",
+      billingAnnual: "Annuel",
+      billingSave: "−15 %",
       plans: [
         {
           name: "Gratuit",
           dot: "free",
           price: "0 €",
           per: "/ mois · 1 bien",
+          priceAnnual: "0 €",
+          perAnnual: "/ an · 1 bien",
           desc: "Tout le nécessaire pour gérer votre premier bien.",
           cta: "Commencer gratuitement",
           features: [
@@ -1055,6 +1106,8 @@ export const fr: Dictionary = {
           dot: "plus",
           price: "9,90 €",
           per: "/ mois · jusqu'à 5 biens",
+          priceAnnual: "100,98 €",
+          perAnnual: "/ an · jusqu'à 5 biens",
           desc: "Pour les bailleurs qui constituent un petit patrimoine.",
           cta: "Commencer gratuitement",
           features: [
@@ -1071,6 +1124,8 @@ export const fr: Dictionary = {
           dot: "pro",
           price: "14,90 €",
           per: "/ mois · jusqu'à 10 biens",
+          priceAnnual: "151,98 €",
+          perAnnual: "/ an · jusqu'à 10 biens",
           desc: "Pour les bailleurs qui veulent piloter sérieusement.",
           cta: "Commencer gratuitement",
           features: [
@@ -1085,6 +1140,8 @@ export const fr: Dictionary = {
           dot: "unlimited",
           price: "39,90 €",
           per: "/ mois · biens illimités",
+          priceAnnual: "406,98 €",
+          perAnnual: "/ an · biens illimités",
           desc: "Pour les multi-propriétaires, SCI et gestionnaires.",
           cta: "Parler à l'équipe",
           features: [

@@ -61,6 +61,13 @@ function buildGroups(
       },
     );
   }
+  if (role === "tenant") {
+    management.push({
+      href: `/${locale}/dashboard/my-lease`,
+      label: dict.leases,
+      icon: "📄",
+    });
+  }
   groups.push({ label: dict.groups.management, items: management });
 
   // Accounting: finance, owner-only.

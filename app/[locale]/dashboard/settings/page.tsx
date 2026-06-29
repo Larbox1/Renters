@@ -11,13 +11,18 @@ import {
 } from "@/components/storage-usage-table";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import {
-  PLANS,
-  planPriceCents,
   planStorageLimit,
+  type BillingInterval,
   type PlanId,
 } from "@/lib/plans";
-import { deleteOwnAccountAction, updatePlanAction } from "./actions";
+import {
+  cancelSubscriptionAction,
+  deleteOwnAccountAction,
+  openBillingPortalAction,
+  resumeSubscriptionAction,
+} from "./actions";
 import { ProfileForm } from "./profile-form";
+import { PlanSelector } from "./plan-selector";
 
 type ProfileRow = {
   first_name: string | null;
@@ -29,14 +34,25 @@ type ProfileRow = {
   phone: string | null;
 };
 
+type BillingRow = {
+  plan: PlanId;
+  plan_interval: BillingInterval | null;
+  subscription_status: string | null;
+  plan_current_period_end: string | null;
+  plan_cancel_at_period_end: boolean | null;
+};
+
 export default async function SettingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ billing?: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const dict = getDictionary(locale as Locale);
+  const { billing } = await searchParams;
 
   if (!hasSupabaseEnv()) return <SetupNotice locale={locale as Locale} />;
 
@@ -46,30 +62,34 @@ export default async function SettingsPage({
   const isAdmin = session.role === "admin";
   const isOwner = session.role === "owner";
 
-  // Current subscription plan (owners only).
+  // Current subscription plan + Stripe state (owners only).
   let currentPlan: PlanId = "free";
+  let billingState: BillingRow | null = null;
   if (isOwner) {
-    const { data: planRow } = await session.supabase
+    const { data } = await session.supabase
       .from("profiles")
-      .select("plan")
+      .select(
+        "plan, plan_interval, subscription_status, plan_current_period_end, plan_cancel_at_period_end",
+      )
       .eq("id", session.user.id)
-      .maybeSingle<{ plan: PlanId }>();
-    currentPlan = planRow?.plan ?? "free";
+      .maybeSingle<BillingRow>();
+    billingState = data;
+    currentPlan = data?.plan ?? "free";
   }
-  const currentPriceCents = planPriceCents(currentPlan);
+  // Subscribed = on a paid tier. Switches/cancellations then go through the
+  // Stripe Customer Portal; only free users see Checkout buttons.
+  const isSubscribed = isOwner && currentPlan !== "free";
+  const periodEnd = billingState?.plan_current_period_end
+    ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
+        dateStyle: "long",
+      }).format(new Date(billingState.plan_current_period_end))
+    : null;
 
   // Plan descriptions reuse the copy shown on the public landing page
   // (pricing section), keyed by the plan id stored in each plan's `dot`.
   const planDescriptions = Object.fromEntries(
     dict.home.pricing.plans.map((pl) => [pl.dot, pl.desc]),
   ) as Record<PlanId, string>;
-
-  const fmtPlanPrice = (cents: number) =>
-    new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
-      style: "currency",
-      currency: "EUR",
-      minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
-    }).format(cents / 100);
 
   const { data: profileRow } = await session.supabase
     .from("profiles")
@@ -114,88 +134,98 @@ export default async function SettingsPage({
           <p className="mb-4 text-sm text-slate-500">
             {dict.settings.plan.subtitle}
           </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PLANS.map((p) => {
-              const isCurrent = p.id === currentPlan;
-              const isUpgrade = p.priceCents > currentPriceCents;
-              return (
-                <div
-                  key={p.id}
-                  className={`relative flex flex-col rounded-xl border p-5 ${
-                    isCurrent
-                      ? "border-brand-500 bg-brand-50/40 ring-1 ring-brand-500"
-                      : "border-slate-200 bg-white"
-                  }`}
-                >
-                  {isCurrent && (
-                    <span className="absolute right-4 top-4 rounded-full bg-brand-600 px-2 py-0.5 text-[11px] font-semibold text-white">
-                      {dict.settings.plan.currentBadge}
+
+          {billing === "success" && (
+            <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800">
+              {dict.settings.plan.billingSuccess}
+            </p>
+          )}
+          {billing === "canceled" && (
+            <p className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+              {dict.settings.plan.billingCanceled}
+            </p>
+          )}
+          {(billing === "error" || billing === "unconfigured") && (
+            <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+              {dict.settings.plan.billingError}
+            </p>
+          )}
+          {billing === "cancel_scheduled" && (
+            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+              {dict.settings.plan.cancelScheduled}
+            </p>
+          )}
+          {billing === "resumed" && (
+            <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800">
+              {dict.settings.plan.resumed}
+            </p>
+          )}
+
+          {isSubscribed && (
+            <div className="mb-4 flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {dict.settings.plan.currentBadge}: {dict.settings.plan.names[currentPlan]}
+                  {billingState?.plan_interval && (
+                    <span className="ml-1.5 font-normal text-slate-500">
+                      ·{" "}
+                      {billingState.plan_interval === "year"
+                        ? dict.settings.plan.billingAnnual
+                        : dict.settings.plan.billingMonthly}
                     </span>
                   )}
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-slate-900">
-                      {dict.settings.plan.names[p.id]}
-                    </p>
-                    <span className="group relative inline-flex">
-                      <span
-                        tabIndex={0}
-                        role="img"
-                        aria-label={planDescriptions[p.id]}
-                        className="flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold leading-none text-slate-600"
-                      >
-                        ?
-                      </span>
-                      <span
-                        role="tooltip"
-                        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-52 -translate-x-1/2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-normal leading-snug text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
-                      >
-                        {planDescriptions[p.id]}
-                      </span>
-                    </span>
-                  </div>
-                  <p className="mt-2 flex items-baseline gap-1">
-                    <span className="text-2xl font-bold tracking-tight text-slate-900">
-                      {fmtPlanPrice(p.priceCents)}
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      {dict.settings.plan.perMonth}
-                    </span>
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {dict.settings.plan.scopes[p.id]}
-                  </p>
-                  <div className="mt-4">
-                    {isCurrent ? (
-                      <button
-                        type="button"
-                        disabled
-                        className="w-full cursor-default rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-400"
-                      >
-                        {dict.settings.plan.currentBadge}
-                      </button>
-                    ) : (
-                      <form action={updatePlanAction}>
-                        <input type="hidden" name="locale" value={locale} />
-                        <input type="hidden" name="plan" value={p.id} />
-                        <button
-                          type="submit"
-                          className={`w-full rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                            isUpgrade
-                              ? "bg-brand-600 text-white hover:bg-brand-700"
-                              : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                          }`}
-                        >
-                          {isUpgrade
-                            ? dict.settings.plan.upgrade
-                            : dict.settings.plan.switchPlan}
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                </p>
+                <p className="mt-0.5 text-sm text-slate-600">
+                  {billingState?.plan_cancel_at_period_end && periodEnd
+                    ? dict.settings.plan.cancelsOn.replace("{date}", periodEnd)
+                    : periodEnd
+                      ? dict.settings.plan.renewsOn.replace("{date}", periodEnd)
+                      : dict.settings.plan.manageHint}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <form action={openBillingPortalAction}>
+                  <input type="hidden" name="locale" value={locale} />
+                  <button
+                    type="submit"
+                    className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                  >
+                    {dict.settings.plan.manageBilling}
+                  </button>
+                </form>
+                {billingState?.plan_cancel_at_period_end ? (
+                  <form action={resumeSubscriptionAction}>
+                    <input type="hidden" name="locale" value={locale} />
+                    <button
+                      type="submit"
+                      className="whitespace-nowrap rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+                    >
+                      {dict.settings.plan.resumeSubscription}
+                    </button>
+                  </form>
+                ) : (
+                  <form action={cancelSubscriptionAction}>
+                    <input type="hidden" name="locale" value={locale} />
+                    <ConfirmSubmit
+                      message={dict.settings.plan.confirmCancel}
+                      className="whitespace-nowrap rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50"
+                    >
+                      {dict.settings.plan.cancelSubscription}
+                    </ConfirmSubmit>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+
+          <PlanSelector
+            locale={locale as Locale}
+            currentPlan={currentPlan}
+            currentInterval={billingState?.plan_interval ?? null}
+            isSubscribed={isSubscribed}
+            dict={dict.settings.plan}
+            descriptions={planDescriptions}
+          />
         </section>
       )}
 

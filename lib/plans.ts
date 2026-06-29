@@ -6,6 +6,15 @@ export type PlanId = "free" | "plus" | "pro" | "unlimited";
 
 export const PLAN_IDS = ["free", "plus", "pro", "unlimited"] as const;
 
+// Billing cadence. Annual plans bill once a year at a discount; monthly bill
+// every month at the headline price.
+export type BillingInterval = "month" | "year";
+
+// Discount applied to the 12-month total when paying annually.
+export const ANNUAL_DISCOUNT = 0.15;
+
+// `priceCents` is the monthly price. Annual pricing is derived from it (see
+// planPriceCents) so the discount lives in exactly one place.
 export const PLANS: { id: PlanId; priceCents: number }[] = [
   { id: "free", priceCents: 0 },
   { id: "plus", priceCents: 990 },
@@ -17,8 +26,28 @@ export function isPlanId(value: string): value is PlanId {
   return (PLAN_IDS as readonly string[]).includes(value);
 }
 
-export function planPriceCents(id: PlanId): number {
+export function isBillingInterval(value: string): value is BillingInterval {
+  return value === "month" || value === "year";
+}
+
+function monthlyCents(id: PlanId): number {
   return PLANS.find((p) => p.id === id)?.priceCents ?? 0;
+}
+
+/** Annual total (12 months minus the discount), rounded to whole cents. */
+export function annualPriceCents(id: PlanId): number {
+  return Math.round(monthlyCents(id) * 12 * (1 - ANNUAL_DISCOUNT));
+}
+
+/**
+ * Charged amount for the given cadence: the monthly price for "month", the
+ * (discounted) yearly total for "year".
+ */
+export function planPriceCents(
+  id: PlanId,
+  interval: BillingInterval = "month",
+): number {
+  return interval === "year" ? annualPriceCents(id) : monthlyCents(id);
 }
 
 // Maximum number of properties an owner may hold on each tier. `null` means

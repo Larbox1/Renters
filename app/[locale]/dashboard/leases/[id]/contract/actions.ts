@@ -31,12 +31,13 @@ export async function saveLeaseContractAction(formData: FormData) {
     .eq("id", leaseId)
     .maybeSingle();
 
-  if (
-    leaseError ||
-    !lease ||
-    (lease.type !== "bail_vide" && lease.type !== "bail_meuble")
-  )
-    return;
+  const SUPPORTED_TYPES = [
+    "bail_vide",
+    "bail_meuble",
+    "bail_civil",
+    "bail_commercial",
+  ];
+  if (leaseError || !lease || !SUPPORTED_TYPES.includes(lease.type)) return;
 
   const property = Array.isArray(lease.properties)
     ? lease.properties[0]
@@ -45,33 +46,59 @@ export async function saveLeaseContractAction(formData: FormData) {
     ? lease.tenants[0]
     : lease.tenants;
 
-  const { data: ownerProfile } = await session.supabase
-    .from("profiles")
-    .select(
-      "full_name, first_name, last_name, address, city, postal_code, country, phone",
-    )
-    .eq("id", property?.owner_id)
-    .maybeSingle<{
-      full_name: string | null;
-      first_name: string | null;
-      last_name: string | null;
-      address: string | null;
-      city: string | null;
-      postal_code: string | null;
-      country: string | null;
-      phone: string | null;
-    }>();
+  // Landlord details via the SECURITY DEFINER RPC — profiles are private
+  // (RLS), so a direct read returns nothing when the viewer didn't create
+  // this property. See migration 0043_owner_contact_for_contract.sql.
+  type OwnerContact = {
+    full_name: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    address: string | null;
+    city: string | null;
+    postal_code: string | null;
+    country: string | null;
+    phone: string | null;
+  };
+  let ownerProfile: OwnerContact | null = null;
+  if (property?.owner_id) {
+    const { data: ownerRows } = await session.supabase.rpc(
+      "get_owner_contact",
+      { p_owner_id: property.owner_id },
+    );
+    ownerProfile = (ownerRows as OwnerContact[] | null)?.[0] ?? null;
+  }
 
-  // Render the PDF buffer via dynamic import.
+  // Render the PDF buffer via dynamic import. Bail civil uses its own
+  // renderer; bail vide / meublé share the loi Alur renderer.
   let pdfBuffer: Buffer;
   try {
-    const { renderContractPdf } = await import("./contract-pdf");
-    pdfBuffer = await renderContractPdf({
-      lease,
-      property,
-      tenant,
-      ownerProfile,
-    });
+    if (lease.type === "bail_civil") {
+      const { renderCivilContractPdf } = await import("./contract-civil-pdf");
+      pdfBuffer = await renderCivilContractPdf({
+        lease,
+        property,
+        tenant,
+        ownerProfile,
+      });
+    } else if (lease.type === "bail_commercial") {
+      const { renderCommercialContractPdf } = await import(
+        "./contract-commercial-pdf"
+      );
+      pdfBuffer = await renderCommercialContractPdf({
+        lease,
+        property,
+        tenant,
+        ownerProfile,
+      });
+    } else {
+      const { renderContractPdf } = await import("./contract-pdf");
+      pdfBuffer = await renderContractPdf({
+        lease,
+        property,
+        tenant,
+        ownerProfile,
+      });
+    }
   } catch (err) {
     console.error("[contract.save] PDF render failed:", err);
     return;

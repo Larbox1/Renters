@@ -60,7 +60,7 @@ export function Navbar({
       {/* Utility bar — marketing only, scrolls away above the sticky nav. */}
       {!userEmail && utility && (
         <div className="border-b border-line bg-paper text-[12.5px] text-ink-3">
-          <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6">
+          <div className="mx-auto flex h-9 max-w-[1360px] items-center justify-between px-6">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600" />
@@ -91,7 +91,7 @@ export function Navbar({
       <header className="sticky top-0 z-50 h-16 shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur">
         <nav
           className={`mx-auto flex h-full items-center justify-between px-6 ${
-            userEmail ? "max-w-none" : "max-w-7xl"
+            userEmail ? "max-w-none" : "max-w-[1360px]"
           }`}
         >
           <Link href={`/${locale}`} className="flex items-center">

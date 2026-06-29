@@ -35,7 +35,7 @@ export function DashboardSidebarShell({
     <>
       <aside
         className={`border-b border-slate-200 bg-slate-50 md:flex md:h-full md:shrink-0 md:flex-col md:overflow-hidden md:border-b-0 md:border-r print:hidden ${
-          collapsed ? "md:hidden" : "md:w-56"
+          collapsed ? "md:hidden" : "md:w-64"
         }`}
       >
         <div className="hidden shrink-0 justify-end px-4 pt-4 md:flex">

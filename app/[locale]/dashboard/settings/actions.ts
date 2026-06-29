@@ -6,13 +6,26 @@ import { isLocale, defaultLocale } from "@/i18n/config";
 import { getCurrentSession } from "@/lib/auth/current-user";
 import { createAdminClient, hasServiceRoleKey } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { isPlanId } from "@/lib/plans";
+import { isPlanId, isBillingInterval } from "@/lib/plans";
+import {
+  getStripe,
+  hasStripeEnv,
+  priceIdForPlan,
+} from "@/lib/stripe";
+import type { CurrentSession } from "@/lib/auth/current-user";
 
 export type ProfileState = { error?: string; saved?: boolean };
 
 function getLocale(formData: FormData) {
   const raw = String(formData.get("locale") ?? "");
   return isLocale(raw) ? raw : defaultLocale;
+}
+
+function getSiteUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    "http://localhost:3000"
+  );
 }
 
 function nullableString(raw: string): string | null {
@@ -59,26 +72,166 @@ export async function updateProfileAction(
 }
 
 /**
- * Switches the owner's subscription plan. No billing integration yet — this
- * simply records the chosen tier on the profile so the rest of the app can
- * read it. Owner-only; other roles are silently no-oped.
+ * Returns the owner's Stripe customer id, creating the customer (and storing
+ * the id on the profile) on first use. Writes go through the admin client
+ * because the billing-column guard trigger blocks the user from setting
+ * stripe_customer_id on their own row.
  */
-export async function updatePlanAction(formData: FormData) {
+async function ensureStripeCustomer(session: CurrentSession): Promise<string> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("stripe_customer_id")
+    .eq("id", session.user.id)
+    .maybeSingle<{ stripe_customer_id: string | null }>();
+  if (data?.stripe_customer_id) return data.stripe_customer_id;
+
+  const customer = await getStripe().customers.create({
+    email: session.user.email ?? undefined,
+    name: session.fullName || undefined,
+    metadata: { supabase_user_id: session.user.id },
+  });
+  await admin
+    .from("profiles")
+    .update({ stripe_customer_id: customer.id })
+    .eq("id", session.user.id);
+  return customer.id;
+}
+
+/**
+ * Starts a Stripe Checkout session for one of the paid tiers and redirects the
+ * owner to the hosted payment page. The webhook (not this action) writes the
+ * resulting plan onto the profile once payment succeeds. Owner-only.
+ */
+export async function startCheckoutAction(formData: FormData) {
   const locale = getLocale(formData);
   const session = await getCurrentSession();
   if (!session) redirect(`/${locale}/login`);
 
   const plan = String(formData.get("plan") ?? "");
-  if (session.role === "owner" && isPlanId(plan)) {
-    const { error } = await session.supabase
-      .from("profiles")
-      .update({ plan })
-      .eq("id", session.user.id);
-    if (error) console.error("[settings.updatePlan] failed:", error);
+  const rawInterval = String(formData.get("interval") ?? "month");
+  const interval = isBillingInterval(rawInterval) ? rawInterval : "month";
+  if (session.role !== "owner" || !isPlanId(plan) || plan === "free") {
+    redirect(`/${locale}/dashboard/settings`);
+  }
+  if (!hasStripeEnv()) {
+    console.error("[settings.startCheckout] Stripe env not configured");
+    redirect(`/${locale}/dashboard/settings?billing=unconfigured`);
   }
 
-  revalidatePath(`/${locale}/dashboard/settings`);
-  redirect(`/${locale}/dashboard/settings`);
+  const settingsUrl = `${getSiteUrl()}/${locale}/dashboard/settings`;
+  const customerId = await ensureStripeCustomer(session);
+
+  // Guard against creating a second subscription. The UI normally hides
+  // Checkout once subscribed, but if the profile is briefly out of sync with
+  // Stripe (e.g. a missed webhook) the buttons could still show — so check the
+  // source of truth and route an already-subscribed owner to the portal.
+  const active = await getStripe().subscriptions.list({
+    customer: customerId,
+    status: "active",
+    limit: 1,
+  });
+  if (active.data.length > 0) {
+    const portal = await getStripe().billingPortal.sessions.create({
+      customer: customerId,
+      return_url: settingsUrl,
+    });
+    redirect(portal.url);
+  }
+
+  const checkout = await getStripe().checkout.sessions.create({
+    mode: "subscription",
+    customer: customerId,
+    client_reference_id: session.user.id,
+    line_items: [{ price: priceIdForPlan(plan, interval), quantity: 1 }],
+    allow_promotion_codes: true,
+    success_url: `${settingsUrl}?billing=success`,
+    cancel_url: `${settingsUrl}?billing=canceled`,
+  });
+
+  if (!checkout.url) {
+    console.error("[settings.startCheckout] Checkout session has no URL");
+    redirect(`${settingsUrl}?billing=error`);
+  }
+  redirect(checkout.url);
+}
+
+/**
+ * Opens the Stripe Customer Portal so a subscribed owner can switch tiers,
+ * update their card, or cancel (which drops them to free at period end, per
+ * the portal's configuration). Owner-only; no-ops if no customer exists yet.
+ */
+export async function openBillingPortalAction(formData: FormData) {
+  const locale = getLocale(formData);
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
+
+  const settingsUrl = `${getSiteUrl()}/${locale}/dashboard/settings`;
+  if (session.role !== "owner" || !hasStripeEnv()) {
+    redirect(settingsUrl);
+  }
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("stripe_customer_id")
+    .eq("id", session.user.id)
+    .maybeSingle<{ stripe_customer_id: string | null }>();
+
+  if (!data?.stripe_customer_id) {
+    // Nothing to manage yet — they've never checked out.
+    redirect(settingsUrl);
+  }
+
+  const portal = await getStripe().billingPortal.sessions.create({
+    customer: data.stripe_customer_id,
+    return_url: settingsUrl,
+  });
+  redirect(portal.url);
+}
+
+/**
+ * Schedules or unschedules cancellation of the owner's subscription at the end
+ * of the current billing period — the in-app equivalent of the portal's cancel
+ * button (no Stripe redirect). The subscription stays active until period end,
+ * then `customer.subscription.deleted` drops the profile to free. We also write
+ * the flag optimistically so the UI updates without waiting on the webhook.
+ * Owner-only.
+ */
+async function setCancelAtPeriodEnd(locale: string, cancel: boolean) {
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
+
+  const settingsPath = `/${locale}/dashboard/settings`;
+  if (session.role !== "owner" || !hasStripeEnv()) redirect(settingsPath);
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("profiles")
+    .select("stripe_subscription_id")
+    .eq("id", session.user.id)
+    .maybeSingle<{ stripe_subscription_id: string | null }>();
+
+  if (!data?.stripe_subscription_id) redirect(settingsPath);
+
+  await getStripe().subscriptions.update(data.stripe_subscription_id, {
+    cancel_at_period_end: cancel,
+  });
+  await admin
+    .from("profiles")
+    .update({ plan_cancel_at_period_end: cancel })
+    .eq("id", session.user.id);
+
+  revalidatePath(settingsPath);
+  redirect(`${settingsPath}?billing=${cancel ? "cancel_scheduled" : "resumed"}`);
+}
+
+export async function cancelSubscriptionAction(formData: FormData) {
+  await setCancelAtPeriodEnd(getLocale(formData), true);
+}
+
+export async function resumeSubscriptionAction(formData: FormData) {
+  await setCancelAtPeriodEnd(getLocale(formData), false);
 }
 
 /**

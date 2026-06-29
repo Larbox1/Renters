@@ -8,7 +8,16 @@ import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { PrintButton } from "./print-button";
 import { ContractDocument } from "./contract-document";
+import { ContractCivilDocument } from "./contract-civil-document";
+import { ContractCommercialDocument } from "./contract-commercial-document";
 import { saveLeaseContractAction } from "./actions";
+
+const SUPPORTED_TYPES = [
+  "bail_vide",
+  "bail_meuble",
+  "bail_civil",
+  "bail_commercial",
+];
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -37,7 +46,7 @@ export default async function ContractPage({ params, searchParams }: Props) {
     .maybeSingle();
 
   if (!lease) notFound();
-  if (lease.type !== "bail_vide" && lease.type !== "bail_meuble") {
+  if (!SUPPORTED_TYPES.includes(lease.type)) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
         <Link
@@ -47,8 +56,9 @@ export default async function ContractPage({ params, searchParams }: Props) {
           ← {dict.leases.backToList}
         </Link>
         <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-          The contract template currently only supports <strong>Bail vide</strong>{" "}
-          and <strong>Bail meublé</strong>. Switch the lease type to generate the
+          The contract template currently only supports <strong>Bail vide</strong>,{" "}
+          <strong>Bail meublé</strong>, <strong>Bail civil</strong> and{" "}
+          <strong>Bail commercial</strong>. Switch the lease type to generate the
           document.
         </p>
       </div>
@@ -62,22 +72,28 @@ export default async function ContractPage({ params, searchParams }: Props) {
     ? lease.tenants[0]
     : lease.tenants;
 
-  const { data: ownerProfile } = await supabase
-    .from("profiles")
-    .select(
-      "full_name, first_name, last_name, address, city, postal_code, country, phone",
-    )
-    .eq("id", property?.owner_id)
-    .maybeSingle<{
-      full_name: string | null;
-      first_name: string | null;
-      last_name: string | null;
-      address: string | null;
-      city: string | null;
-      postal_code: string | null;
-      country: string | null;
-      phone: string | null;
-    }>();
+  // Landlord (bailleur) details. Profiles are private — an owner can only read
+  // their own row (RLS) — but properties/leases are shared across owners, so a
+  // direct read returns nothing when the viewer didn't create this property.
+  // get_owner_contact (SECURITY DEFINER, owner/admin-gated) returns just the
+  // display fields regardless of which owner the property belongs to.
+  type OwnerContact = {
+    full_name: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    address: string | null;
+    city: string | null;
+    postal_code: string | null;
+    country: string | null;
+    phone: string | null;
+  };
+  let ownerProfile: OwnerContact | null = null;
+  if (property?.owner_id) {
+    const { data: ownerRows } = await supabase.rpc("get_owner_contact", {
+      p_owner_id: property.owner_id,
+    });
+    ownerProfile = (ownerRows as OwnerContact[] | null)?.[0] ?? null;
+  }
 
   return (
     <>
@@ -118,9 +134,19 @@ export default async function ContractPage({ params, searchParams }: Props) {
             </div>
           </div>
 
-          <ContractDocument
-            data={{ lease, property, tenant, ownerProfile }}
-          />
+          {lease.type === "bail_civil" ? (
+            <ContractCivilDocument
+              data={{ lease, property, tenant, ownerProfile }}
+            />
+          ) : lease.type === "bail_commercial" ? (
+            <ContractCommercialDocument
+              data={{ lease, property, tenant, ownerProfile }}
+            />
+          ) : (
+            <ContractDocument
+              data={{ lease, property, tenant, ownerProfile }}
+            />
+          )}
         </div>
       </div>
     </>

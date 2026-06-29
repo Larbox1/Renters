@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { LandingPricingGrid } from "@/components/landing-pricing";
 
 const LOGOS = [
   { kind: "round", label: "Maisonette" },
@@ -45,7 +46,7 @@ export default async function HomePage({
     <div className="bg-paper text-ink">
       {/* Hero */}
       <section className="relative pt-16 pb-12 md:pt-20">
-        <div className="mx-auto max-w-[1240px] px-7">
+        <div className="mx-auto max-w-[1360px] px-7">
           <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-elev py-1 pl-1 pr-3 text-[12.5px] text-ink-3">
@@ -210,7 +211,7 @@ export default async function HomePage({
 
         {/* Logos strip */}
         <div className="mt-14 border-y border-line bg-paper py-7">
-          <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-8 px-7">
+          <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-8 px-7">
             <p className="max-w-[200px] whitespace-nowrap text-xs text-ink-3">{d.logos.tagline}</p>
             <div className="flex flex-wrap items-center gap-9 opacity-80">
               {LOGOS.map((l) => (
@@ -237,7 +238,7 @@ export default async function HomePage({
 
       {/* Features grid */}
       <section id="features" className="py-24">
-        <div className="mx-auto max-w-[1240px] px-7">
+        <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
             <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.features.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-ink text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
@@ -262,7 +263,7 @@ export default async function HomePage({
 
       {/* Showcases */}
       <section id="audience" className="pb-24">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-24 px-7">
+        <div className="mx-auto flex max-w-[1360px] flex-col gap-24 px-7">
           {/* Showcase 1 — receipts */}
           <Showcase
             tag={d.show1.tag}
@@ -353,7 +354,7 @@ export default async function HomePage({
 
       {/* Numbers band */}
       <section className="bg-ink py-20 text-paper">
-        <div className="mx-auto max-w-[1240px] px-7">
+        <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
             <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent">{d.numbers.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-paper text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
@@ -378,7 +379,7 @@ export default async function HomePage({
 
       {/* Testimonials */}
       <section className="py-24">
-        <div className="mx-auto max-w-[1240px] px-7">
+        <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
             <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.testimonials.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-ink text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
@@ -411,7 +412,7 @@ export default async function HomePage({
 
       {/* Pricing */}
       <section id="pricing" className="border-y border-line bg-paper-sunk py-24">
-        <div className="mx-auto max-w-[1240px] px-7">
+        <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
             <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.pricing.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-ink text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
@@ -419,67 +420,14 @@ export default async function HomePage({
             </h2>
             <p className="mt-4 max-w-[56ch] text-[17px] text-ink-2">{d.pricing.lede}</p>
           </div>
-          <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {d.pricing.plans.map((plan, i) => {
-              const featured = "featured" in plan && plan.featured;
-              return (
-                <div
-                  key={i}
-                  className={`relative flex flex-col gap-5 rounded-2xl border bg-paper-elev p-8 ${featured ? "border-ink shadow-[0_8px_24px_-8px_rgba(20,20,15,.18)]" : "border-line"}`}
-                >
-                  {featured && (
-                    <span className="absolute right-6 -top-3 rounded-full bg-accent px-3 py-1 text-[11px] font-medium text-white">
-                      {d.pricing.badgePopular}
-                    </span>
-                  )}
-                  <div className="flex items-center gap-2 text-[14px] font-medium text-ink-2">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        plan.dot === "free"
-                          ? "bg-emerald-600"
-                          : plan.dot === "plus"
-                            ? "bg-accent"
-                            : plan.dot === "pro"
-                              ? "bg-accent-deep"
-                              : "bg-ink"
-                      }`}
-                    />
-                    {plan.name}
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[30px] font-semibold leading-none tracking-[-0.03em]">{plan.price}</span>
-                    <span className="text-[13.5px] text-ink-3">{plan.per}</span>
-                  </div>
-                  <p className="min-h-[42px] text-[14px] text-ink-3">{plan.desc}</p>
-                  <Link
-                    href={`/${locale}/signup`}
-                    className={`inline-flex items-center justify-center rounded-lg py-3 text-sm font-medium ${
-                      featured
-                        ? "bg-accent text-white shadow-sm hover:bg-accent-deep"
-                        : "border border-line bg-paper-elev text-ink hover:border-ink-3"
-                    }`}
-                  >
-                    {plan.cta}
-                  </Link>
-                  <ul className="flex flex-col gap-3 border-t border-line pt-4 text-[13.5px] text-ink-2">
-                    {plan.features.map((f, j) => (
-                      <li key={j} className="flex items-start gap-2.5">
-                        <CheckIcon className="mt-0.5 h-3.5 w-3.5 flex-none text-accent" />
-                        <span dangerouslySetInnerHTML={{ __html: f.replace(/\*\*(.+?)\*\*/g, '<strong class="font-medium text-ink">$1</strong>') }} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
+          <LandingPricingGrid locale={locale as Locale} dict={d.pricing} />
           <p className="mt-7 text-center text-[13px] text-ink-3">{d.pricing.note}</p>
         </div>
       </section>
 
       {/* FAQ */}
       <section id="resources" className="py-24">
-        <div className="mx-auto max-w-[1240px] px-7">
+        <div className="mx-auto max-w-[1360px] px-7">
           <div className="grid items-start gap-14 lg:grid-cols-[1fr_1.4fr]">
             <div>
               <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.faq.kicker}</span>
@@ -509,7 +457,7 @@ export default async function HomePage({
 
       {/* Final CTA */}
       <section id="cta" className="border-y border-line bg-accent-soft">
-        <div className="mx-auto grid max-w-[1240px] items-center gap-10 px-7 py-20 lg:grid-cols-[1.4fr_0.6fr]">
+        <div className="mx-auto grid max-w-[1360px] items-center gap-10 px-7 py-20 lg:grid-cols-[1.4fr_0.6fr]">
           <div>
             <h2 className="font-semibold tracking-[-0.03em] text-ink text-[34px] leading-none sm:text-[44px] lg:text-[60px]">
               {d.finalCta.h2A} <span className="font-serif italic font-normal text-accent-deep">{d.finalCta.h2Serif}</span>
