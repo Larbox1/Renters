@@ -6,7 +6,21 @@ import { getCurrentSession } from "@/lib/auth/current-user";
 import { isPlanId, planPropertyLimit, type PlanId } from "@/lib/plans";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { DashboardSidebarShell } from "@/components/dashboard-sidebar-shell";
+import { DashboardBreadcrumb } from "@/components/dashboard-breadcrumb";
+import { AddMenu, type AddMenuItem } from "@/components/add-menu";
+import {
+  NotificationsBell,
+  type NotificationItem,
+} from "@/components/notifications-bell";
 import { PollRefresh } from "@/components/poll-refresh";
+
+type ConversationRow = {
+  counterpart_id: string;
+  counterpart_name: string | null;
+  counterpart_email: string | null;
+  last_message_body: string;
+  unread_count: number;
+};
 
 export default async function DashboardLayout({
   children,
@@ -21,7 +35,7 @@ export default async function DashboardLayout({
 
   // Resolve the session here only to render a role-aware sidebar. The
   // page-level checks still own redirects / setup notices, so we silently
-  // skip the sidebar when the user isn't authenticated yet.
+  // skip the chrome when the user isn't authenticated yet.
   const session = hasSupabaseEnv() ? await getCurrentSession() : null;
 
   // Lightweight count of unread received messages for the sidebar badge.
@@ -61,10 +75,135 @@ export default async function DashboardLayout({
     };
   }
 
+  // Header chrome data: the role-aware "+" menu and the notifications feed.
+  // These live in the dashboard top bar (the global navbar only renders for
+  // logged-out marketing pages).
+  const addItems: AddMenuItem[] = [];
+  const notifications: NotificationItem[] = [];
+  if (session) {
+    if (session.role === "owner" || session.role === "admin") {
+      addItems.push(
+        {
+          href: `/${locale}/dashboard/properties/new`,
+          label: dict.properties.newProperty,
+        },
+        {
+          href: `/${locale}/dashboard/tenants/new`,
+          label: dict.tenants.newTenant,
+        },
+        {
+          href: `/${locale}/dashboard/leases/new`,
+          label: dict.leases.newLease,
+        },
+      );
+    }
+    addItems.push({
+      href: `/${locale}/dashboard/messages/new`,
+      label: dict.messages.newConversation,
+    });
+
+    // Notifications: unread conversations + (owners) properties flagged to rent
+    // that still have no active lease.
+    const isOwner = session.role === "owner";
+    const [convRes, propsRes, activeLeasesRes] = await Promise.all([
+      session.supabase.rpc("list_my_conversations"),
+      isOwner
+        ? session.supabase
+            .from("properties")
+            .select("id, label, address, city")
+            .eq("to_rent", true)
+        : Promise.resolve({
+            data: [] as {
+              id: string;
+              label: string | null;
+              address: string;
+              city: string;
+            }[],
+            error: null,
+          }),
+      isOwner
+        ? session.supabase
+            .from("leases")
+            .select("property_id")
+            .eq("status", "active")
+        : Promise.resolve({
+            data: [] as { property_id: string }[],
+            error: null,
+          }),
+    ]);
+
+    if (convRes.error) {
+      console.error(
+        "[dashboard.notifications] list_my_conversations failed:",
+        convRes.error,
+      );
+    } else {
+      const rows = (convRes.data ?? []) as ConversationRow[];
+      for (const c of rows) {
+        if (c.unread_count > 0 && notifications.length < 5) {
+          notifications.push({
+            id: `msg:${c.counterpart_id}`,
+            name: c.counterpart_name ?? c.counterpart_email ?? c.counterpart_id,
+            preview: c.last_message_body,
+            unreadCount: c.unread_count,
+            href: `/${locale}/dashboard/messages/${c.counterpart_id}`,
+          });
+        }
+      }
+    }
+
+    if (!propsRes.error && !activeLeasesRes.error && isOwner) {
+      const rentedIds = new Set(
+        (activeLeasesRes.data ?? []).map((l) => l.property_id),
+      );
+      let added = 0;
+      for (const p of propsRes.data ?? []) {
+        if (added >= 5) break;
+        if (rentedIds.has(p.id)) continue;
+        notifications.push({
+          id: `prop:${p.id}`,
+          name: p.label ?? `${p.address}, ${p.city}`,
+          preview: dict.nav.propertyNotRented,
+          unreadCount: 1,
+          href: `/${locale}/dashboard/properties/${p.id}`,
+          icon: "🏠",
+        });
+        added++;
+      }
+    }
+  }
+
+  const logoSrc =
+    locale === "fr" ? "/meskasas_logo_fr.png" : "/meskasas_logo_en.png";
+
+  // Path-segment → label map for the breadcrumb. Unmapped segments (record ids)
+  // fall back to the generic "details" label.
+  const crumbLabels: Record<string, string> = {
+    dashboard: dict.dashboard.sidebar.overview,
+    properties: dict.dashboard.sidebar.properties,
+    tenants: dict.dashboard.sidebar.tenants,
+    leases: dict.dashboard.sidebar.leases,
+    documents: dict.dashboard.sidebar.documents,
+    finance: dict.dashboard.sidebar.finance,
+    messages: dict.dashboard.sidebar.messages,
+    users: dict.dashboard.sidebar.users,
+    settings: dict.dashboard.sidebar.settings,
+    "my-lease": dict.myLease.title,
+    "the-hub": "The Hub",
+    search: dict.dashboard.sidebar.search.replace("…", "").trim(),
+    new: dict.dashboard.breadcrumb.new,
+    edit: dict.dashboard.breadcrumb.edit,
+    contract: dict.dashboard.breadcrumb.contract,
+  };
+
   return (
-    <div className="flex w-full flex-col md:h-[calc(100vh-4rem)] md:flex-row md:overflow-hidden">
+    <div className="flex w-full flex-col md:h-screen md:flex-row md:overflow-hidden">
       {session && (
-        <DashboardSidebarShell toggleLabel={dict.dashboard.sidebar.toggleSidebar}>
+        <DashboardSidebarShell
+          toggleLabel={dict.dashboard.sidebar.toggleSidebar}
+          logoSrc={logoSrc}
+          homeHref={`/${locale}`}
+        >
           <DashboardSidebar
             locale={locale as Locale}
             role={session.role}
@@ -77,7 +216,29 @@ export default async function DashboardLayout({
           />
         </DashboardSidebarShell>
       )}
-      <div className="min-w-0 flex-1 md:h-full md:overflow-y-auto">{children}</div>
+
+      <div className="flex min-w-0 flex-1 flex-col md:h-full">
+        {session && (
+          <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 md:px-6 print:hidden">
+            <DashboardBreadcrumb
+              labels={crumbLabels}
+              fallback={dict.dashboard.breadcrumb.details}
+            />
+            <div className="flex shrink-0 items-center gap-2">
+              <AddMenu items={addItems} ariaLabel={dict.nav.addMenu} />
+              <NotificationsBell
+                items={notifications}
+                ariaLabel={dict.nav.notifications}
+                emptyLabel={dict.nav.notificationsEmpty}
+                viewAllLabel={dict.nav.notificationsViewAll}
+                viewAllHref={`/${locale}/dashboard/messages`}
+              />
+            </div>
+          </header>
+        )}
+        <div className="min-w-0 flex-1 md:overflow-y-auto">{children}</div>
+      </div>
+
       {session && <PollRefresh />}
     </div>
   );

@@ -17,6 +17,8 @@ type Profile = {
   postal_code: string | null;
   country: string | null;
   phone: string | null;
+  iban: string | null;
+  bic: string | null;
 };
 
 const inputClass =
@@ -137,6 +139,34 @@ export function ProfileForm({
           className={inputClass}
         />
       </div>
+
+      <fieldset className="rounded-lg border border-slate-200 p-4">
+        <legend className="px-1 text-sm font-medium text-slate-700">
+          {dict.bankHeading}
+        </legend>
+        <p className="mb-3 text-xs text-slate-500">{dict.bankHint}</p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="sm:col-span-2">
+            <label className={labelClass}>{dict.iban}</label>
+            <input
+              name="iban"
+              type="text"
+              defaultValue={profile.iban ?? ""}
+              placeholder="FR76 ...."
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>{dict.bic}</label>
+            <input
+              name="bic"
+              type="text"
+              defaultValue={profile.bic ?? ""}
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </fieldset>
 
       {state.error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

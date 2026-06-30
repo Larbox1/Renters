@@ -32,6 +32,8 @@ type ProfileRow = {
   postal_code: string | null;
   country: string | null;
   phone: string | null;
+  iban: string | null;
+  bic: string | null;
 };
 
 type BillingRow = {
@@ -93,7 +95,9 @@ export default async function SettingsPage({
 
   const { data: profileRow } = await session.supabase
     .from("profiles")
-    .select("first_name, last_name, address, city, postal_code, country, phone")
+    .select(
+      "first_name, last_name, address, city, postal_code, country, phone, iban, bic",
+    )
     .eq("id", session.user.id)
     .maybeSingle<ProfileRow>();
   const profile: ProfileRow = profileRow ?? {
@@ -104,6 +108,8 @@ export default async function SettingsPage({
     postal_code: null,
     country: null,
     phone: null,
+    iban: null,
+    bic: null,
   };
 
   // Personal storage usage — non-admins only. Admin's global storage now

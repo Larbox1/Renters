@@ -134,6 +134,8 @@ export function LeaseForm({
 
   const showContractDetails =
     selectedType === "bail_vide" || selectedType === "bail_meuble";
+  const showCivilCommercial =
+    selectedType === "bail_civil" || selectedType === "bail_commercial";
   const isMeuble = selectedType === "bail_meuble";
   const bv = dict.fields.bailVide;
   const durationOptions: LeaseDuration[] = isMeuble
@@ -167,46 +169,78 @@ export function LeaseForm({
       <input type="hidden" name="locale" value={locale} />
       {lease && <input type="hidden" name="id" value={lease.id} />}
 
-      <div>
-        <label className={labelClass}>
-          {dict.fields.property} <span className="text-red-500">*</span>
-        </label>
-        <select
-          name="property_id"
-          required
-          defaultValue={lease?.property_id ?? defaultPropertyId ?? ""}
-          onChange={handlePropertyChange}
-          className={selectClass}
-        >
-          <option value="">{dict.fields.propertyPlaceholder}</option>
-          {properties.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label ?? `${p.address}, ${p.city}`}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className={labelClass}>
-          {dict.fields.tenant} <span className="text-red-500">*</span>
-        </label>
-        <select
-          name="tenant_id"
-          required
-          defaultValue={lease?.tenant_id ?? ""}
-          className={selectClass}
-        >
-          <option value="">{dict.fields.tenantPlaceholder}</option>
-          {tenants.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.full_name}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className={labelClass}>
+            {dict.fields.property} <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="property_id"
+            required
+            defaultValue={lease?.property_id ?? defaultPropertyId ?? ""}
+            onChange={handlePropertyChange}
+            className={selectClass}
+          >
+            <option value="">{dict.fields.propertyPlaceholder}</option>
+            {properties.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label ?? `${p.address}, ${p.city}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className={labelClass}>
+            {dict.fields.tenant} <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="tenant_id"
+            required
+            defaultValue={lease?.tenant_id ?? ""}
+            className={selectClass}
+          >
+            <option value="">{dict.fields.tenantPlaceholder}</option>
+            {tenants.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.full_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label className={labelClass}>{dict.fields.type}</label>
+          <select
+            name="type"
+            value={selectedType}
+            onChange={(e) =>
+              setSelectedType(e.target.value as LeaseTypeValue | "")
+            }
+            className={selectClass}
+          >
+            <option value="">{dict.fields.typePlaceholder}</option>
+            {LEASE_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {dict.types[t]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>{dict.fields.status}</label>
+          <select
+            name="status"
+            defaultValue={lease?.status ?? "pending"}
+            className={selectClass}
+          >
+            <option value="pending">{dict.status.pending}</option>
+            <option value="active">{dict.status.active}</option>
+            <option value="ended">{dict.status.ended}</option>
+          </select>
+        </div>
         <div>
           <label className={labelClass}>
             {dict.fields.startDate} <span className="text-red-500">*</span>
@@ -270,39 +304,6 @@ export function LeaseForm({
               {isMeuble ? bv.depositHintMeuble : bv.depositHintVide}
             </p>
           )}
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className={labelClass}>{dict.fields.type}</label>
-          <select
-            name="type"
-            value={selectedType}
-            onChange={(e) =>
-              setSelectedType(e.target.value as LeaseTypeValue | "")
-            }
-            className={selectClass}
-          >
-            <option value="">{dict.fields.typePlaceholder}</option>
-            {LEASE_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {dict.types[t]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>{dict.fields.status}</label>
-          <select
-            name="status"
-            defaultValue={lease?.status ?? "pending"}
-            className={selectClass}
-          >
-            <option value="pending">{dict.status.pending}</option>
-            <option value="active">{dict.status.active}</option>
-            <option value="ended">{dict.status.ended}</option>
-          </select>
         </div>
       </div>
 
@@ -578,6 +579,73 @@ export function LeaseForm({
                   className={inputClass}
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCivilCommercial && (
+        <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-5">
+          <h2 className="text-base font-semibold text-slate-900">
+            {dict.types[selectedType as LeaseTypeValue]}
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className={labelClass}>{bv.irlReference}</label>
+              <input
+                name="irl_reference"
+                type="text"
+                defaultValue={lease?.irl_reference ?? ""}
+                placeholder={bv.irlReferencePlaceholder}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>{bv.revisionDate}</label>
+              <input
+                name="revision_date"
+                type="date"
+                defaultValue={lease?.revision_date ?? ""}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>{bv.chargesAmount}</label>
+              <input
+                name="charges_amount_cents"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={
+                  lease?.charges_amount_cents != null
+                    ? centsToEuros(lease.charges_amount_cents)
+                    : ""
+                }
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>{bv.paymentDay}</label>
+              <input
+                name="payment_day_of_month"
+                type="number"
+                min="1"
+                max="31"
+                defaultValue={lease?.payment_day_of_month ?? ""}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>{bv.paymentTiming}</label>
+              <select
+                name="payment_timing"
+                defaultValue={lease?.payment_timing ?? ""}
+                className={selectClass}
+              >
+                <option value="">{bv.paymentTimingPlaceholder}</option>
+                <option value="in_advance">{bv.paymentInAdvance}</option>
+                <option value="arrears">{bv.paymentArrears}</option>
+              </select>
             </div>
           </div>
         </div>

@@ -117,51 +117,80 @@ export function TenantForm({
   const showSociete = tenantType === "societe";
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-6">
       <input type="hidden" name="locale" value={locale} />
       {tenant && <input type="hidden" name="id" value={tenant.id} />}
 
-      {showOwnerSelect && (
-        <div>
-          <label className={labelClass}>
-            {dict.fields.owner} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="owner_id"
-            required
-            defaultValue={tenant?.owner_id ?? ""}
-            className={selectClass}
-          >
-            <option value="" disabled>
-              —
-            </option>
-            {owners!.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.full_name ?? o.email ?? o.id}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <div>
-        <label className={labelClass}>{dict.fields.tenantType}</label>
-        <div className="mt-2 flex gap-4 text-sm text-slate-700">
-          {(["particulier", "societe"] as const).map((t) => (
-            <label key={t} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="tenant_type"
-                value={t}
-                checked={tenantType === t}
-                onChange={() => setTenantType(t)}
-                className="h-4 w-4 text-brand-600 focus:ring-brand-500"
-              />
-              {t === "particulier"
-                ? dict.fields.tenantTypeParticulier
-                : dict.fields.tenantTypeSociete}
+      {/* Identity — owner, type, name + contact across the full width */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {showOwnerSelect && (
+          <div>
+            <label className={labelClass}>
+              {dict.fields.owner} <span className="text-red-500">*</span>
             </label>
-          ))}
+            <select
+              name="owner_id"
+              required
+              defaultValue={tenant?.owner_id ?? ""}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                —
+              </option>
+              {owners!.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.full_name ?? o.email ?? o.id}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className={showOwnerSelect ? "" : "sm:col-span-2 lg:col-span-1"}>
+          <label className={labelClass}>{dict.fields.tenantType}</label>
+          <div className="mt-2 flex h-[38px] items-center gap-4 text-sm text-slate-700">
+            {(["particulier", "societe"] as const).map((t) => (
+              <label key={t} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="tenant_type"
+                  value={t}
+                  checked={tenantType === t}
+                  onChange={() => setTenantType(t)}
+                  className="h-4 w-4 text-brand-600 focus:ring-brand-500"
+                />
+                {t === "particulier"
+                  ? dict.fields.tenantTypeParticulier
+                  : dict.fields.tenantTypeSociete}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className={labelClass}>{dict.fields.email}</label>
+          <input
+            name="email"
+            type="email"
+            defaultValue={tenant?.email ?? ""}
+            placeholder={dict.fields.emailPlaceholder}
+            className={inputClass}
+          />
+          {!tenant && (
+            <p className="mt-1 text-xs text-slate-500">
+              {dict.fields.emailHint}
+            </p>
+          )}
+        </div>
+        <div>
+          <label className={labelClass}>{dict.fields.phone}</label>
+          <input
+            name="phone"
+            type="tel"
+            defaultValue={tenant?.phone ?? ""}
+            placeholder={dict.fields.phonePlaceholder}
+            className={inputClass}
+          />
         </div>
       </div>
 
@@ -180,34 +209,8 @@ export function TenantForm({
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className={labelClass}>{dict.fields.email}</label>
-          <input
-            name="email"
-            type="email"
-            defaultValue={tenant?.email ?? ""}
-            placeholder={dict.fields.emailPlaceholder}
-            className={inputClass}
-          />
-          {!tenant && (
-            <p className="mt-1 text-xs text-slate-500">{dict.fields.emailHint}</p>
-          )}
-        </div>
-        <div>
-          <label className={labelClass}>{dict.fields.phone}</label>
-          <input
-            name="phone"
-            type="tel"
-            defaultValue={tenant?.phone ?? ""}
-            placeholder={dict.fields.phonePlaceholder}
-            className={inputClass}
-          />
-        </div>
-      </div>
-
       {showParticulier && (
-        <>
+        <div className="grid gap-4 lg:grid-cols-2">
           {/* Personal information */}
           <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -326,12 +329,11 @@ export function TenantForm({
               </div>
             </div>
           </fieldset>
-
-        </>
+        </div>
       )}
 
       {showSociete && (
-        <>
+        <div className="grid gap-4 lg:grid-cols-2">
           {/* Company information */}
           <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -450,7 +452,7 @@ export function TenantForm({
               </div>
             </div>
           </fieldset>
-        </>
+        </div>
       )}
 
       {(showParticulier || showSociete) && (

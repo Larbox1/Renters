@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "renters:sidebar-collapsed";
@@ -13,9 +15,13 @@ const STORAGE_KEY = "renters:sidebar-collapsed";
 export function DashboardSidebarShell({
   children,
   toggleLabel,
+  logoSrc,
+  homeHref,
 }: {
   children: React.ReactNode;
   toggleLabel: string;
+  logoSrc: string;
+  homeHref: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -38,13 +44,23 @@ export function DashboardSidebarShell({
           collapsed ? "md:hidden" : "md:w-64"
         }`}
       >
-        <div className="hidden shrink-0 justify-end px-4 pt-4 md:flex">
+        <div className="flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-2 md:pb-0">
+          <Link href={homeHref} className="flex items-center">
+            <Image
+              src={logoSrc}
+              alt="Meskasas"
+              width={1493}
+              height={374}
+              priority
+              className="h-8 w-auto"
+            />
+          </Link>
           <button
             type="button"
             onClick={toggle}
             aria-label={toggleLabel}
             title={toggleLabel}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+            className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 hover:text-slate-700 md:inline-flex"
           >
             <span aria-hidden className="text-base leading-none">
               «

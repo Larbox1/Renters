@@ -222,57 +222,74 @@ export function PropertyForm({
       <input type="hidden" name="locale" value={locale} />
       {property && <input type="hidden" name="id" value={property.id} />}
 
-      {showOwnerSelect && (
+      {/* Identity & location */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {showOwnerSelect && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {dict.fields.owner} <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="owner_id"
+              required
+              defaultValue={property?.owner_id ?? ""}
+              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            >
+              <option value="" disabled>
+                —
+              </option>
+              {owners!.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.full_name ?? o.email ?? o.id}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-slate-700">
-            {dict.fields.owner} <span className="text-red-500">*</span>
+            {dict.fields.label}
+          </label>
+          <input
+            name="label"
+            type="text"
+            defaultValue={property?.label ?? ""}
+            placeholder={dict.fields.labelPlaceholder}
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            {dict.fields.type}
           </label>
           <select
-            name="owner_id"
-            required
-            defaultValue={property?.owner_id ?? ""}
-            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            name="type"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
-            <option value="" disabled>
-              —
-            </option>
-            {owners!.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.full_name ?? o.email ?? o.id}
+            <option value="">{dict.fields.typePlaceholder}</option>
+            {PROPERTY_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {dict.types[t]}
               </option>
             ))}
           </select>
         </div>
-      )}
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700">
-          {dict.fields.label}
-        </label>
-        <input
-          name="label"
-          type="text"
-          defaultValue={property?.label ?? ""}
-          placeholder={dict.fields.labelPlaceholder}
-          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-700">
-          {dict.fields.address} <span className="text-red-500">*</span>
-        </label>
-        <input
-          name="address"
-          type="text"
-          required
-          defaultValue={property?.address ?? ""}
-          placeholder={dict.fields.addressPlaceholder}
-          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="sm:col-span-2 lg:col-span-3">
+          <label className="block text-sm font-medium text-slate-700">
+            {dict.fields.address} <span className="text-red-500">*</span>
+          </label>
+          <input
+            name="address"
+            type="text"
+            required
+            defaultValue={property?.address ?? ""}
+            placeholder={dict.fields.addressPlaceholder}
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+        </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">
             {dict.fields.city} <span className="text-red-500">*</span>
@@ -312,7 +329,8 @@ export function PropertyForm({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Pricing */}
+      <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label className="block text-sm font-medium text-slate-700">
             {dict.fields.monthlyRent}
@@ -341,22 +359,23 @@ export function PropertyForm({
             className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
         </div>
-      </div>
-
-      <div className="sm:max-w-xs">
-        <label className="block text-sm font-medium text-slate-700">
-          {dict.fields.sellPrice}
-        </label>
-        <input
-          name="sell_price_cents"
-          type="number"
-          min="0"
-          step="0.01"
-          defaultValue={centsToEuros(property?.sell_price_cents ?? null)}
-          placeholder={dict.fields.valuePlaceholder}
-          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-        />
-        <p className="mt-1 text-xs text-slate-500">{dict.fields.sellPriceHint}</p>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            {dict.fields.sellPrice}
+          </label>
+          <input
+            name="sell_price_cents"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={centsToEuros(property?.sell_price_cents ?? null)}
+            placeholder={dict.fields.valuePlaceholder}
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            {dict.fields.sellPriceHint}
+          </p>
+        </div>
       </div>
 
       {/* Listing status */}
@@ -391,7 +410,7 @@ export function PropertyForm({
         <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
           {dict.sections.financials}
         </legend>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.acquisitionDate}
@@ -403,8 +422,6 @@ export function PropertyForm({
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.acquisitionFees}
@@ -431,8 +448,6 @@ export function PropertyForm({
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.housingTax}
@@ -467,25 +482,7 @@ export function PropertyForm({
         <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
           {dict.sections.characteristics}
         </legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-700">
-              {dict.fields.type}
-            </label>
-            <select
-              name="type"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            >
-              <option value="">{dict.fields.typePlaceholder}</option>
-              {PROPERTY_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {dict.types[t]}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.surface}
@@ -499,8 +496,6 @@ export function PropertyForm({
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.rooms}
@@ -527,8 +522,6 @@ export function PropertyForm({
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.bathrooms}
@@ -542,6 +535,8 @@ export function PropertyForm({
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.floor}
@@ -554,8 +549,6 @@ export function PropertyForm({
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.building}
@@ -582,7 +575,7 @@ export function PropertyForm({
             />
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.housingKind}
@@ -611,8 +604,6 @@ export function PropertyForm({
               <option value="co_ownership">{dict.fields.ownershipKindCo}</option>
             </select>
           </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.heatingMode}

@@ -62,6 +62,8 @@ export async function updateProfileAction(
       postal_code: nullableString(String(formData.get("postal_code") ?? "")),
       country: nullableString(String(formData.get("country") ?? "")),
       phone: nullableString(String(formData.get("phone") ?? "")),
+      iban: nullableString(String(formData.get("iban") ?? "")),
+      bic: nullableString(String(formData.get("bic") ?? "")),
     })
     .eq("id", session.user.id);
 

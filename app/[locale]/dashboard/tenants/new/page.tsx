@@ -41,7 +41,7 @@ export default async function NewTenantPage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12">
+    <div className="mx-auto max-w-6xl px-6 py-12">
       <div className="mb-6">
         <Link
           href={`/${locale}/dashboard/tenants`}

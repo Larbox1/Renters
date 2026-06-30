@@ -101,14 +101,30 @@ export async function deleteDocumentAction(formData: FormData) {
     .maybeSingle();
   if (!doc) return;
 
-  const { error } = await session.supabase
+  // Drop any rent receipt that pointed at this document first (FK is ON DELETE
+  // SET NULL, so otherwise the receipt would linger on the lease page with a
+  // dead download link).
+  await session.supabase.from("rent_receipts").delete().eq("document_id", id);
+
+  // .select() so we know how many rows were actually removed. A row blocked by
+  // RLS deletes 0 rows with no error — without this check we'd delete the
+  // storage file while the row (and the listing entry) survived.
+  const { data: deleted, error } = await session.supabase
     .from("documents")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
-  if (!error && doc.path) {
-    await deleteDocument(doc.path as string);
+  if (error) {
+    console.error("[documents.delete] failed:", error);
+    return;
   }
+  if (!deleted || deleted.length === 0) {
+    console.error("[documents.delete] removed 0 rows (blocked by RLS?)", id);
+    return;
+  }
+
+  if (doc.path) await deleteDocument(doc.path as string);
 
   revalidatePath(`/${locale}/dashboard/documents`);
 }

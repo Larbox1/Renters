@@ -30,7 +30,13 @@ export const fmt = (cents: number | null | undefined) =>
         style: "currency",
         currency: "EUR",
         minimumFractionDigits: 2,
-      }).format(cents / 100)
+      })
+        .format(cents / 100)
+        // fr-FR groups thousands with a narrow no-break space (U+202F) and
+        // spaces the € sign with a no-break space (U+00A0). @react-pdf's built-in
+        // Helvetica has no glyph for U+202F and renders it as "/", so normalise
+        // both to a regular space. Harmless in the HTML views.
+        .replace(/[  ]/g, " ")
     : "_______________";
 
 export const fmtDate = (iso: string | null | undefined) =>

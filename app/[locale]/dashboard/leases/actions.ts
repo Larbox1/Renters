@@ -59,28 +59,57 @@ const CHARGES_METHODS = ["provisions", "periodic", "flat_rate"] as const;
 const PAYMENT_TIMINGS = ["in_advance", "arrears"] as const;
 const DPE_CLASSES = ["A", "B", "C", "D", "E", "F", "G"] as const;
 
-function buildBailVidePayload(formData: FormData, includeDetails: boolean) {
-  if (!includeDetails) {
-    // Clear contract-detail fields when the lease isn't a bail vide / meublé.
-    return {
-      duration: null,
-      reduced_duration_months: null,
-      reduced_duration_reason: null,
-      irl_reference: null,
-      revision_date: null,
-      rent_supplement_cents: null,
-      is_zone_tendue: false,
-      reference_rent_cents_per_sqm: null,
-      reference_rent_capped_cents_per_sqm: null,
-      charges_method: null,
-      charges_amount_cents: null,
-      payment_day_of_month: null,
-      payment_timing: null,
-      dpe_class: null,
-      annual_energy_cost_cents: null,
-      tenant_fees_cents: null,
-      tenant_inventory_fees_cents: null,
-    };
+function buildLeaseDetailPayload(formData: FormData, typeRaw: string) {
+  const isFull = typeRaw === "bail_vide" || typeRaw === "bail_meuble";
+  const isBasic = typeRaw === "bail_civil" || typeRaw === "bail_commercial";
+
+  // Everything nulled — the baseline for lease types that capture no
+  // contract details (e.g. mobilité, étudiant).
+  const cleared = {
+    duration: null,
+    reduced_duration_months: null,
+    reduced_duration_reason: null,
+    irl_reference: null,
+    revision_date: null,
+    rent_supplement_cents: null,
+    is_zone_tendue: false,
+    reference_rent_cents_per_sqm: null,
+    reference_rent_capped_cents_per_sqm: null,
+    charges_method: null,
+    charges_amount_cents: null,
+    payment_day_of_month: null,
+    payment_timing: null,
+    dpe_class: null,
+    annual_energy_cost_cents: null,
+    tenant_fees_cents: null,
+    tenant_inventory_fees_cents: null,
+  };
+
+  if (!isFull) {
+    // Bail civil / commercial capture a small financial subset used by their
+    // contract templates (revision index, charges, payment terms).
+    if (isBasic) {
+      return {
+        ...cleared,
+        irl_reference: optionalString(
+          String(formData.get("irl_reference") ?? ""),
+        ),
+        revision_date: optionalString(
+          String(formData.get("revision_date") ?? ""),
+        ),
+        charges_amount_cents: optionalCents(
+          String(formData.get("charges_amount_cents") ?? ""),
+        ),
+        payment_day_of_month: optionalInt(
+          String(formData.get("payment_day_of_month") ?? ""),
+        ),
+        payment_timing: optionalEnum(
+          String(formData.get("payment_timing") ?? ""),
+          PAYMENT_TIMINGS,
+        ),
+      };
+    }
+    return cleared;
   }
   const duration = optionalEnum(
     String(formData.get("duration") ?? ""),
@@ -161,10 +190,7 @@ export async function createLeaseAction(
       deposit_cents: eurosToCents(String(formData.get("deposit_cents") ?? "0")),
       status: String(formData.get("status") ?? "pending"),
       type: typeRaw || null,
-      ...buildBailVidePayload(
-        formData,
-        typeRaw === "bail_vide" || typeRaw === "bail_meuble",
-      ),
+      ...buildLeaseDetailPayload(formData, typeRaw),
     })
     .select("id")
     .single();
@@ -199,10 +225,7 @@ export async function updateLeaseAction(
       deposit_cents: eurosToCents(String(formData.get("deposit_cents") ?? "0")),
       status: String(formData.get("status") ?? "pending"),
       type: typeRaw || null,
-      ...buildBailVidePayload(
-        formData,
-        typeRaw === "bail_vide" || typeRaw === "bail_meuble",
-      ),
+      ...buildLeaseDetailPayload(formData, typeRaw),
     })
     .eq("id", id);
 
