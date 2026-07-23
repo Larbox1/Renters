@@ -9,8 +9,11 @@ import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import {
   Calendar,
   type CalendarEvent,
-  type CalendarEventKind,
 } from "@/components/calendar";
+import {
+  CashflowChart,
+  type MonthlyCashflow,
+} from "@/components/cashflow-chart";
 import {
   StorageUsageTable,
   type StorageUsageRow,
@@ -25,16 +28,123 @@ function parseMonth(raw: string | undefined): Date {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-function isoDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
 }
 
-type RpcEvent = {
-  event_date: string;
-  kind: CalendarEventKind;
-  label: string;
-  lease_id: string;
+// Aggregate finance transactions into the trailing 12 monthly buckets, oldest
+// first. Empty months are kept so the chart shows a continuous axis.
+function buildCashflow(
+  rows: { kind: string; amount_cents: number; occurred_on: string }[],
+  year: number,
+  month0: number, // 0-based month of the most recent bucket
+): MonthlyCashflow[] {
+  const months: MonthlyCashflow[] = [];
+  const byMonth = new Map<string, MonthlyCashflow>();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(year, month0 - i, 1);
+    const bucket: MonthlyCashflow = {
+      month: `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`,
+      incomeCents: 0,
+      expenseCents: 0,
+    };
+    months.push(bucket);
+    byMonth.set(bucket.month, bucket);
+  }
+  for (const r of rows) {
+    const bucket = byMonth.get(r.occurred_on.slice(0, 7));
+    if (!bucket) continue;
+    if (r.kind === "income") bucket.incomeCents += r.amount_cents;
+    else if (r.kind === "expense") bucket.expenseCents += r.amount_cents;
+  }
+  return months;
+}
+
+type LeaseCalendarRow = {
+  id: string;
+  start_date: string | null;
+  end_date: string | null;
+  revision_date: string | null;
+  payment_day_of_month: number | null;
+  tenants:
+    | { full_name: string | null; date_of_birth: string | null }
+    | { full_name: string | null; date_of_birth: string | null }[]
+    | null;
+  properties:
+    | { label: string | null; address: string | null }
+    | { label: string | null; address: string | null }[]
+    | null;
 };
+
+// Supabase returns a many-to-one embed as an object, but the generated types
+// (and older PostgREST versions) can surface it as a one-element array.
+function pickOne<T>(rel: T | T[] | null): T | null {
+  if (!rel) return null;
+  return Array.isArray(rel) ? (rel[0] ?? null) : rel;
+}
+
+// Expand each lease into the calendar events that fall in the displayed month.
+// Recurring events (revision, birthday, rent payment) are projected onto the
+// month; one-off events (start/end) are only emitted when they land in it.
+function buildCalendarEvents(
+  leases: LeaseCalendarRow[],
+  asOwner: boolean,
+  year: number,
+  month: number, // 0-based
+): CalendarEvent[] {
+  const monthKey = `${year}-${pad2(month + 1)}`;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const events: CalendarEvent[] = [];
+  const birthdaysSeen = new Set<string>();
+
+  const inThisMonth = (iso: string) => iso.slice(0, 7) === monthKey;
+  const withinLease = (iso: string, start: string | null, end: string | null) =>
+    (!start || iso >= start) && (!end || iso <= end);
+  // Same month/day as `iso`, projected into the displayed month/year (clamped
+  // so e.g. Feb 29 lands on the 28th in non-leap years).
+  const annualOccurrence = (iso: string): string | null => {
+    if (Number(iso.slice(5, 7)) - 1 !== month) return null;
+    const day = Math.min(Number(iso.slice(8, 10)), daysInMonth);
+    return `${monthKey}-${pad2(day)}`;
+  };
+
+  for (const l of leases) {
+    const tenant = pickOne(l.tenants);
+    const property = pickOne(l.properties);
+    const tenantName = tenant?.full_name ?? null;
+    const propLabel = property?.label ?? property?.address ?? null;
+    const counterpart = (asOwner ? tenantName ?? propLabel : propLabel) ?? "";
+
+    if (l.start_date && inThisMonth(l.start_date))
+      events.push({ date: l.start_date, kind: "lease_start", label: counterpart, leaseId: l.id });
+
+    if (l.end_date && inThisMonth(l.end_date))
+      events.push({ date: l.end_date, kind: "lease_end", label: counterpart, leaseId: l.id });
+
+    if (l.revision_date) {
+      const occ = annualOccurrence(l.revision_date);
+      if (occ && withinLease(occ, l.start_date, l.end_date))
+        events.push({ date: occ, kind: "lease_revision", label: counterpart, leaseId: l.id });
+    }
+
+    if (tenant?.date_of_birth) {
+      const occ = annualOccurrence(tenant.date_of_birth);
+      // A tenant can hold several leases — show their birthday once.
+      if (occ && !birthdaysSeen.has(`${tenantName ?? l.id}-${occ}`)) {
+        birthdaysSeen.add(`${tenantName ?? l.id}-${occ}`);
+        events.push({ date: occ, kind: "tenant_birthday", label: tenantName ?? counterpart, leaseId: l.id });
+      }
+    }
+
+    if (l.payment_day_of_month != null) {
+      const day = Math.min(Math.max(l.payment_day_of_month, 1), daysInMonth);
+      const occ = `${monthKey}-${pad2(day)}`;
+      if (withinLease(occ, l.start_date, l.end_date))
+        events.push({ date: occ, kind: "rent_payment", label: counterpart, leaseId: l.id });
+    }
+  }
+  return events;
+}
 
 export default async function DashboardPage({
   params,
@@ -63,7 +173,6 @@ export default async function DashboardPage({
   let propertiesCount = 0;
   let occupiedCount = 0;
   let activeLeasesCount = 0;
-  let monthlyRentCents = 0;
   let portfolioValueCents = 0;
 
   if (showOwnerNav) {
@@ -74,7 +183,7 @@ export default async function DashboardPage({
       session.supabase.from("properties").select("value_cents"),
       session.supabase
         .from("leases")
-        .select("monthly_rent_cents, property_id")
+        .select("property_id")
         .eq("status", "active"),
     ]);
 
@@ -85,10 +194,6 @@ export default async function DashboardPage({
     );
     const leases = activeLeases.data ?? [];
     activeLeasesCount = leases.length;
-    monthlyRentCents = leases.reduce(
-      (sum, l) => sum + (l.monthly_rent_cents ?? 0),
-      0,
-    );
     occupiedCount = new Set(leases.map((l) => l.property_id)).size;
   }
 
@@ -107,12 +212,6 @@ export default async function DashboardPage({
   // Calendar (non-admin only). Resolve month from URL param.
   const sp = await searchParams;
   const monthDate = parseMonth(sp.month);
-  const monthStart = monthDate;
-  const monthEnd = new Date(
-    monthDate.getFullYear(),
-    monthDate.getMonth() + 1,
-    0,
-  );
 
   // Admins see global storage usage on the overview.
   let storageRows: StorageUsageRow[] = [];
@@ -127,22 +226,51 @@ export default async function DashboardPage({
 
   let calendarEvents: CalendarEvent[] = [];
   if (showCalendar) {
-    const { data, error } = await session.supabase.rpc(
-      "get_my_lease_events",
-      {
-        range_start: isoDate(monthStart),
-        range_end: isoDate(monthEnd),
-      },
-    );
+    // RLS scopes this per role: owners/admins see every lease, tenants only
+    // their own. We expand each lease into calendar events client-side.
+    const { data, error } = await session.supabase
+      .from("leases")
+      .select(
+        "id, start_date, end_date, revision_date, payment_day_of_month, tenants(full_name, date_of_birth), properties(label, address)",
+      );
     if (error) {
-      console.error("[dashboard.calendar] get_my_lease_events failed:", error);
+      console.error("[dashboard.calendar] leases fetch failed:", error);
     } else {
-      calendarEvents = ((data ?? []) as RpcEvent[]).map((e) => ({
-        date: e.event_date,
-        kind: e.kind,
-        label: e.label,
-        leaseId: e.lease_id,
-      }));
+      calendarEvents = buildCalendarEvents(
+        (data ?? []) as LeaseCalendarRow[],
+        isOwnerOrAdmin(role),
+        monthDate.getFullYear(),
+        monthDate.getMonth(),
+      );
+    }
+  }
+
+  // Cash flow (owners): trailing 12 months of recorded income / expense. The
+  // chart's range selector (3/6/12) slices this client-side, so we fetch the
+  // full window once.
+  let cashflow: MonthlyCashflow[] = [];
+  if (role === "owner") {
+    const now = new Date();
+    const windowStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    const { data, error } = await session.supabase
+      .from("finance_transactions")
+      .select("kind, amount_cents, occurred_on")
+      .gte(
+        "occurred_on",
+        `${windowStart.getFullYear()}-${pad2(windowStart.getMonth() + 1)}-01`,
+      );
+    if (error) {
+      console.error("[dashboard.cashflow] finance fetch failed:", error);
+    } else {
+      cashflow = buildCashflow(
+        (data ?? []) as {
+          kind: string;
+          amount_cents: number;
+          occurred_on: string;
+        }[],
+        now.getFullYear(),
+        now.getMonth(),
+      );
     }
   }
 
@@ -164,7 +292,7 @@ export default async function DashboardPage({
       </div>
 
       {showOwnerNav && (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <Link
             href={`/${locale}/dashboard/properties`}
             className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
@@ -202,17 +330,6 @@ export default async function DashboardPage({
             </p>
           </Link>
           <Link
-            href={`/${locale}/dashboard/leases`}
-            className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
-          >
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              {dict.dashboard.stats.monthlyRent}
-            </p>
-            <p className="mt-2 text-2xl font-bold text-slate-900 group-hover:text-brand-700">
-              {fmtCurrency(monthlyRentCents)}
-            </p>
-          </Link>
-          <Link
             href={`/${locale}/dashboard/properties`}
             className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
           >
@@ -223,6 +340,18 @@ export default async function DashboardPage({
               {fmtCurrency(portfolioValueCents)}
             </p>
           </Link>
+        </div>
+      )}
+
+      {role === "owner" && (
+        <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <div className="col-span-2 lg:col-span-3">
+            <CashflowChart
+              locale={locale as Locale}
+              data={cashflow}
+              dict={dict.dashboard.cashflow}
+            />
+          </div>
         </div>
       )}
 

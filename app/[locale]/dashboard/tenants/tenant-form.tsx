@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { SignedTenantDocument } from "@/lib/tenants/documents";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 import {
   createTenantAction,
   updateTenantAction,
@@ -286,36 +287,29 @@ export function TenantForm({
             <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
               {dict.sections.previousAddress}
             </legend>
-            <div>
-              <label className={labelClass}>{dict.fields.previousAddress}</label>
-              <input
-                name="previous_address"
-                type="text"
-                defaultValue={tenant?.previous_address ?? ""}
-                className={inputClass}
-              />
-            </div>
             <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <label className={labelClass}>{dict.fields.previousCity}</label>
-                <input
-                  name="previous_city"
-                  type="text"
-                  defaultValue={tenant?.previous_city ?? ""}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>
-                  {dict.fields.previousPostalCode}
-                </label>
-                <input
-                  name="previous_postal_code"
-                  type="text"
-                  defaultValue={tenant?.previous_postal_code ?? ""}
-                  className={inputClass}
-                />
-              </div>
+              <AddressAutocomplete
+                searchingLabel={dict.fields.addressSearching}
+                noResultsLabel={dict.fields.addressNoResults}
+                addressColSpanClass="sm:col-span-3"
+                address={{
+                  name: "previous_address",
+                  label: dict.fields.previousAddress,
+                }}
+                city={{
+                  name: "previous_city",
+                  label: dict.fields.previousCity,
+                }}
+                postalCode={{
+                  name: "previous_postal_code",
+                  label: dict.fields.previousPostalCode,
+                }}
+                defaults={{
+                  address: tenant?.previous_address ?? "",
+                  city: tenant?.previous_city ?? "",
+                  postalCode: tenant?.previous_postal_code ?? "",
+                }}
+              />
               <div>
                 <label className={labelClass}>
                   {dict.fields.previousCountry}

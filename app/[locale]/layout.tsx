@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -77,6 +78,7 @@ export default async function LocaleLayout({
         )}
         <main className="flex-1">{children}</main>
         {!userEmail && <Footer locale={locale as Locale} dict={dict.footer} />}
+        <Analytics />
       </body>
     </html>
   );

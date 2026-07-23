@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { SignedPhoto } from "@/lib/properties/photos";
 import { PhotoManager, type PhotoManagerHandle } from "./photo-manager";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 import {
   createPropertyAction,
   updatePropertyAction,
@@ -277,44 +278,32 @@ export function PropertyForm({
           </select>
         </div>
 
-        <div className="sm:col-span-2 lg:col-span-3">
-          <label className="block text-sm font-medium text-slate-700">
-            {dict.fields.address} <span className="text-red-500">*</span>
-          </label>
-          <input
-            name="address"
-            type="text"
-            required
-            defaultValue={property?.address ?? ""}
-            placeholder={dict.fields.addressPlaceholder}
-            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700">
-            {dict.fields.city} <span className="text-red-500">*</span>
-          </label>
-          <input
-            name="city"
-            type="text"
-            required
-            defaultValue={property?.city ?? ""}
-            placeholder={dict.fields.cityPlaceholder}
-            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700">
-            {dict.fields.postalCode}
-          </label>
-          <input
-            name="postal_code"
-            type="text"
-            defaultValue={property?.postal_code ?? ""}
-            placeholder={dict.fields.postalCodePlaceholder}
-            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
-        </div>
+        <AddressAutocomplete
+          searchingLabel={dict.fields.addressSearching}
+          noResultsLabel={dict.fields.addressNoResults}
+          address={{
+            name: "address",
+            label: dict.fields.address,
+            placeholder: dict.fields.addressPlaceholder,
+            required: true,
+          }}
+          city={{
+            name: "city",
+            label: dict.fields.city,
+            placeholder: dict.fields.cityPlaceholder,
+            required: true,
+          }}
+          postalCode={{
+            name: "postal_code",
+            label: dict.fields.postalCode,
+            placeholder: dict.fields.postalCodePlaceholder,
+          }}
+          defaults={{
+            address: property?.address ?? "",
+            city: property?.city ?? "",
+            postalCode: property?.postal_code ?? "",
+          }}
+        />
         <div>
           <label className="block text-sm font-medium text-slate-700">
             {dict.fields.country}

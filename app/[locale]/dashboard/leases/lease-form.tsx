@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState, type ChangeEvent } from "react";
+import { useActionState, useState, type ChangeEvent } from "react";
 import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
@@ -9,6 +9,7 @@ import {
   updateLeaseAction,
   type LeaseState,
 } from "./actions";
+import { RentRevision } from "./rent-revision";
 
 type Property = {
   id: string;
@@ -77,6 +78,39 @@ type Lease = {
   tenant_inventory_fees_cents: number | null;
 };
 
+// Number of months covered by each lease duration option. `reduced` is
+// variable, so it resolves from the entered month count instead.
+function durationToMonths(
+  d: LeaseDuration | "",
+  reducedMonths: number | null,
+): number | null {
+  switch (d) {
+    case "3_years":
+      return 36;
+    case "6_years":
+      return 72;
+    case "1_year":
+      return 12;
+    case "9_months_student":
+      return 9;
+    case "reduced":
+      return reducedMonths && reducedMonths > 0 ? reducedMonths : null;
+    default:
+      return null;
+  }
+}
+
+// End date = start + N months on the same day-of-month (the lease anniversary).
+// This matches how the contract derives its duration label from start/end
+// (see contract-shared.ts durationLabel), which expects the anniversary day.
+function computeEndDate(start: string, months: number): string {
+  const [y, m, d] = start.split("-").map(Number);
+  if (!y || !m || !d) return "";
+  const base = new Date(Date.UTC(y, m - 1, d));
+  base.setUTCMonth(base.getUTCMonth() + months);
+  return base.toISOString().slice(0, 10);
+}
+
 function SubmitButton({ labels }: { labels: { idle: string; busy: string } }) {
   const { pending } = useFormStatus();
   return (
@@ -113,13 +147,17 @@ export function LeaseForm({
   const propertyRentMap = new Map(
     properties.map((p) => [p.id, p.monthly_rent_cents] as const),
   );
-  const rentRef = useRef<HTMLInputElement>(null);
+
+  const initialRentEuros = lease
+    ? centsToEuros(lease.monthly_rent_cents)
+    : defaultPropertyId && propertyRentMap.get(defaultPropertyId) != null
+      ? centsToEuros(propertyRentMap.get(defaultPropertyId)!)
+      : "";
+  const [rentEuros, setRentEuros] = useState<string>(initialRentEuros);
 
   const handlePropertyChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const cents = propertyRentMap.get(e.target.value);
-    if (cents != null && rentRef.current) {
-      rentRef.current.value = centsToEuros(cents);
-    }
+    if (cents != null) setRentEuros(centsToEuros(cents));
   };
 
   const [selectedType, setSelectedType] = useState<LeaseTypeValue | "">(
@@ -131,6 +169,28 @@ export function LeaseForm({
   const [isZoneTendue, setIsZoneTendue] = useState<boolean>(
     lease?.is_zone_tendue ?? false,
   );
+  const [startDate, setStartDate] = useState<string>(lease?.start_date ?? "");
+  const [endDate, setEndDate] = useState<string>(lease?.end_date ?? "");
+  const [reducedMonths, setReducedMonths] = useState<string>(
+    lease?.reduced_duration_months != null
+      ? String(lease.reduced_duration_months)
+      : "",
+  );
+
+  // Recompute the end date from the start date and selected duration. Called on
+  // any change to those inputs; leaves the end date untouched (and manually
+  // editable) when the duration can't be resolved.
+  const applyEndDate = (
+    start: string,
+    dur: LeaseDuration | "",
+    reduced: string,
+  ) => {
+    const months = durationToMonths(dur, reduced ? Number(reduced) : null);
+    if (start && months) {
+      const computed = computeEndDate(start, months);
+      if (computed) setEndDate(computed);
+    }
+  };
 
   const showContractDetails =
     selectedType === "bail_vide" || selectedType === "bail_meuble";
@@ -249,7 +309,11 @@ export function LeaseForm({
             name="start_date"
             type="date"
             required
-            defaultValue={lease?.start_date ?? ""}
+            value={startDate}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              applyEndDate(e.target.value, duration, reducedMonths);
+            }}
             className={inputClass}
           />
         </div>
@@ -258,7 +322,8 @@ export function LeaseForm({
           <input
             name="end_date"
             type="date"
-            defaultValue={lease?.end_date ?? ""}
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
             className={inputClass}
           />
         </div>
@@ -270,20 +335,13 @@ export function LeaseForm({
             {dict.fields.monthlyRent} <span className="text-red-500">*</span>
           </label>
           <input
-            ref={rentRef}
             name="monthly_rent_cents"
             type="number"
             min="0"
             step="0.01"
             required
-            defaultValue={
-              lease
-                ? centsToEuros(lease.monthly_rent_cents)
-                : defaultPropertyId &&
-                    propertyRentMap.get(defaultPropertyId) != null
-                  ? centsToEuros(propertyRentMap.get(defaultPropertyId)!)
-                  : ""
-            }
+            value={rentEuros}
+            onChange={(e) => setRentEuros(e.target.value)}
             placeholder={dict.fields.monthlyRentPlaceholder}
             className={inputClass}
           />
@@ -323,7 +381,10 @@ export function LeaseForm({
                     name="duration"
                     value={d}
                     checked={duration === d}
-                    onChange={() => setDuration(d)}
+                    onChange={() => {
+                      setDuration(d);
+                      applyEndDate(startDate, d, reducedMonths);
+                    }}
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500"
                   />
                   {durationLabel(d)}
@@ -341,7 +402,11 @@ export function LeaseForm({
                     type="number"
                     min="1"
                     max="36"
-                    defaultValue={lease?.reduced_duration_months ?? ""}
+                    value={reducedMonths}
+                    onChange={(e) => {
+                      setReducedMonths(e.target.value);
+                      applyEndDate(startDate, duration, e.target.value);
+                    }}
                     className={inputClass}
                   />
                 </div>
@@ -362,27 +427,14 @@ export function LeaseForm({
 
           <div className="space-y-3">
             <p className={subheadingClass}>{bv.rentRevisionGroup}</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className={labelClass}>{bv.irlReference}</label>
-                <input
-                  name="irl_reference"
-                  type="text"
-                  defaultValue={lease?.irl_reference ?? ""}
-                  placeholder={bv.irlReferencePlaceholder}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>{bv.revisionDate}</label>
-                <input
-                  name="revision_date"
-                  type="date"
-                  defaultValue={lease?.revision_date ?? ""}
-                  className={inputClass}
-                />
-              </div>
-            </div>
+            <RentRevision
+              locale={locale}
+              bv={bv}
+              defaultReference={lease?.irl_reference ?? null}
+              defaultRevisionDate={lease?.revision_date ?? null}
+              currentRentEuros={rentEuros}
+              onApply={setRentEuros}
+            />
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
                 type="checkbox"
@@ -589,26 +641,15 @@ export function LeaseForm({
           <h2 className="text-base font-semibold text-slate-900">
             {dict.types[selectedType as LeaseTypeValue]}
           </h2>
+          <RentRevision
+            locale={locale}
+            bv={bv}
+            defaultReference={lease?.irl_reference ?? null}
+            defaultRevisionDate={lease?.revision_date ?? null}
+            currentRentEuros={rentEuros}
+            onApply={setRentEuros}
+          />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <label className={labelClass}>{bv.irlReference}</label>
-              <input
-                name="irl_reference"
-                type="text"
-                defaultValue={lease?.irl_reference ?? ""}
-                placeholder={bv.irlReferencePlaceholder}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>{bv.revisionDate}</label>
-              <input
-                name="revision_date"
-                type="date"
-                defaultValue={lease?.revision_date ?? ""}
-                className={inputClass}
-              />
-            </div>
             <div>
               <label className={labelClass}>{bv.chargesAmount}</label>
               <input

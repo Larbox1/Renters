@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 import {
   updateProfileAction,
   type ProfileState,
@@ -90,35 +91,20 @@ export function ProfileForm({
         </div>
       </div>
 
-      <div>
-        <label className={labelClass}>{dict.address}</label>
-        <input
-          name="address"
-          type="text"
-          defaultValue={profile.address ?? ""}
-          className={inputClass}
-        />
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <label className={labelClass}>{dict.city}</label>
-          <input
-            name="city"
-            type="text"
-            defaultValue={profile.city ?? ""}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className={labelClass}>{dict.postalCode}</label>
-          <input
-            name="postal_code"
-            type="text"
-            defaultValue={profile.postal_code ?? ""}
-            className={inputClass}
-          />
-        </div>
+        <AddressAutocomplete
+          searchingLabel={dict.addressSearching}
+          noResultsLabel={dict.addressNoResults}
+          addressColSpanClass="sm:col-span-3"
+          address={{ name: "address", label: dict.address }}
+          city={{ name: "city", label: dict.city }}
+          postalCode={{ name: "postal_code", label: dict.postalCode }}
+          defaults={{
+            address: profile.address ?? "",
+            city: profile.city ?? "",
+            postalCode: profile.postal_code ?? "",
+          }}
+        />
         <div>
           <label className={labelClass}>{dict.country}</label>
           <input

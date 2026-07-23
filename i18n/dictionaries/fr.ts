@@ -2,10 +2,10 @@ import type { Dictionary } from "./en";
 
 export const fr: Dictionary = {
   meta: {
-    siteTitle: "renters — La gestion locative, simplifiée",
+    siteTitle: "Meskasas — La gestion locative, simplifiée",
     siteDescription:
       "Gérez vos biens, locataires, baux et prestataires au même endroit. Conçu pour les propriétaires, locataires et gestionnaires.",
-    pricingTitle: "Tarifs — renters",
+    pricingTitle: "Tarifs — Meskasas",
     pricingDescription:
       "Des tarifs simples et transparents. Commencez gratuitement avec 1 bien, puis évoluez à votre rythme.",
   },
@@ -119,6 +119,14 @@ export const fr: Dictionary = {
       monthlyRent: "Loyer mensuel",
       portfolioValue: "Valeur du portefeuille",
     },
+    cashflow: {
+      heading: "Flux de trésorerie",
+      revenues: "Revenus",
+      expenses: "Dépenses",
+      net: "Net",
+      monthsSuffix: "mois",
+      empty: "Aucune transaction sur cette période.",
+    },
     calendar: {
       heading: "Calendrier",
       empty: "Aucun événement ce mois-ci.",
@@ -128,7 +136,13 @@ export const fr: Dictionary = {
       events: {
         lease_start: "Début de bail",
         lease_end: "Fin de bail",
+        lease_revision: "Révision du loyer",
+        tenant_birthday: "Anniversaire",
+        rent_payment: "Paiement du loyer",
       },
+      close: "Fermer",
+      noEventsDay: "Aucun événement ce jour.",
+      viewLease: "Voir le bail",
     },
     sidebar: {
       overview: "Vue d'ensemble",
@@ -265,6 +279,8 @@ export const fr: Dictionary = {
       city: "Ville",
       postalCode: "Code postal",
       country: "Pays",
+      addressSearching: "Recherche…",
+      addressNoResults: "Aucune adresse correspondante",
       phone: "Numéro de téléphone",
       bankHeading: "Coordonnées bancaires",
       bankHint: "Affichées sur les quittances pour permettre au locataire de vous régler.",
@@ -466,6 +482,8 @@ export const fr: Dictionary = {
       labelPlaceholder: "ex. Appartement 3B",
       address: "Adresse",
       addressPlaceholder: "123 rue de la Paix",
+      addressSearching: "Recherche…",
+      addressNoResults: "Aucune adresse correspondante",
       city: "Ville",
       cityPlaceholder: "Paris",
       postalCode: "Code postal",
@@ -644,6 +662,8 @@ export const fr: Dictionary = {
       previousCity: "Ville",
       previousPostalCode: "Code postal",
       previousCountry: "Pays",
+      addressSearching: "Recherche…",
+      addressNoResults: "Aucune adresse correspondante",
       idDocumentType: "Type de pièce d'identité",
       idDocumentTypePlaceholder: "Choisir un type",
       idDocumentTypes: {
@@ -717,7 +737,19 @@ export const fr: Dictionary = {
         rentRevisionGroup: "Loyer & révision",
         irlReference: "Trimestre de référence IRL",
         irlReferencePlaceholder: "ex. T2 2024",
+        irlSelectPlaceholder: "Choisir un trimestre",
+        irlLoading: "Chargement des indices IRL…",
+        irlUnavailable: "Indices IRL indisponibles — saisir la référence manuellement.",
+        irlBaseIndex: "Indice de référence",
         revisionDate: "Date de révision annuelle",
+        revisedRentGroup: "Révision automatique",
+        revisedRent: "Loyer révisé",
+        revisedRentBasis: "{new} ÷ {base} × loyer actuel",
+        revisedRentNeedsQuarter: "Choisir un trimestre de référence pour calculer le loyer révisé.",
+        revisedRentNoNewIndex: "L'indice de la prochaine révision n'est pas encore publié.",
+        revisedRentEffective: "Appliqué le {date}",
+        applyRevisedRent: "Appliquer ce loyer",
+        revisedRentApplied: "Loyer révisé appliqué au champ loyer.",
         rentSupplement: "Complément de loyer (€)",
         rentSupplementHint:
           "Uniquement en zone tendue avec caractéristiques justificatives.",

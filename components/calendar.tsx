@@ -1,8 +1,16 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 
-export type CalendarEventKind = "lease_start" | "lease_end";
+export type CalendarEventKind =
+  | "lease_start"
+  | "lease_end"
+  | "lease_revision"
+  | "tenant_birthday"
+  | "rent_payment";
 
 export type CalendarEvent = {
   date: string; // ISO YYYY-MM-DD
@@ -14,7 +22,32 @@ export type CalendarEvent = {
 const EVENT_DOT_CLASS: Record<CalendarEventKind, string> = {
   lease_start: "bg-green-500",
   lease_end: "bg-amber-500",
+  lease_revision: "bg-blue-500",
+  tenant_birthday: "bg-pink-500",
+  rent_payment: "bg-violet-500",
 };
+
+// Tinted background + text for the inline event previews inside day cells.
+const EVENT_PILL_CLASS: Record<CalendarEventKind, string> = {
+  lease_start: "bg-green-100 text-green-700",
+  lease_end: "bg-amber-100 text-amber-700",
+  lease_revision: "bg-blue-100 text-blue-700",
+  tenant_birthday: "bg-pink-100 text-pink-700",
+  rent_payment: "bg-violet-100 text-violet-700",
+};
+
+// How many event previews to render inside a day cell before collapsing the
+// rest into a "+N" counter.
+const MAX_PREVIEWS = 3;
+
+// Legend / popup order — keeps related event types grouped.
+const EVENT_ORDER: CalendarEventKind[] = [
+  "lease_start",
+  "lease_end",
+  "rent_payment",
+  "lease_revision",
+  "tenant_birthday",
+];
 
 function intlLocale(locale: Locale): string {
   return locale === "fr" ? "fr-FR" : "en-US";
@@ -40,6 +73,27 @@ export function Calendar({
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
 
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  // Computed after mount so server-rendered HTML (which uses the server's clock)
+  // never disagrees with the client on which cell is "today".
+  const [today, setToday] = useState<Date | null>(null);
+  useEffect(() => setToday(new Date()), []);
+
+  // Reset the open popup whenever the displayed month changes.
+  useEffect(() => {
+    setSelectedDay(null);
+  }, [year, month]);
+
+  // Close the popup on Escape.
+  useEffect(() => {
+    if (selectedDay === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedDay(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [selectedDay]);
+
   const monthStart = new Date(year, month, 1);
   const monthEnd = new Date(year, month + 1, 0);
   const daysInMonth = monthEnd.getDate();
@@ -62,6 +116,10 @@ export function Calendar({
     arr.push(e);
     eventsByDay.set(day, arr);
   }
+  // Stable, grouped ordering within a day.
+  for (const arr of eventsByDay.values()) {
+    arr.sort((a, b) => EVENT_ORDER.indexOf(a.kind) - EVENT_ORDER.indexOf(b.kind));
+  }
 
   const fmt = intlLocale(locale);
   const monthLabel = new Intl.DateTimeFormat(fmt, {
@@ -81,10 +139,23 @@ export function Calendar({
   const nextHref = `${baseUrl}?month=${formatMonthParam(nextMonth)}`;
   const todayHref = baseUrl;
 
-  const today = new Date();
   const isCurrentMonth =
-    today.getFullYear() === year && today.getMonth() === month;
-  const todayDate = today.getDate();
+    today !== null &&
+    today.getFullYear() === year &&
+    today.getMonth() === month;
+  const todayDate = today?.getDate() ?? -1;
+
+  const selectedEvents =
+    selectedDay !== null ? (eventsByDay.get(selectedDay) ?? []) : [];
+  const selectedDateLabel =
+    selectedDay !== null
+      ? new Intl.DateTimeFormat(fmt, {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }).format(new Date(year, month, selectedDay))
+      : "";
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -134,17 +205,21 @@ export function Calendar({
             return (
               <div
                 key={i}
-                className="aspect-square rounded-md bg-slate-50/40"
+                className="min-h-[92px] rounded-md bg-slate-50/40"
                 aria-hidden
               />
             );
           }
           const dayEvents = eventsByDay.get(d) ?? [];
           const isToday = isCurrentMonth && d === todayDate;
+          const hidden = dayEvents.length - MAX_PREVIEWS;
           return (
-            <div
+            <button
               key={i}
-              className={`relative flex aspect-square flex-col rounded-md border p-1.5 ${
+              type="button"
+              onClick={() => setSelectedDay(d)}
+              aria-label={`${d}${dayEvents.length > 0 ? ` — ${dayEvents.length}` : ""}`}
+              className={`relative flex min-h-[92px] flex-col gap-1 rounded-md border p-1.5 text-left transition hover:border-brand-400 hover:bg-brand-50/60 focus:outline-none focus:ring-2 focus:ring-brand-400 ${
                 isToday
                   ? "border-brand-400 bg-brand-50"
                   : "border-slate-200 bg-white"
@@ -158,39 +233,103 @@ export function Calendar({
                 {d}
               </span>
               {dayEvents.length > 0 && (
-                <div className="mt-auto flex flex-wrap gap-0.5">
-                  {dayEvents.slice(0, 4).map((e, idx) => (
+                <div className="flex flex-col gap-0.5">
+                  {dayEvents.slice(0, MAX_PREVIEWS).map((e, idx) => (
                     <span
                       key={`${e.leaseId}-${e.kind}-${idx}`}
                       title={`${dict.events[e.kind]}: ${e.label}`}
-                      className={`block h-1.5 w-1.5 rounded-full ${EVENT_DOT_CLASS[e.kind]}`}
-                    />
+                      className={`flex items-center gap-1 rounded px-1 py-0.5 text-[10px] font-medium leading-tight ${EVENT_PILL_CLASS[e.kind]}`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${EVENT_DOT_CLASS[e.kind]}`}
+                      />
+                      <span className="truncate">
+                        {e.label || dict.events[e.kind]}
+                      </span>
+                    </span>
                   ))}
-                  {dayEvents.length > 4 && (
-                    <span className="text-[9px] font-semibold text-slate-500">
-                      +{dayEvents.length - 4}
+                  {hidden > 0 && (
+                    <span className="px-1 text-[10px] font-semibold text-slate-500">
+                      +{hidden}
                     </span>
                   )}
                 </div>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-green-500" />
-          {dict.events.lease_start}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-amber-500" />
-          {dict.events.lease_end}
-        </span>
+        {EVENT_ORDER.map((kind) => (
+          <span key={kind} className="inline-flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${EVENT_DOT_CLASS[kind]}`} />
+            {dict.events[kind]}
+          </span>
+        ))}
         {events.length === 0 && (
           <span className="ml-auto italic">{dict.empty}</span>
         )}
       </div>
+
+      {/* Day-detail popup */}
+      {selectedDay !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4"
+          onClick={() => setSelectedDay(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl"
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <h3 className="text-base font-semibold capitalize text-slate-900">
+                {selectedDateLabel}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSelectedDay(null)}
+                aria-label={dict.close}
+                className="-mr-1 -mt-1 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            {selectedEvents.length === 0 ? (
+              <p className="py-4 text-sm text-slate-500">{dict.noEventsDay}</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {selectedEvents.map((e, idx) => (
+                  <li key={`${e.leaseId}-${e.kind}-${idx}`}>
+                    <Link
+                      href={`${baseUrl}/leases/${e.leaseId}`}
+                      className="flex items-center gap-3 rounded-lg border border-slate-100 px-3 py-2 hover:border-brand-200 hover:bg-brand-50/60"
+                    >
+                      <span
+                        className={`h-2.5 w-2.5 shrink-0 rounded-full ${EVENT_DOT_CLASS[e.kind]}`}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-slate-900">
+                          {e.label}
+                        </span>
+                        <span className="block text-xs text-slate-500">
+                          {dict.events[e.kind]}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-xs font-medium text-brand-600">
+                        {dict.viewLease}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
