@@ -46,16 +46,27 @@ export function Footer({
                 {col.title}
               </h5>
               <ul className="flex flex-col gap-2">
-                {col.links.map((label) => (
-                  <li key={label}>
-                    <a
-                      href="#"
-                      className="text-[13.5px] text-ink-2 transition hover:text-accent-deep"
-                    >
-                      {label}
-                    </a>
-                  </li>
-                ))}
+                {col.links.map((label) =>
+                  label === dict.contactLabel ? (
+                    <li key={label}>
+                      <Link
+                        href={`/${locale}/contact`}
+                        className="text-[13.5px] text-ink-2 transition hover:text-accent-deep"
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  ) : (
+                    <li key={label}>
+                      <a
+                        href="#"
+                        className="text-[13.5px] text-ink-2 transition hover:text-accent-deep"
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           ))}

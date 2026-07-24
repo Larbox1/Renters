@@ -73,7 +73,6 @@ export default async function LocaleLayout({
             locale={locale as Locale}
             dict={dict.nav}
             userEmail={userEmail}
-            utility={dict.home.utility}
           />
         )}
         <main className="flex-1">{children}</main>

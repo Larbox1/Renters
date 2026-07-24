@@ -5,15 +5,6 @@ import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { LandingPricingGrid } from "@/components/landing-pricing";
 
-const LOGOS = [
-  { kind: "round", label: "Maisonette" },
-  { kind: "square", label: "SCI Verlaine" },
-  { kind: "tri", label: "Brique & Co" },
-  { kind: "round", label: "Foncière 36" },
-  { kind: "square", label: "Logé" },
-  { kind: "round", label: "Latoit" },
-] as const;
-
 const TABLE_ROWS = [
   { ini: "JM", name: "Bastille T2 · J. Mercier", due: "05 nov.", amount: "910 €", status: "collected" as const },
   { ini: "CR", name: "Vauban T3 · C. Roux", due: "05 nov.", amount: "1 240 €", status: "collected" as const },
@@ -74,15 +65,6 @@ export default async function HomePage({
                   {d.hero.ctaPrimary}
                   <ArrowIcon />
                 </Link>
-                <a
-                  href="#features"
-                  className="inline-flex items-center gap-2 rounded-lg border border-line bg-paper-elev px-[18px] py-3 text-[15px] font-medium text-ink shadow-sm transition hover:border-ink-3"
-                >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M5 3.5v9l7-4.5-7-4.5Z" />
-                  </svg>
-                  {d.hero.ctaDemo}
-                </a>
               </div>
               <div className="mt-4 flex flex-wrap gap-5 text-[13px] text-ink-3">
                 <span className="inline-flex items-center gap-1.5"><CheckIcon className="h-3 w-3 text-accent" />{d.hero.metaNoCard}</span>
@@ -209,31 +191,6 @@ export default async function HomePage({
           </div>
         </div>
 
-        {/* Logos strip */}
-        <div className="mt-14 border-y border-line bg-paper py-7">
-          <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-8 px-7">
-            <p className="max-w-[200px] whitespace-nowrap text-xs text-ink-3">{d.logos.tagline}</p>
-            <div className="flex flex-wrap items-center gap-9 opacity-80">
-              {LOGOS.map((l) => (
-                <span key={l.label} className="inline-flex items-center gap-2 text-[15.5px] font-semibold tracking-[-0.02em] text-ink-2">
-                  {l.kind === "round" && <span className="h-2 w-2 rounded-full bg-ink-2" />}
-                  {l.kind === "square" && <span className="h-2 w-2 rounded-[2px] bg-ink-2" />}
-                  {l.kind === "tri" && (
-                    <span
-                      className="h-0 w-0"
-                      style={{
-                        borderLeft: "5px solid transparent",
-                        borderRight: "5px solid transparent",
-                        borderBottom: "8px solid #2F3D6B",
-                      }}
-                    />
-                  )}
-                  {l.label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Features grid */}
@@ -249,11 +206,28 @@ export default async function HomePage({
           <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
             {d.features.items.map((f, i) => (
               <article key={i} className="flex min-h-[220px] flex-col gap-3 bg-paper-elev p-7">
-                <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-lg bg-accent-soft text-accent-deep">
-                  <FeatIcon i={i} />
+                <div
+                  className={`mb-1 flex h-9 w-9 items-center justify-center rounded-lg ${
+                    f.comingSoon ? "bg-paper-sunk text-ink-4" : "bg-accent-soft text-accent-deep"
+                  }`}
+                >
+                  <FeatIcon icon={f.icon} />
                 </div>
-                <h3 className="text-base font-semibold tracking-[-0.01em]">{f.title}</h3>
-                <p className="text-[14px] leading-[1.55] text-ink-3">{f.description}</p>
+                <h3
+                  className={`text-base font-semibold tracking-[-0.01em] ${
+                    f.comingSoon ? "text-ink-3" : ""
+                  }`}
+                >
+                  {f.title}
+                  {f.comingSoon && (
+                    <span className="ml-2 inline-flex translate-y-[-1px] rounded-full bg-amber-100 px-2 py-0.5 align-middle text-[10.5px] font-medium text-amber-800">
+                      {d.features.comingSoonBadge}
+                    </span>
+                  )}
+                </h3>
+                <p className={`text-[14px] leading-[1.55] ${f.comingSoon ? "text-ink-4" : "text-ink-3"}`}>
+                  {f.description}
+                </p>
                 <span className="mt-auto pt-4 font-mono text-[11px] text-ink-4">{f.label}</span>
               </article>
             ))}
@@ -472,12 +446,6 @@ export default async function HomePage({
               {d.finalCta.primary}
               <ArrowIcon />
             </Link>
-            <a
-              href="#"
-              className="inline-flex items-center justify-center rounded-lg border border-line bg-paper-elev px-[18px] py-3 text-[15px] font-medium text-ink hover:border-ink-3"
-            >
-              {d.finalCta.demo}
-            </a>
             <small className="mt-1 text-center text-[12px] text-ink-3">{d.finalCta.note}</small>
           </div>
         </div>
@@ -618,19 +586,19 @@ function MobCard({ l, v, meta }: { l: string; v: string; meta: string }) {
   );
 }
 
-function FeatIcon({ i }: { i: number }) {
-  const Icons = [
-    <svg key="0" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M3 4h11l3 3v9H3V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M6 9h8M6 12h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    <svg key="1" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M3 16V4M17 4v12M3 16h14M6 13V9m4 4V6m4 7v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    <svg key="2" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><circle cx="10" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.5" /><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    <svg key="3" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><rect x="3" y="4" width="14" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><path d="M6 9h8M6 12h5M3 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    <svg key="4" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M5 3h7l4 4v10H5V3Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="m8 12 2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-    <svg key="5" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M3 6h14v9H3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M3 6 10 12 17 6" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>,
-    <svg key="6" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M3 12h14M5 8h10M7 4h6M5 16h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    <svg key="7" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" /><path d="M10 6v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-    <svg key="8" viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><rect x="6" y="2" width="8" height="16" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><circle cx="10" cy="15" r=".7" fill="currentColor" /></svg>,
-  ];
-  return Icons[i] ?? Icons[0];
+function FeatIcon({ icon }: { icon: string }) {
+  const Icons: Record<string, React.ReactNode> = {
+    receipt: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M3 4h11l3 3v9H3V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M6 9h8M6 12h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+    chart: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M3 16V4M17 4v12M3 16h14M6 13V9m4 4V6m4 7v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+    users: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><circle cx="10" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.5" /><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+    report: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><rect x="3" y="4" width="14" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><path d="M6 9h8M6 12h5M3 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+    signature: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M5 3h7l4 4v10H5V3Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="m8 12 2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+    mail: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M3 6h14v9H3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M3 6 10 12 17 6" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>,
+    works: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><path d="M3 12h14M5 8h10M7 4h6M5 16h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+    portal: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" /><path d="M10 6v4l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+    phone: <svg viewBox="0 0 20 20" fill="none" className="h-[18px] w-[18px]"><rect x="6" y="2" width="8" height="16" rx="1.5" stroke="currentColor" strokeWidth="1.5" /><circle cx="10" cy="15" r=".7" fill="currentColor" /></svg>,
+  };
+  return Icons[icon] ?? Icons.receipt;
 }
 
 function Showcase({

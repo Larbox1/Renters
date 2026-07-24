@@ -6,6 +6,39 @@ export const en = {
     pricingTitle: "Pricing — Meskasas",
     pricingDescription:
       "Simple, transparent pricing. Start free with 1 property, or scale up as you grow.",
+    contactTitle: "Contact — Meskasas",
+    contactDescription:
+      "A question about Meskasas, your account or your data? Write to us — a human replies, usually the same day.",
+  },
+  contact: {
+    kicker: "Contact",
+    h1A: "Talk to",
+    h1Serif: "a human.",
+    lede:
+      "A question about the product, your account or your data? Write to us — a real person reads and answers every message.",
+    emailTitle: "Email us",
+    emailBody:
+      "For any question about the product, billing, migration or your data.",
+    emailAddress: "contact@meskasas.com",
+    hoursTitle: "Response times",
+    hoursBody:
+      "We reply within one business day — usually the same day.",
+    hoursNote: "MON–FRI · 9AM–6PM (PARIS)",
+    form: {
+      nameLabel: "Your name",
+      namePlaceholder: "Sophie Martin",
+      emailLabel: "Your email",
+      emailPlaceholder: "you@example.com",
+      messageLabel: "Your message",
+      messagePlaceholder: "How can we help?",
+      submit: "Send message",
+      submitting: "Sending…",
+      successTitle: "Message sent",
+      successBody:
+        "Thank you! We've received your message and will get back to you within one business day.",
+      error:
+        "Your message could not be sent. Please try again, or email us directly at contact@meskasas.com.",
+    },
   },
   nav: {
     home: "Home",
@@ -870,17 +903,11 @@ export const en = {
     resourcesLinks: ["Landlord guides", "Blog", "Lease templates", "Support"],
     company: "Company",
     companyLinks: ["About", "Security & GDPR", "Legal notice", "Contact"],
+    contactLabel: "Contact",
     rights: "Hosted in France · ★ 4.8 / 5",
     legal: ["Terms", "Privacy", "Cookies", "Status"],
   },
   home: {
-    utility: {
-      status: "All services operational",
-      version: "v3.4 · new: e-signature included",
-      lang: "Language",
-      statusLink: "Status",
-      help: "Help",
-    },
     hero: {
       eyebrowPill: "New",
       eyebrowText: "One-click rent receipts + auto reminders",
@@ -889,9 +916,8 @@ export const en = {
       lede:
         "Meskasas brings your leases, receipts, payments and condition reports together in one clear workspace. Tenants get exactly what they need — automatically — your books stay current, and you get your weekends back.",
       ctaPrimary: "Start free",
-      ctaDemo: "Watch the demo (2 min)",
       metaNoCard: "No credit card",
-      metaFreeUnits: "5 units free forever",
+      metaFreeUnits: "1 property free forever",
       metaHosted: "Hosted in France · GDPR",
     },
     mock: {
@@ -939,69 +965,85 @@ export const en = {
       mobileLateMeta: "Unpaid · D+9",
       mobileCta: "Send a reminder",
     },
-    logos: {
-      tagline: "Trusted by 7,400 landlords and property companies across France",
-    },
     features: {
       kicker: "All-in-one · 01",
       h2A: "A complete toolbox,",
       h2Serif: "not a puzzle.",
       lede:
         "Nine modules that talk to each other. Enter information once — Meskasas takes care of the rest: generation, sending, archiving, accounting.",
+      comingSoonBadge: "Coming soon",
       items: [
         {
           title: "Receipts & rent calls",
           description:
             "Automatic generation on the dates set by your leases. Sent by email, archived as PDFs, with configurable reminders.",
           label: "01 / COLLECTION",
-        },
-        {
-          title: "Accounting & tax filing",
-          description:
-            "Every payment recorded automatically, charges deducted, 2044 / 2031 exports ready to sign.",
-          label: "02 / TAX",
+          icon: "receipt",
+          comingSoon: false,
         },
         {
           title: "Tenants & leases",
           description:
             "Detailed profiles, security deposits, IRL indexation, addenda, clauses — all traceable and exportable.",
-          label: "03 / OCCUPANCY",
-        },
-        {
-          title: "Digital condition reports",
-          description:
-            "Room by room with photos. Move-in / move-out comparison, on-the-spot signature, timestamped PDF.",
-          label: "04 / FIELD",
-        },
-        {
-          title: "E-signature",
-          description:
-            "Leases, addenda, mandates signed remotely with legal value. Included on the free plan.",
-          label: "05 / DOCUMENTS",
+          label: "02 / OCCUPANCY",
+          icon: "users",
+          comingSoon: false,
         },
         {
           title: "Built-in messaging",
           description:
             "Talk to tenants from the app, letter templates, read receipts, full history per property.",
-          label: "06 / RELATIONSHIP",
+          label: "03 / RELATIONSHIP",
+          icon: "mail",
+          comingSoon: false,
         },
         {
           title: "Works & incidents",
           description:
             "Tickets, quotes, photos, progress tracking. Keep a clean history per unit and per tenant.",
-          label: "07 / OPS",
+          label: "04 / OPS",
+          icon: "works",
+          comingSoon: false,
         },
         {
           title: "Tenant portal",
           description:
             "Tenants check their receipts, report incidents, pay online. No app to install.",
-          label: "08 / PORTAL",
+          label: "05 / PORTAL",
+          icon: "portal",
+          comingSoon: false,
+        },
+        {
+          title: "Accounting & tax filing",
+          description:
+            "Every payment recorded automatically, charges deducted, 2044 / 2031 exports ready to sign.",
+          label: "06 / TAX",
+          icon: "chart",
+          comingSoon: true,
+        },
+        {
+          title: "Digital condition reports",
+          description:
+            "Room by room with photos. Move-in / move-out comparison, on-the-spot signature, timestamped PDF.",
+          label: "07 / FIELD",
+          icon: "report",
+          comingSoon: true,
+        },
+        {
+          title: "E-signature",
+          description:
+            "Leases, addenda and mandates signed remotely with legal value.",
+          label: "08 / DOCUMENTS",
+          icon: "signature",
+          comingSoon: true,
         },
         {
           title: "Mobile app",
           description:
             "iOS and Android. Snap a condition report, validate a rent, scan an invoice in two taps.",
           label: "09 / MOBILE",
+          icon: "phone",
+          comingSoon: true,
         },
       ],
     },
@@ -1206,7 +1248,7 @@ export const en = {
       kicker: "Questions · 05",
       h2: "No surprises.",
       ledeBefore: "Can't find your answer? Email us at",
-      ledeEmail: "hello@meskasas.fr",
+      ledeEmail: "contact@meskasas.com",
       ledeAfter: " — a human will get back to you the same day.",
       items: [
         {
@@ -1226,8 +1268,8 @@ export const en = {
           a: "Your tenants can pay by card or SEPA direct debit from their portal. Funds land directly on your bank account — Meskasas never holds the money.",
         },
         {
-          q: "What if I go over my 5 free units?",
-          a: "You keep full access to your data and can still view it. To add new units or keep sending receipts and reminders, you switch to Pro (€14/month). No commitment.",
+          q: "What if I need more than my 1 free property?",
+          a: "You keep full access to your data and can still view it. To add new properties or keep sending receipts and reminders, you switch to Plus (€9.90/month). No commitment.",
         },
         {
           q: "Do you offer onboarding help?",
@@ -1240,8 +1282,7 @@ export const en = {
       h2Serif: "your time.",
       p: "Account creation in 90 seconds. You can add your first property, import a lease and send a receipt before you finish your coffee.",
       primary: "Start free",
-      demo: "Book a demo",
-      note: "No credit card · 5 units free forever",
+      note: "No credit card · 1 property free forever",
     },
   },
   pricing: {

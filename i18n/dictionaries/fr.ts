@@ -8,6 +8,39 @@ export const fr: Dictionary = {
     pricingTitle: "Tarifs — Meskasas",
     pricingDescription:
       "Des tarifs simples et transparents. Commencez gratuitement avec 1 bien, puis évoluez à votre rythme.",
+    contactTitle: "Contact — Meskasas",
+    contactDescription:
+      "Une question sur Meskasas, votre compte ou vos données ? Écrivez-nous — un humain vous répond, souvent le jour même.",
+  },
+  contact: {
+    kicker: "Contact",
+    h1A: "Parlez à",
+    h1Serif: "un humain.",
+    lede:
+      "Une question sur le produit, votre compte ou vos données ? Écrivez-nous — une vraie personne lit et répond à chaque message.",
+    emailTitle: "Écrivez-nous",
+    emailBody:
+      "Pour toute question sur le produit, la facturation, la migration ou vos données.",
+    emailAddress: "contact@meskasas.com",
+    hoursTitle: "Délais de réponse",
+    hoursBody:
+      "Nous répondons sous un jour ouvré — souvent le jour même.",
+    hoursNote: "LUN–VEN · 9H–18H (PARIS)",
+    form: {
+      nameLabel: "Votre nom",
+      namePlaceholder: "Sophie Martin",
+      emailLabel: "Votre e-mail",
+      emailPlaceholder: "vous@exemple.com",
+      messageLabel: "Votre message",
+      messagePlaceholder: "Comment pouvons-nous vous aider ?",
+      submit: "Envoyer le message",
+      submitting: "Envoi…",
+      successTitle: "Message envoyé",
+      successBody:
+        "Merci ! Nous avons bien reçu votre message et nous vous répondrons sous un jour ouvré.",
+      error:
+        "Votre message n'a pas pu être envoyé. Réessayez, ou écrivez-nous directement à contact@meskasas.com.",
+    },
   },
   nav: {
     home: "Accueil",
@@ -883,17 +916,11 @@ export const fr: Dictionary = {
     resourcesLinks: ["Guides bailleurs", "Blog", "Modèles de baux", "Support"],
     company: "Société",
     companyLinks: ["À propos", "Sécurité & RGPD", "Mentions légales", "Contact"],
+    contactLabel: "Contact",
     rights: "Hébergé en France · ★ 4,8 / 5",
     legal: ["CGU", "Confidentialité", "Cookies", "Statut"],
   },
   home: {
-    utility: {
-      status: "Tous les services opérationnels",
-      version: "v3.4 · nouveauté : signature électronique gratuite",
-      lang: "Langue",
-      statusLink: "Statut",
-      help: "Aide",
-    },
     hero: {
       eyebrowPill: "Nouveau",
       eyebrowText: "Quittances en 1 clic + relances auto",
@@ -902,9 +929,8 @@ export const fr: Dictionary = {
       lede:
         "Meskasas rassemble vos baux, quittances, paiements et états des lieux dans un seul espace clair. Vos locataires reçoivent automatiquement ce qu'il faut, vos comptes restent à jour, et vous récupérez vos week-ends.",
       ctaPrimary: "Démarrer gratuitement",
-      ctaDemo: "Voir la démo (2 min)",
       metaNoCard: "Sans CB",
-      metaFreeUnits: "5 lots gratuits à vie",
+      metaFreeUnits: "1 bien gratuit à vie",
       metaHosted: "Hébergé en France · RGPD",
     },
     mock: {
@@ -952,69 +978,85 @@ export const fr: Dictionary = {
       mobileLateMeta: "Impayé · J+9",
       mobileCta: "Envoyer une relance",
     },
-    logos: {
-      tagline: "Choisi par 7 400 bailleurs et SCI partout en France",
-    },
     features: {
       kicker: "Tout-en-un · 01",
       h2A: "Une boîte à outils complète,",
       h2Serif: "pas un puzzle.",
       lede:
         "Neuf modules qui se parlent entre eux. Vous saisissez l'information une fois, Meskasas s'occupe du reste : génération, envoi, archivage, comptabilité.",
+      comingSoonBadge: "Bientôt disponible",
       items: [
         {
           title: "Quittances & appels de loyer",
           description:
             "Génération automatique aux dates fixées par vos baux. Envoi par e-mail, archive PDF, relances paramétrables.",
           label: "01 / RECOUVREMENT",
-        },
-        {
-          title: "Comptabilité & déclaration",
-          description:
-            "Saisie automatique de chaque encaissement, déduction des charges, export 2044 / 2031 prêt à signer.",
-          label: "02 / FISCAL",
+          icon: "receipt",
+          comingSoon: false,
         },
         {
           title: "Locataires & baux",
           description:
             "Fiches détaillées, dépôts de garantie, indexations IRL, avenants, clauses, le tout traçable et exportable.",
-          label: "03 / OCCUPATION",
-        },
-        {
-          title: "État des lieux numérique",
-          description:
-            "Pièce par pièce, avec photos. Comparaison entrée / sortie, signature sur place, PDF horodaté.",
-          label: "04 / TERRAIN",
-        },
-        {
-          title: "Signature électronique",
-          description:
-            "Baux, avenants, mandats, signés à distance avec valeur légale. Inclus dès le forfait gratuit.",
-          label: "05 / DOCUMENTS",
+          label: "02 / OCCUPATION",
+          icon: "users",
+          comingSoon: false,
         },
         {
           title: "Communication intégrée",
           description:
             "Échanges avec vos locataires depuis l'app, modèles de courriers, accusés, historique par bien.",
-          label: "06 / RELATION",
+          label: "03 / RELATION",
+          icon: "mail",
+          comingSoon: false,
         },
         {
           title: "Travaux & sinistres",
           description:
             "Tickets, devis, photos, suivi de l'avancement. Gardez un historique propre par lot et par locataire.",
-          label: "07 / OPS",
+          label: "04 / OPS",
+          icon: "works",
+          comingSoon: false,
         },
         {
           title: "Espace locataire",
           description:
             "Vos locataires consultent leurs quittances, signalent un incident, paient en ligne. Sans appli à installer.",
-          label: "08 / PORTAIL",
+          label: "05 / PORTAIL",
+          icon: "portal",
+          comingSoon: false,
+        },
+        {
+          title: "Comptabilité & déclaration",
+          description:
+            "Saisie automatique de chaque encaissement, déduction des charges, export 2044 / 2031 prêt à signer.",
+          label: "06 / FISCAL",
+          icon: "chart",
+          comingSoon: true,
+        },
+        {
+          title: "État des lieux numérique",
+          description:
+            "Pièce par pièce, avec photos. Comparaison entrée / sortie, signature sur place, PDF horodaté.",
+          label: "07 / TERRAIN",
+          icon: "report",
+          comingSoon: true,
+        },
+        {
+          title: "Signature électronique",
+          description:
+            "Baux, avenants, mandats, signés à distance avec valeur légale.",
+          label: "08 / DOCUMENTS",
+          icon: "signature",
+          comingSoon: true,
         },
         {
           title: "Application mobile",
           description:
             "iOS et Android. Photographiez un état des lieux, validez un loyer, scannez une facture en deux taps.",
           label: "09 / MOBILE",
+          icon: "phone",
+          comingSoon: true,
         },
       ],
     },
@@ -1219,7 +1261,7 @@ export const fr: Dictionary = {
       kicker: "Questions · 05",
       h2: "Sans surprise.",
       ledeBefore: "Vous ne trouvez pas votre réponse ? Écrivez-nous à",
-      ledeEmail: "bonjour@meskasas.fr",
+      ledeEmail: "contact@meskasas.com",
       ledeAfter: " — un humain vous répond dans la journée.",
       items: [
         {
@@ -1239,8 +1281,8 @@ export const fr: Dictionary = {
           a: "Vos locataires peuvent payer par CB ou par prélèvement SEPA depuis leur espace. Les fonds arrivent directement sur votre compte bancaire — Meskasas ne stocke jamais l'argent.",
         },
         {
-          q: "Et si je dépasse mes 5 lots gratuits ?",
-          a: "Vous gardez l'accès complet à vos données et continuez de les consulter. Pour ajouter de nouveaux lots ou continuer à émettre quittances et relances, vous passez au forfait Pro (14 €/mois). Sans engagement.",
+          q: "Et si j'ai besoin de plus que mon bien gratuit ?",
+          a: "Vous gardez l'accès complet à vos données et continuez de les consulter. Pour ajouter de nouveaux biens ou continuer à émettre quittances et relances, vous passez au forfait Plus (9,90 €/mois). Sans engagement.",
         },
         {
           q: "Vous proposez un accompagnement à la mise en place ?",
@@ -1253,8 +1295,7 @@ export const fr: Dictionary = {
       h2Serif: "votre temps.",
       p: "Création de compte en 90 secondes. Vous pouvez ajouter votre premier bien, importer un bail et envoyer une quittance avant la fin du café.",
       primary: "Démarrer gratuitement",
-      demo: "Réserver une démo",
-      note: "Sans CB · 5 lots gratuits à vie",
+      note: "Sans CB · 1 bien gratuit à vie",
     },
   },
   pricing: {
