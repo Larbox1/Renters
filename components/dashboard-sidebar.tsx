@@ -29,14 +29,19 @@ function buildGroups(
 ): SidebarGroup[] {
   const groups: SidebarGroup[] = [];
 
+  // Overview: unlabelled group above Management.
+  groups.push({
+    items: [
+      {
+        href: `/${locale}/dashboard`,
+        label: dict.overview,
+        icon: "🏠",
+      },
+    ],
+  });
+
   // Management: the day-to-day piloting of the portfolio.
-  const management: SidebarItem[] = [
-    {
-      href: `/${locale}/dashboard`,
-      label: dict.overview,
-      icon: "🏠",
-    },
-  ];
+  const management: SidebarItem[] = [];
   if (role === "owner" || role === "admin") {
     management.push(
       {
@@ -68,7 +73,9 @@ function buildGroups(
       icon: "📄",
     });
   }
-  groups.push({ label: dict.groups.management, items: management });
+  if (management.length > 0) {
+    groups.push({ label: dict.groups.management, items: management });
+  }
 
   // Accounting: finance, owner-only.
   if (role === "owner") {
@@ -80,22 +87,39 @@ function buildGroups(
           label: dict.finance,
           icon: "💰",
         },
+        {
+          href: `/${locale}/dashboard/accounting`,
+          label: dict.accounting,
+          icon: "🧾",
+        },
       ],
     });
   }
 
-  // Operations: messaging, visible to everyone.
-  groups.push({
-    label: dict.groups.operations,
-    items: [
+  // Operations: messaging for everyone; market tools for owners/admins.
+  const operations: SidebarItem[] = [
+    {
+      href: `/${locale}/dashboard/messages`,
+      label: dict.messages,
+      icon: "💬",
+      badge: unreadMessages > 0 ? unreadMessages : undefined,
+    },
+  ];
+  if (role === "owner" || role === "admin") {
+    operations.push(
       {
-        href: `/${locale}/dashboard/messages`,
-        label: dict.messages,
-        icon: "💬",
-        badge: unreadMessages > 0 ? unreadMessages : undefined,
+        href: `/${locale}/dashboard/market-analysis`,
+        label: dict.marketAnalysis,
+        icon: "📊",
       },
-    ],
-  });
+      {
+        href: `/${locale}/dashboard/rental-yield`,
+        label: dict.rentalYield,
+        icon: "📈",
+      },
+    );
+  }
+  groups.push({ label: dict.groups.operations, items: operations });
 
   // Administration: admin-only tools.
   if (role === "admin") {

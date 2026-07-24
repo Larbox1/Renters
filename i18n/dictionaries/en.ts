@@ -178,6 +178,9 @@ export const en = {
       leases: "My Leases",
       documents: "My Documents",
       finance: "My Finance",
+      accounting: "My Accounting",
+      marketAnalysis: "Market Analysis",
+      rentalYield: "Rental Yield",
       users: "Users",
       settings: "Settings",
       logout: "Log out",
@@ -203,6 +206,7 @@ export const en = {
       details: "Details",
       contract: "Contract",
     },
+    comingSoon: "This section is coming soon.",
   },
   finance: {
     title: "My Finance",

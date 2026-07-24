@@ -185,6 +185,9 @@ export const fr: Dictionary = {
       leases: "Mes Locations",
       documents: "Mes Documents",
       finance: "Mes finances",
+      accounting: "Ma Comptabilité",
+      marketAnalysis: "Analyse du marché",
+      rentalYield: "Rendement locatif",
       users: "Utilisateurs",
       settings: "Paramètres",
       logout: "Se déconnecter",
@@ -204,6 +207,7 @@ export const fr: Dictionary = {
         admin: "Administration",
       },
     },
+    comingSoon: "Cette section sera bientôt disponible.",
     breadcrumb: {
       new: "Nouveau",
       edit: "Modifier",
