@@ -198,7 +198,8 @@ export async function createLeaseAction(
   if (error) return { error: error.message };
 
   revalidatePath(`/${locale}/dashboard/leases`);
-  redirect(`/${locale}/dashboard/leases/${lease.id}`);
+  // created=1 surfaces the "prepare the move-in condition report" banner.
+  redirect(`/${locale}/dashboard/leases/${lease.id}?created=1`);
 }
 
 export async function updateLeaseAction(

@@ -191,6 +191,7 @@ export default async function DashboardLayout({
     messages: dict.dashboard.sidebar.messages,
     users: dict.dashboard.sidebar.users,
     settings: dict.dashboard.sidebar.settings,
+    "condition-report": dict.leases.conditionReports.title,
     "my-lease": dict.myLease.title,
     "the-hub": "The Hub",
     search: dict.dashboard.sidebar.search.replace("…", "").trim(),

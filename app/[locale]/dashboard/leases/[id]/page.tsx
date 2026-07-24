@@ -11,17 +11,23 @@ import { signDocument } from "@/lib/documents/storage";
 import { deleteLeaseAction } from "../actions";
 import { LeaseDetailCards } from "../lease-detail-cards";
 import { LeaseReceiptsTable, type RentReceiptRow } from "../lease-receipts-table";
+import {
+  LeaseConditionReportsTable,
+  type ConditionReportListRow,
+} from "../lease-condition-reports-table";
 import { generateRentReceiptAction } from "./receipts/actions";
+import { createConditionReportAction } from "./condition-report/actions";
+import type { ReportType } from "./condition-report/report-shared";
 
 export default async function LeaseDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string; id: string }>;
-  searchParams: Promise<{ receipt?: string }>;
+  searchParams: Promise<{ receipt?: string; created?: string }>;
 }) {
   const { locale, id } = await params;
-  const { receipt } = await searchParams;
+  const { receipt, created } = await searchParams;
   if (!isLocale(locale)) notFound();
   const dict = getDictionary(locale as Locale);
 
@@ -68,6 +74,29 @@ export default async function LeaseDetailPage({
     }),
   );
 
+  // Condition reports (états des lieux) for this lease, newest first. Completed
+  // reports link to their generated PDF via a short-lived signed URL.
+  const { data: reportRows } = await supabase
+    .from("condition_reports")
+    .select("id, type, status, report_date, created_at, documents(path)")
+    .eq("lease_id", id)
+    .order("created_at", { ascending: false });
+
+  const conditionReports: ConditionReportListRow[] = await Promise.all(
+    (reportRows ?? []).map(async (r) => {
+      const doc = Array.isArray(r.documents) ? r.documents[0] : r.documents;
+      const path = (doc as { path: string } | null)?.path ?? null;
+      return {
+        id: r.id as string,
+        type: r.type as ReportType,
+        status: r.status as "draft" | "completed",
+        report_date: r.report_date as string,
+        created_at: r.created_at as string,
+        url: path ? await signDocument(path) : null,
+      };
+    }),
+  );
+
   const property = Array.isArray(lease.properties)
     ? lease.properties[0]
     : (lease.properties as { id: string; label: string | null; address: string; city: string } | null);
@@ -77,6 +106,11 @@ export default async function LeaseDetailPage({
 
   return (
     <div className="px-6 py-12">
+      {created === "1" && (
+        <p className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+          {dict.leases.conditionReports.createdBanner}
+        </p>
+      )}
       <div className="mb-6">
         <Link
           href={`/${locale}/dashboard/leases`}
@@ -160,6 +194,38 @@ export default async function LeaseDetailPage({
         <LeaseReceiptsTable
           receipts={receipts}
           dict={dict.leases.receipts}
+          locale={locale as Locale}
+          leaseId={id}
+        />
+      </section>
+
+      <section className="mt-10">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {dict.leases.conditionReports.title}
+          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            {(["move_in", "move_out"] as const).map((reportType) => (
+              <form key={reportType} action={createConditionReportAction}>
+                <input type="hidden" name="locale" value={locale} />
+                <input type="hidden" name="lease_id" value={id} />
+                <input type="hidden" name="report_type" value={reportType} />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700"
+                >
+                  {reportType === "move_in"
+                    ? dict.leases.conditionReports.createMoveIn
+                    : dict.leases.conditionReports.createMoveOut}
+                </button>
+              </form>
+            ))}
+          </div>
+        </div>
+
+        <LeaseConditionReportsTable
+          reports={conditionReports}
+          dict={dict.leases.conditionReports}
           locale={locale as Locale}
           leaseId={id}
         />
