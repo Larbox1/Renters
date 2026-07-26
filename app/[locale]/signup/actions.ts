@@ -2,6 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { isLocale, defaultLocale } from "@/i18n/config";
+import {
+  isOperationCountry,
+  type OperationCountry,
+} from "@/lib/operation-country";
 
 export type SignupRole = "owner" | "tenant" | "service_provider";
 export type SignupState = {
@@ -38,6 +42,11 @@ export async function signupAction(
     ? (roleRaw as SignupRole)
     : "tenant";
 
+  const countryRaw = String(formData.get("operation_country") ?? "");
+  const operationCountry: OperationCountry = isOperationCountry(countryRaw)
+    ? countryRaw
+    : "FR";
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,
@@ -47,6 +56,7 @@ export async function signupAction(
       data: {
         full_name: fullName,
         role,
+        operation_country: operationCountry,
       },
     },
   });

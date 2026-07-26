@@ -116,6 +116,13 @@ export const fr: Dictionary = {
         tenant: "Locataire",
         service_provider: "Prestataire de service",
       },
+      operationCountry: "Pays d'exploitation",
+      operationCountryHint:
+        "Le pays où se situent vos biens locatifs. Il détermine les types de baux et les documents légaux applicables. Modifiable plus tard dans les paramètres.",
+      operationCountries: {
+        FR: "🇫🇷 France",
+        US: "🇺🇸 États-Unis",
+      },
       submit: "Créer un compte",
       submitting: "Création du compte…",
       haveAccount: "Vous avez déjà un compte ?",
@@ -319,6 +326,13 @@ export const fr: Dictionary = {
       addressSearching: "Recherche…",
       addressNoResults: "Aucune adresse correspondante",
       phone: "Numéro de téléphone",
+      operationCountry: "Pays d'exploitation",
+      operationCountryHint:
+        "Le pays où se situent vos biens locatifs. Il détermine les types de baux et les documents légaux applicables.",
+      operationCountries: {
+        FR: "🇫🇷 France",
+        US: "🇺🇸 États-Unis",
+      },
       bankHeading: "Coordonnées bancaires",
       bankHint: "Affichées sur les quittances pour permettre au locataire de vous régler.",
       iban: "IBAN",
@@ -827,6 +841,10 @@ export const fr: Dictionary = {
       bail_etudiant: "Bail étudiant",
       bail_civil: "Bail civil",
       bail_commercial: "Bail commercial",
+      us_fixed_term: "Bail à durée déterminée (US)",
+      us_month_to_month: "Bail au mois (US)",
+      us_sublease: "Contrat de sous-location (US)",
+      us_commercial: "Bail commercial (US)",
     },
     form: {
       createTitle: "Nouveau bail",

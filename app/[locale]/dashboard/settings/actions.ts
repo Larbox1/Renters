@@ -7,6 +7,7 @@ import { getCurrentSession } from "@/lib/auth/current-user";
 import { createAdminClient, hasServiceRoleKey } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isPlanId, isBillingInterval } from "@/lib/plans";
+import { isOperationCountry } from "@/lib/operation-country";
 import {
   getStripe,
   hasStripeEnv,
@@ -51,6 +52,10 @@ export async function updateProfileAction(
       ? `${firstName} ${lastName}`
       : (firstName ?? lastName ?? null);
 
+  // Only present on the owner form — leave untouched when the field is absent
+  // (tenants / providers) or holds an unexpected value.
+  const operationCountryRaw = String(formData.get("operation_country") ?? "");
+
   const { error } = await session.supabase
     .from("profiles")
     .update({
@@ -64,6 +69,9 @@ export async function updateProfileAction(
       phone: nullableString(String(formData.get("phone") ?? "")),
       iban: nullableString(String(formData.get("iban") ?? "")),
       bic: nullableString(String(formData.get("bic") ?? "")),
+      ...(isOperationCountry(operationCountryRaw)
+        ? { operation_country: operationCountryRaw }
+        : {}),
     })
     .eq("id", session.user.id);
 

@@ -89,7 +89,7 @@ const MAX_PATH = 300;
 // Photo caps: per element and across the whole report (the report cap also
 // bounds the finalized PDF's size, since photos are embedded in the annex).
 export const MAX_PHOTOS_PER_ELEMENT = 3;
-export const MAX_PHOTOS_PER_REPORT = 80;
+export const MAX_PHOTOS_PER_REPORT = 40;
 
 const str = (v: unknown, max: number): string =>
   typeof v === "string" ? v.trim().slice(0, max) : "";

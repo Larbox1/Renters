@@ -110,6 +110,13 @@ export const en = {
         tenant: "Tenant",
         service_provider: "Service provider",
       },
+      operationCountry: "Operation country",
+      operationCountryHint:
+        "Where your rental properties are located. This determines which lease types and legal documents apply. You can change it later in Settings.",
+      operationCountries: {
+        FR: "🇫🇷 France",
+        US: "🇺🇸 United States",
+      },
       submit: "Create account",
       submitting: "Creating account…",
       haveAccount: "Already have an account?",
@@ -312,6 +319,13 @@ export const en = {
       addressSearching: "Searching…",
       addressNoResults: "No matching address",
       phone: "Phone",
+      operationCountry: "Operation country",
+      operationCountryHint:
+        "Where your rental properties are located. Determines which lease types and legal documents apply.",
+      operationCountries: {
+        FR: "🇫🇷 France",
+        US: "🇺🇸 United States",
+      },
       bankHeading: "Bank details",
       bankHint: "Shown on rent receipts so tenants can pay you.",
       iban: "IBAN",
@@ -814,6 +828,10 @@ export const en = {
       bail_etudiant: "Bail étudiant (student)",
       bail_civil: "Bail civil",
       bail_commercial: "Bail commercial",
+      us_fixed_term: "Fixed-term lease",
+      us_month_to_month: "Month-to-month lease",
+      us_sublease: "Sublease agreement",
+      us_commercial: "Commercial lease",
     },
     form: {
       createTitle: "New lease",

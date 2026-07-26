@@ -1,11 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { signupAction, type SignupState } from "./actions";
+import {
+  signupAction,
+  type SignupRole,
+  type SignupState,
+} from "./actions";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import {
+  OPERATION_COUNTRIES,
+  type OperationCountry,
+} from "@/lib/operation-country";
 
 function SubmitButton({ labels }: { labels: { idle: string; busy: string } }) {
   const { pending } = useFormStatus();
@@ -31,6 +39,9 @@ export function SignupForm({
     signupAction,
     { status: "idle" },
   );
+  const [role, setRole] = useState<SignupRole>("owner");
+  const [operationCountry, setOperationCountry] =
+    useState<OperationCountry>("FR");
 
   if (state.status === "success") {
     return (
@@ -108,7 +119,7 @@ export function SignupForm({
         </legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           {(["owner", "tenant", "service_provider"] as const).map(
-            (roleValue, idx) => (
+            (roleValue) => (
               <label
                 key={roleValue}
                 className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:border-brand-500 has-[input:checked]:border-brand-600 has-[input:checked]:bg-brand-50 has-[input:checked]:text-brand-900"
@@ -117,7 +128,8 @@ export function SignupForm({
                   type="radio"
                   name="role"
                   value={roleValue}
-                  defaultChecked={idx === 0}
+                  checked={role === roleValue}
+                  onChange={() => setRole(roleValue)}
                   className="text-brand-600 focus:ring-brand-500"
                 />
                 {dict.roles[roleValue]}
@@ -126,6 +138,35 @@ export function SignupForm({
           )}
         </div>
       </fieldset>
+
+      {role === "owner" && (
+        <fieldset>
+          <legend className="text-sm font-medium text-slate-700">
+            {dict.operationCountry}
+          </legend>
+          <p className="mt-1 text-xs text-slate-500">
+            {dict.operationCountryHint}
+          </p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {OPERATION_COUNTRIES.map((countryValue) => (
+              <label
+                key={countryValue}
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:border-brand-500 has-[input:checked]:border-brand-600 has-[input:checked]:bg-brand-50 has-[input:checked]:text-brand-900"
+              >
+                <input
+                  type="radio"
+                  name="operation_country"
+                  value={countryValue}
+                  checked={operationCountry === countryValue}
+                  onChange={() => setOperationCountry(countryValue)}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                {dict.operationCountries[countryValue]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       {state.status === "error" && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

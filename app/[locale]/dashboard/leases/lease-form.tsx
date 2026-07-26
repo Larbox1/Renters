@@ -5,6 +5,11 @@ import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import {
+  leaseTypesFor,
+  type LeaseTypeValue,
+  type OperationCountry,
+} from "@/lib/operation-country";
+import {
   createLeaseAction,
   updateLeaseAction,
   type LeaseState,
@@ -19,23 +24,6 @@ type Property = {
   monthly_rent_cents: number | null;
 };
 type Tenant = { id: string; full_name: string };
-
-type LeaseTypeValue =
-  | "bail_vide"
-  | "bail_meuble"
-  | "bail_mobilite"
-  | "bail_etudiant"
-  | "bail_civil"
-  | "bail_commercial";
-
-const LEASE_TYPES: LeaseTypeValue[] = [
-  "bail_vide",
-  "bail_meuble",
-  "bail_mobilite",
-  "bail_etudiant",
-  "bail_civil",
-  "bail_commercial",
-];
 
 type LeaseDuration =
   | "3_years"
@@ -131,6 +119,7 @@ export function LeaseForm({
   tenants,
   lease,
   defaultPropertyId,
+  operationCountry,
 }: {
   locale: Locale;
   dict: Dictionary["leases"];
@@ -138,6 +127,7 @@ export function LeaseForm({
   tenants: Tenant[];
   lease?: Lease;
   defaultPropertyId?: string;
+  operationCountry: OperationCountry;
 }) {
   const action = lease ? updateLeaseAction : createLeaseAction;
   const [state, formAction] = useActionState<LeaseState, FormData>(action, {});
@@ -159,6 +149,14 @@ export function LeaseForm({
     const cents = propertyRentMap.get(e.target.value);
     if (cents != null) setRentEuros(centsToEuros(cents));
   };
+
+  const countryTypes = leaseTypesFor(operationCountry);
+  // Keep an out-of-country type selectable when editing a lease created
+  // before the owner switched operation country.
+  const leaseTypes: readonly LeaseTypeValue[] =
+    lease?.type && !countryTypes.includes(lease.type)
+      ? [...countryTypes, lease.type]
+      : countryTypes;
 
   const [selectedType, setSelectedType] = useState<LeaseTypeValue | "">(
     lease?.type ?? "",
@@ -282,7 +280,7 @@ export function LeaseForm({
             className={selectClass}
           >
             <option value="">{dict.fields.typePlaceholder}</option>
-            {LEASE_TYPES.map((t) => (
+            {leaseTypes.map((t) => (
               <option key={t} value={t}>
                 {dict.types[t]}
               </option>

@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
+import { OPERATION_COUNTRIES } from "@/lib/operation-country";
 import {
   updateProfileAction,
   type ProfileState,
@@ -20,6 +21,7 @@ type Profile = {
   phone: string | null;
   iban: string | null;
   bic: string | null;
+  operation_country: "FR" | "US" | null;
 };
 
 const inputClass =
@@ -44,11 +46,13 @@ export function ProfileForm({
   dict,
   profile,
   email,
+  showOperationCountry,
 }: {
   locale: Locale;
   dict: Dictionary["settings"]["profile"];
   profile: Profile;
   email: string;
+  showOperationCountry: boolean;
 }) {
   const [state, formAction] = useActionState<ProfileState, FormData>(
     updateProfileAction,
@@ -125,6 +129,26 @@ export function ProfileForm({
           className={inputClass}
         />
       </div>
+
+      {showOperationCountry && (
+        <div className="sm:max-w-xs">
+          <label className={labelClass}>{dict.operationCountry}</label>
+          <select
+            name="operation_country"
+            defaultValue={profile.operation_country ?? "FR"}
+            className={`${inputClass} bg-white`}
+          >
+            {OPERATION_COUNTRIES.map((c) => (
+              <option key={c} value={c}>
+                {dict.operationCountries[c]}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-slate-500">
+            {dict.operationCountryHint}
+          </p>
+        </div>
+      )}
 
       <fieldset className="rounded-lg border border-slate-200 p-4">
         <legend className="px-1 text-sm font-medium text-slate-700">
