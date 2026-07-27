@@ -4,6 +4,8 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import type { CurrencyCode } from "@/lib/currency";
+import { localizeCurrencyLabel } from "@/lib/currency";
 import {
   createTransactionAction,
   type TransactionState,
@@ -58,12 +60,14 @@ function TransactionForm({
   properties,
   today,
   onSuccess,
+  currency,
 }: {
   locale: Locale;
   dict: Dictionary["finance"]["transactions"];
   properties: PropertyOption[];
   today: string;
   onSuccess: () => void;
+  currency: CurrencyCode;
 }) {
   const [state, formAction] = useActionState<TransactionState, FormData>(
     createTransactionAction,
@@ -123,7 +127,8 @@ function TransactionForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>
-            {dict.fields.amount} <span className="text-red-500">*</span>
+            {localizeCurrencyLabel(dict.fields.amount, currency)}{" "}
+            <span className="text-red-500">*</span>
           </label>
           <input
             name="amount_cents"
@@ -200,11 +205,13 @@ export function AddTransactionModal({
   dict,
   properties,
   today,
+  currency,
 }: {
   locale: Locale;
   dict: Dictionary["finance"]["transactions"];
   properties: PropertyOption[];
   today: string;
+  currency: CurrencyCode;
 }) {
   const [open, setOpen] = useState(false);
   // Bumped on each open so the inner form (and its action state) remounts fresh.
@@ -275,6 +282,7 @@ export function AddTransactionModal({
                 properties={properties}
                 today={today}
                 onSuccess={() => setOpen(false)}
+                currency={currency}
               />
             </div>
           </div>

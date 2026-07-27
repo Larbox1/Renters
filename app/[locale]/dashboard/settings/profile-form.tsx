@@ -59,6 +59,8 @@ export function ProfileForm({
     {},
   );
 
+  const isUS = profile.operation_country === "US";
+
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="locale" value={locale} />
@@ -100,9 +102,13 @@ export function ProfileForm({
           searchingLabel={dict.addressSearching}
           noResultsLabel={dict.addressNoResults}
           addressColSpanClass="sm:col-span-3"
+          disableSearch={isUS}
           address={{ name: "address", label: dict.address }}
           city={{ name: "city", label: dict.city }}
-          postalCode={{ name: "postal_code", label: dict.postalCode }}
+          postalCode={{
+            name: "postal_code",
+            label: isUS ? dict.zipCode : dict.postalCode,
+          }}
           defaults={{
             address: profile.address ?? "",
             city: profile.city ?? "",
@@ -155,19 +161,25 @@ export function ProfileForm({
           {dict.bankHeading}
         </legend>
         <p className="mb-3 text-xs text-slate-500">{dict.bankHint}</p>
+        {/* US operators store routing / account numbers in the same iban/bic
+            columns — only the labels change. */}
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
-            <label className={labelClass}>{dict.iban}</label>
+            <label className={labelClass}>
+              {isUS ? dict.routingNumber : dict.iban}
+            </label>
             <input
               name="iban"
               type="text"
               defaultValue={profile.iban ?? ""}
-              placeholder="FR76 ...."
+              placeholder={isUS ? undefined : "FR76 ...."}
               className={inputClass}
             />
           </div>
           <div>
-            <label className={labelClass}>{dict.bic}</label>
+            <label className={labelClass}>
+              {isUS ? dict.accountNumber : dict.bic}
+            </label>
             <input
               name="bic"
               type="text"

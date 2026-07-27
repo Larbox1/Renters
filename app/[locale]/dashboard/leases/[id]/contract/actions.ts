@@ -36,6 +36,10 @@ export async function saveLeaseContractAction(formData: FormData) {
     "bail_meuble",
     "bail_civil",
     "bail_commercial",
+    "us_fixed_term",
+    "us_month_to_month",
+    "us_sublease",
+    "us_commercial",
   ];
   if (leaseError || !lease || !SUPPORTED_TYPES.includes(lease.type)) return;
 
@@ -72,7 +76,15 @@ export async function saveLeaseContractAction(formData: FormData) {
   // renderer; bail vide / meublé share the loi Alur renderer.
   let pdfBuffer: Buffer;
   try {
-    if (lease.type === "bail_civil") {
+    if (typeof lease.type === "string" && lease.type.startsWith("us_")) {
+      const { renderUsContractPdf } = await import("./contract-us-pdf");
+      pdfBuffer = await renderUsContractPdf({
+        lease,
+        property,
+        tenant,
+        ownerProfile,
+      });
+    } else if (lease.type === "bail_civil") {
       const { renderCivilContractPdf } = await import("./contract-civil-pdf");
       pdfBuffer = await renderCivilContractPdf({
         lease,

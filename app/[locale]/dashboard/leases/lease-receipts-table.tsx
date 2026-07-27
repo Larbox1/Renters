@@ -1,6 +1,7 @@
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { ConfirmSubmit } from "@/components/confirm-submit";
+import type { CurrencyCode } from "@/lib/currency";
 import { deleteRentReceiptAction } from "./[id]/receipts/actions";
 
 export type RentReceiptRow = {
@@ -24,16 +25,18 @@ export function LeaseReceiptsTable({
   dict,
   locale,
   leaseId,
+  currency,
 }: {
   receipts: RentReceiptRow[];
   dict: Dictionary["leases"]["receipts"];
   locale: Locale;
   leaseId: string;
+  currency: CurrencyCode;
 }) {
   const fmtEuros = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: "EUR",
+      currency,
       minimumFractionDigits: 2,
     }).format(cents / 100);
 

@@ -62,6 +62,7 @@ const DPE_CLASSES = ["A", "B", "C", "D", "E", "F", "G"] as const;
 function buildLeaseDetailPayload(formData: FormData, typeRaw: string) {
   const isFull = typeRaw === "bail_vide" || typeRaw === "bail_meuble";
   const isBasic = typeRaw === "bail_civil" || typeRaw === "bail_commercial";
+  const isUs = typeRaw.startsWith("us_");
 
   // Everything nulled — the baseline for lease types that capture no
   // contract details (e.g. mobilité, étudiant).
@@ -83,9 +84,47 @@ function buildLeaseDetailPayload(formData: FormData, typeRaw: string) {
     annual_energy_cost_cents: null,
     tenant_fees_cents: null,
     tenant_inventory_fees_cents: null,
+    us_state: null,
+    late_fee_cents: null,
+    late_fee_grace_days: null,
+    notice_period_days: null,
+    pets_allowed: null,
+    pet_deposit_cents: null,
+    utilities_included: null,
   };
 
   if (!isFull) {
+    // US lease types capture their own detail subset (state, late fees,
+    // notice, pets, utilities) plus the shared payment day.
+    if (isUs) {
+      const petsAllowed = formData.get("pets_allowed") === "on";
+      const stateRaw = String(formData.get("us_state") ?? "")
+        .trim()
+        .toUpperCase();
+      return {
+        ...cleared,
+        us_state: /^[A-Z]{2}$/.test(stateRaw) ? stateRaw : null,
+        late_fee_cents: optionalCents(
+          String(formData.get("late_fee_cents") ?? ""),
+        ),
+        late_fee_grace_days: optionalInt(
+          String(formData.get("late_fee_grace_days") ?? ""),
+        ),
+        notice_period_days: optionalInt(
+          String(formData.get("notice_period_days") ?? ""),
+        ),
+        pets_allowed: petsAllowed,
+        pet_deposit_cents: petsAllowed
+          ? optionalCents(String(formData.get("pet_deposit_cents") ?? ""))
+          : null,
+        utilities_included: optionalString(
+          String(formData.get("utilities_included") ?? ""),
+        ),
+        payment_day_of_month: optionalInt(
+          String(formData.get("payment_day_of_month") ?? ""),
+        ),
+      };
+    }
     // Bail civil / commercial capture a small financial subset used by their
     // contract templates (revision index, charges, payment terms).
     if (isBasic) {

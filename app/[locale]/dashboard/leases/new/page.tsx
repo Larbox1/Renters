@@ -29,22 +29,16 @@ export default async function NewLeasePage({
   }
   const { supabase } = session;
 
-  const [{ data: properties }, { data: tenants }, { data: profile }] =
-    await Promise.all([
-      supabase
-        .from("properties")
-        .select("id, label, address, city, monthly_rent_cents")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("tenants")
-        .select("id, full_name")
-        .order("full_name", { ascending: true }),
-      supabase
-        .from("profiles")
-        .select("operation_country")
-        .eq("id", session.user.id)
-        .maybeSingle<{ operation_country: "FR" | "US" | null }>(),
-    ]);
+  const [{ data: properties }, { data: tenants }] = await Promise.all([
+    supabase
+      .from("properties")
+      .select("id, label, address, city, monthly_rent_cents")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("tenants")
+      .select("id, full_name")
+      .order("full_name", { ascending: true }),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
@@ -66,7 +60,7 @@ export default async function NewLeasePage({
           properties={properties ?? []}
           tenants={tenants ?? []}
           defaultPropertyId={property_id}
-          operationCountry={profile?.operation_country ?? "FR"}
+          operationCountry={session.operationCountry}
         />
       </div>
     </div>

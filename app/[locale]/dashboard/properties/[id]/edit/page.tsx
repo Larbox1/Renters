@@ -74,6 +74,7 @@ export default async function EditPropertyPage({
           property={property}
           owners={owners}
           existingPhotos={existingPhotos}
+          operationCountry={session.operationCountry}
         />
       </div>
     </div>

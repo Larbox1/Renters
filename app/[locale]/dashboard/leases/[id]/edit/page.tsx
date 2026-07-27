@@ -26,7 +26,7 @@ export default async function EditLeasePage({
   }
   const { supabase } = session;
 
-  const [{ data: lease }, { data: properties }, { data: tenants }, { data: profile }] =
+  const [{ data: lease }, { data: properties }, { data: tenants }] =
     await Promise.all([
       supabase.from("leases").select("*").eq("id", id).maybeSingle(),
       supabase
@@ -37,11 +37,6 @@ export default async function EditLeasePage({
         .from("tenants")
         .select("id, full_name")
         .order("full_name", { ascending: true }),
-      supabase
-        .from("profiles")
-        .select("operation_country")
-        .eq("id", session.user.id)
-        .maybeSingle<{ operation_country: "FR" | "US" | null }>(),
     ]);
 
   if (!lease) notFound();
@@ -66,7 +61,7 @@ export default async function EditLeasePage({
           properties={properties ?? []}
           tenants={tenants ?? []}
           lease={lease}
-          operationCountry={profile?.operation_country ?? "FR"}
+          operationCountry={session.operationCountry}
         />
       </div>
     </div>

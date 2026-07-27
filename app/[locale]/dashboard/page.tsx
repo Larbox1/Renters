@@ -6,6 +6,7 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { logoutAction } from "@/lib/actions/auth";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
+import { currencyFor } from "@/lib/currency";
 import {
   Calendar,
   type CalendarEvent,
@@ -205,7 +206,7 @@ export default async function DashboardPage({
   const fmtCurrency = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: "EUR",
+      currency: currencyFor(session.operationCountry),
       maximumFractionDigits: 0,
     }).format(cents / 100);
 

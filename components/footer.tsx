@@ -46,27 +46,25 @@ export function Footer({
                 {col.title}
               </h5>
               <ul className="flex flex-col gap-2">
-                {col.links.map((label) =>
-                  label === dict.contactLabel ? (
-                    <li key={label}>
+                {col.links.map(({ label, href }) => (
+                  <li key={label}>
+                    {href ? (
                       <Link
-                        href={`/${locale}/contact`}
+                        href={`/${locale}${href}`}
                         className="text-[13.5px] text-ink-2 transition hover:text-accent-deep"
                       >
                         {label}
                       </Link>
-                    </li>
-                  ) : (
-                    <li key={label}>
+                    ) : (
                       <a
                         href="#"
                         className="text-[13.5px] text-ink-2 transition hover:text-accent-deep"
                       >
                         {label}
                       </a>
-                    </li>
-                  ),
-                )}
+                    )}
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
@@ -77,11 +75,25 @@ export function Footer({
             © {new Date().getFullYear()} Meskasas SAS · {dict.rights}
           </span>
           <div className="flex flex-wrap gap-[18px]">
-            {dict.legal.map((label) => (
-              <a key={label} href="#" className="transition hover:text-accent-deep">
-                {label}
-              </a>
-            ))}
+            {dict.legal.map(({ label, href }) =>
+              href ? (
+                <Link
+                  key={label}
+                  href={`/${locale}${href}`}
+                  className="transition hover:text-accent-deep"
+                >
+                  {label}
+                </Link>
+              ) : (
+                <a
+                  key={label}
+                  href="#"
+                  className="transition hover:text-accent-deep"
+                >
+                  {label}
+                </a>
+              ),
+            )}
           </div>
         </div>
       </div>

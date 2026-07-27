@@ -9,6 +9,15 @@ export const en = {
     contactTitle: "Contact — Meskasas",
     contactDescription:
       "A question about Meskasas, your account or your data? Write to us — a human replies, usually the same day.",
+    legalNoticeTitle: "Legal notice — Meskasas",
+    legalNoticeDescription:
+      "Legal notice: site publisher, hosting providers, intellectual property, personal data and applicable law.",
+    privacyTitle: "Privacy policy — Meskasas",
+    privacyDescription:
+      "Privacy policy: data we collect, legal bases, retention periods, processors, security measures and your GDPR rights.",
+    termsTitle: "Terms of use — Meskasas",
+    termsDescription:
+      "Terms of use: subscriptions, user obligations, liability, intellectual property and applicable law.",
   },
   contact: {
     kicker: "Contact",
@@ -319,6 +328,7 @@ export const en = {
       addressSearching: "Searching…",
       addressNoResults: "No matching address",
       phone: "Phone",
+      zipCode: "ZIP code",
       operationCountry: "Operation country",
       operationCountryHint:
         "Where your rental properties are located. Determines which lease types and legal documents apply.",
@@ -330,6 +340,8 @@ export const en = {
       bankHint: "Shown on rent receipts so tenants can pay you.",
       iban: "IBAN",
       bic: "BIC",
+      routingNumber: "Routing number",
+      accountNumber: "Account number",
       submit: "Save",
       submitting: "Saving…",
       saved: "Saved",
@@ -527,6 +539,7 @@ export const en = {
       cityPlaceholder: "Paris",
       postalCode: "Postal code",
       postalCodePlaceholder: "75001",
+      zipCode: "ZIP code",
       country: "Country",
       countryPlaceholder: "FR",
       monthlyRent: "Monthly rent (€)",
@@ -815,6 +828,20 @@ export const en = {
         tenantFees: "Visit, dossier & lease drafting (€)",
         tenantInventoryFees: "Move-in inventory (€)",
       },
+      usLease: {
+        sectionTitle: "US lease details",
+        state: "State",
+        statePlaceholder: "CA",
+        stateHint: "Two-letter state code (governing law).",
+        lateFee: "Late fee ($)",
+        lateFeeGraceDays: "Grace period (days)",
+        graceDaysShort: "days grace",
+        noticePeriodDays: "Notice period (days)",
+        petsAllowed: "Pets allowed",
+        petDeposit: "Pet deposit ($)",
+        utilitiesIncluded: "Utilities included in rent",
+        utilitiesIncludedPlaceholder: "e.g. water, trash collection",
+      },
     },
     status: {
       pending: "Pending",
@@ -1024,21 +1051,42 @@ export const en = {
     tagline:
       "Rental management for landlords who want to keep their weekends. Built in France.",
     product: "Product",
-    productLinks: ["Features", "Pricing", "Mobile app", "What's new"],
+    // href is a locale-relative path ("/contact", "/#pricing"); null renders
+    // as a dead link until the target page exists.
+    productLinks: [
+      { label: "Features", href: "/#features" as string | null },
+      { label: "Pricing", href: "/#pricing" },
+      { label: "Mobile app", href: null },
+      { label: "What's new", href: null },
+    ],
     audience: "Who for",
     audienceLinks: [
-      "Private landlords",
-      "SCIs & investors",
-      "Multi-owners",
-      "Coliving",
+      { label: "Private landlords", href: null as string | null },
+      { label: "SCIs & investors", href: null },
+      { label: "Multi-owners", href: null },
+      { label: "Coliving", href: null },
     ],
     resources: "Resources",
-    resourcesLinks: ["Landlord guides", "Blog", "Lease templates", "Support"],
+    resourcesLinks: [
+      { label: "Landlord guides", href: null as string | null },
+      { label: "Blog", href: null },
+      { label: "Lease templates", href: null },
+      { label: "Support", href: null },
+    ],
     company: "Company",
-    companyLinks: ["About", "Security & GDPR", "Legal notice", "Contact"],
-    contactLabel: "Contact",
+    companyLinks: [
+      { label: "Terms of use", href: "/terms" as string | null },
+      { label: "Security & GDPR", href: "/privacy" },
+      { label: "Legal notice", href: "/legal-notice" },
+      { label: "Contact", href: "/contact" },
+    ],
     rights: "Hosted in France · ★ 4.8 / 5",
-    legal: ["Terms", "Privacy", "Cookies", "Status"],
+    legal: [
+      { label: "Terms", href: "/terms" as string | null },
+      { label: "Privacy", href: "/privacy" },
+      { label: "Cookies", href: null },
+      { label: "Status", href: null },
+    ],
   },
   home: {
     hero: {

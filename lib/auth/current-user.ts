@@ -5,6 +5,10 @@ import {
   getAdminEmails,
   hasServiceRoleKey,
 } from "@/lib/supabase/admin";
+import {
+  isOperationCountry,
+  type OperationCountry,
+} from "@/lib/operation-country";
 
 export type Role = "admin" | "owner" | "tenant" | "service_provider";
 
@@ -25,6 +29,7 @@ function isRole(value: unknown): value is Role {
 export type Profile = {
   role: Role;
   full_name: string | null;
+  operation_country?: OperationCountry | null;
 };
 
 export type CurrentSession = {
@@ -34,6 +39,7 @@ export type CurrentSession = {
   role: Role;
   fullName: string;
   hasProfile: boolean;
+  operationCountry: OperationCountry;
 };
 
 /**
@@ -89,7 +95,7 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
 
   const { data: rawProfile } = await supabase
     .from("profiles")
-    .select("role, full_name")
+    .select("role, full_name, operation_country")
     .eq("id", user.id)
     .maybeSingle<Profile>();
 
@@ -117,6 +123,9 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
       user.email ??
       "",
     hasProfile: profile !== null,
+    operationCountry: isOperationCountry(profile?.operation_country)
+      ? profile.operation_country
+      : "FR",
   };
 }
 

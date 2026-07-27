@@ -6,6 +6,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { getCurrentSession } from "@/lib/auth/current-user";
+import { currencyFor } from "@/lib/currency";
 import { AddTransactionModal } from "./transaction-modal";
 import { deleteTransactionAction } from "./actions";
 
@@ -127,17 +128,18 @@ export default async function FinancePage({
       ? (annualIncomeCents / portfolioValueCents) * 100
       : 0;
 
+  const currency = currencyFor(session.operationCountry);
   const fmtCurrency = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: "EUR",
+      currency,
       maximumFractionDigits: 0,
     }).format(cents / 100);
 
   const fmtCurrencyPrecise = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: "EUR",
+      currency,
     }).format(cents / 100);
 
   const fmtDate = (iso: string) =>
@@ -178,6 +180,7 @@ export default async function FinancePage({
           dict={dict.finance.transactions}
           properties={propertyOptions}
           today={today}
+          currency={currency}
         />
       </div>
 

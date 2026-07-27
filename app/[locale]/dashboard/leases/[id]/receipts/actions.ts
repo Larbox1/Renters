@@ -109,10 +109,15 @@ export async function generateRentReceiptAction(formData: FormData) {
       .filter((part) => part && (part as string).trim())
       .join(", ") || null;
 
-  // Render the PDF buffer via dynamic import.
+  // Render the PDF buffer via dynamic import. US leases get the English
+  // rent-receipt document; everything else the French quittance.
+  const isUsLease =
+    typeof lease.type === "string" && lease.type.startsWith("us_");
   let pdfBuffer: Buffer;
   try {
-    const { renderReceiptPdf } = await import("./quittance-pdf");
+    const { renderReceiptPdf } = isUsLease
+      ? await import("./receipt-us-pdf")
+      : await import("./quittance-pdf");
     pdfBuffer = await renderReceiptPdf({
       ownerName,
       ownerEmail: ownerProfile?.email ?? null,
@@ -139,8 +144,9 @@ export async function generateRentReceiptAction(formData: FormData) {
     return;
   }
 
-  const tenantName = (tenant?.full_name as string | null) ?? "locataire";
-  const filenameBase = `quittance_${tenantName}_${periodStart}`
+  const tenantName =
+    (tenant?.full_name as string | null) ?? (isUsLease ? "tenant" : "locataire");
+  const filenameBase = `${isUsLease ? "receipt" : "quittance"}_${tenantName}_${periodStart}`
     .replace(/[^\w.\-]+/g, "_")
     .replace(/_+/g, "_")
     .slice(0, 80);

@@ -4,7 +4,20 @@ import { useState } from "react";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
-import type { BillingInterval } from "@/lib/plans";
+import { isPlanId, planPriceCents, type BillingInterval } from "@/lib/plans";
+import type { CurrencyCode } from "@/lib/currency";
+
+// USD amounts are set per-plan in lib/plans.ts (not converted from EUR), so
+// format them from cents here. Whole amounts drop the ".00" to match the EUR
+// dictionary strings ("€0", "0 €").
+function formatUsd(cents: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
+    style: "currency",
+    currency: "USD",
+    currencyDisplay: "narrowSymbol",
+    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+  }).format(cents / 100);
+}
 
 const CheckIcon = ({ className = "h-4 w-4" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 16 16" fill="none">
@@ -26,11 +39,16 @@ export function LandingPricingGrid({
   dict: Dictionary["home"]["pricing"];
 }) {
   const [interval, setInterval] = useState<BillingInterval>("month");
+  // EUR strings come from the dictionary; USD amounts from lib/plans.ts
+  // (billing itself stays EUR). Default to USD on the English locale.
+  const [currency, setCurrency] = useState<CurrencyCode>(
+    locale === "fr" ? "EUR" : "USD",
+  );
 
   return (
     <>
-      {/* Monthly / annual toggle — centered above the grid */}
-      <div className="mb-10 flex justify-center">
+      {/* Monthly / annual + currency toggles — centered above the grid */}
+      <div className="mb-10 flex flex-wrap items-center justify-center gap-3">
       <div className="inline-flex items-center gap-1 rounded-full border border-line bg-paper-elev p-1 text-[13.5px]">
         <button
           type="button"
@@ -62,12 +80,33 @@ export function LandingPricingGrid({
           </span>
         </button>
       </div>
+      <div className="inline-flex items-center gap-1 rounded-full border border-line bg-paper-elev p-1 text-[13.5px]">
+        {(["EUR", "USD"] as const).map((code) => (
+          <button
+            key={code}
+            type="button"
+            onClick={() => setCurrency(code)}
+            className={`rounded-full px-4 py-1.5 font-medium transition ${
+              currency === code
+                ? "bg-ink text-paper"
+                : "text-ink-3 hover:text-ink"
+            }`}
+          >
+            {code === "EUR" ? "€ EUR" : "$ USD"}
+          </button>
+        ))}
+      </div>
       </div>
 
       <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {dict.plans.map((plan, i) => {
           const featured = "featured" in plan && plan.featured;
-          const price = interval === "year" ? plan.priceAnnual : plan.price;
+          const price =
+            currency === "USD" && isPlanId(plan.dot)
+              ? formatUsd(planPriceCents(plan.dot, interval, "USD"), locale)
+              : interval === "year"
+                ? plan.priceAnnual
+                : plan.price;
           const per = interval === "year" ? plan.perAnnual : plan.per;
           return (
             <div

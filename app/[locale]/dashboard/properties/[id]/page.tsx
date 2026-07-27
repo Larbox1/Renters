@@ -6,6 +6,7 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
+import { currencyFor } from "@/lib/currency";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { signPhotos, type PropertyPhoto } from "@/lib/properties/photos";
@@ -93,7 +94,7 @@ export default async function PropertyDetailPage({
   const fmtCurrency = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: "EUR",
+      currency: currencyFor(session.operationCountry),
       maximumFractionDigits: 0,
     }).format(cents / 100);
 

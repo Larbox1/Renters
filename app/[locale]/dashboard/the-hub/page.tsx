@@ -6,6 +6,7 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession } from "@/lib/auth/current-user";
+import { currencyFor } from "@/lib/currency";
 import {
   signFirstPhoto,
   type PropertyPhoto,
@@ -103,7 +104,7 @@ export default async function TheHubPage({
   const fmtCurrency = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: "EUR",
+      currency: currencyFor(session.operationCountry),
       maximumFractionDigits: 0,
     }).format(cents / 100);
 

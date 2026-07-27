@@ -5,6 +5,8 @@ import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { SignedPhoto } from "@/lib/properties/photos";
+import type { OperationCountry } from "@/lib/operation-country";
+import { currencyFor, localizeCurrencyLabel } from "@/lib/currency";
 import { PhotoManager, type PhotoManagerHandle } from "./photo-manager";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import {
@@ -185,12 +187,14 @@ export function PropertyForm({
   property,
   owners,
   existingPhotos = [],
+  operationCountry,
 }: {
   locale: Locale;
   dict: Dictionary["properties"];
   property?: Property;
   owners?: OwnerOption[];
   existingPhotos?: SignedPhoto[];
+  operationCountry: OperationCountry;
 }) {
   const action = property ? updatePropertyAction : createPropertyAction;
   const [state, formAction] = useActionState<PropertyState, FormData>(action, {});
@@ -200,6 +204,10 @@ export function PropertyForm({
     property?.rolling_shutters ?? false,
   );
   const [type, setType] = useState<string>(property?.type ?? "");
+
+  const isUS = operationCountry === "US";
+  const money = (label: string) =>
+    localizeCurrencyLabel(label, currencyFor(operationCountry));
 
   const centsToEuros = (cents: number | null) =>
     cents != null ? (cents / 100).toFixed(2) : "";
@@ -281,6 +289,7 @@ export function PropertyForm({
         <AddressAutocomplete
           searchingLabel={dict.fields.addressSearching}
           noResultsLabel={dict.fields.addressNoResults}
+          disableSearch={isUS}
           address={{
             name: "address",
             label: dict.fields.address,
@@ -295,8 +304,8 @@ export function PropertyForm({
           }}
           postalCode={{
             name: "postal_code",
-            label: dict.fields.postalCode,
-            placeholder: dict.fields.postalCodePlaceholder,
+            label: isUS ? dict.fields.zipCode : dict.fields.postalCode,
+            placeholder: isUS ? undefined : dict.fields.postalCodePlaceholder,
           }}
           defaults={{
             address: property?.address ?? "",
@@ -311,7 +320,7 @@ export function PropertyForm({
           <input
             name="country"
             type="text"
-            defaultValue={property?.country ?? "FR"}
+            defaultValue={property?.country ?? (isUS ? "US" : "FR")}
             placeholder={dict.fields.countryPlaceholder}
             className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
@@ -322,7 +331,7 @@ export function PropertyForm({
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label className="block text-sm font-medium text-slate-700">
-            {dict.fields.monthlyRent}
+            {money(dict.fields.monthlyRent)}
           </label>
           <input
             name="monthly_rent_cents"
@@ -336,7 +345,7 @@ export function PropertyForm({
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">
-            {dict.fields.value}
+            {money(dict.fields.value)}
           </label>
           <input
             name="value_cents"
@@ -350,7 +359,7 @@ export function PropertyForm({
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">
-            {dict.fields.sellPrice}
+            {money(dict.fields.sellPrice)}
           </label>
           <input
             name="sell_price_cents"
@@ -413,7 +422,7 @@ export function PropertyForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">
-              {dict.fields.acquisitionFees}
+              {money(dict.fields.acquisitionFees)}
             </label>
             <input
               name="acquisition_fees_cents"
@@ -426,7 +435,7 @@ export function PropertyForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">
-              {dict.fields.brokerageFees}
+              {money(dict.fields.brokerageFees)}
             </label>
             <input
               name="brokerage_fees_cents"
@@ -439,7 +448,7 @@ export function PropertyForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">
-              {dict.fields.housingTax}
+              {money(dict.fields.housingTax)}
             </label>
             <input
               name="housing_tax_cents"
@@ -452,7 +461,7 @@ export function PropertyForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">
-              {dict.fields.propertyTax}
+              {money(dict.fields.propertyTax)}
             </label>
             <input
               name="property_tax_cents"
@@ -677,7 +686,8 @@ export function PropertyForm({
         </fieldset>
       )}
 
-      {/* Energy diagnostic (DPE) */}
+      {/* Energy diagnostic (DPE) — a French certificate; hidden for US operators */}
+      {!isUS && (
       <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
         <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
           {dict.sections.dpe}
@@ -784,6 +794,7 @@ export function PropertyForm({
           </div>
         </div>
       </fieldset>
+      )}
 
       {/* Amenities */}
       <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">

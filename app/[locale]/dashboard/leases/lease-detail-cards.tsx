@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { currencyForLeaseType, currencySymbol } from "@/lib/currency";
 
 type LeaseRecord = {
   status: string;
@@ -9,7 +10,8 @@ type LeaseRecord = {
   deposit_cents: number;
   start_date: string;
   end_date: string | null;
-} & BailVideLease;
+} & BailVideLease &
+  UsLease;
 
 type PropertyRef = {
   id: string;
@@ -48,6 +50,8 @@ export function LeaseDetailCards({
 }) {
   const propertyName =
     property?.label ?? `${property?.address}, ${property?.city}`;
+  // Untyped leases predate lease types and are all French → EUR fallback.
+  const symbol = currencySymbol(currencyForLeaseType(lease.type, "FR"));
 
   return (
     <>
@@ -75,7 +79,7 @@ export function LeaseDetailCards({
             {dict.fields.monthlyRent}
           </p>
           <p className="mt-1 text-lg font-semibold text-slate-900">
-            {(lease.monthly_rent_cents / 100).toFixed(2)} €
+            {(lease.monthly_rent_cents / 100).toFixed(2)} {symbol}
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
@@ -98,7 +102,7 @@ export function LeaseDetailCards({
               {dict.fields.deposit}
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900">
-              {(lease.deposit_cents / 100).toFixed(2)} €
+              {(lease.deposit_cents / 100).toFixed(2)} {symbol}
             </p>
           </div>
         )}
@@ -144,7 +148,92 @@ export function LeaseDetailCards({
       {(lease.type === "bail_vide" || lease.type === "bail_meuble") && (
         <BailVideDetails lease={lease} dict={dict.fields.bailVide} />
       )}
+
+      {lease.type?.startsWith("us_") && (
+        <UsLeaseDetails
+          lease={lease}
+          dict={dict.fields.usLease}
+          bv={dict.fields.bailVide}
+        />
+      )}
     </>
+  );
+}
+
+type UsLease = {
+  us_state: string | null;
+  late_fee_cents: number | null;
+  late_fee_grace_days: number | null;
+  notice_period_days: number | null;
+  pets_allowed: boolean | null;
+  pet_deposit_cents: number | null;
+  utilities_included: string | null;
+};
+
+function UsLeaseDetails({
+  lease,
+  dict,
+  bv,
+}: {
+  lease: UsLease & { payment_day_of_month: number | null };
+  dict: Dictionary["leases"]["fields"]["usLease"];
+  bv: Dictionary["leases"]["fields"]["bailVide"];
+}) {
+  const fmtDollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+  const items: { label: string; value: React.ReactNode }[] = [];
+  if (lease.us_state) items.push({ label: dict.state, value: lease.us_state });
+  if (lease.late_fee_cents != null)
+    items.push({
+      label: dict.lateFee,
+      value:
+        fmtDollars(lease.late_fee_cents) +
+        (lease.late_fee_grace_days != null
+          ? ` · ${lease.late_fee_grace_days} ${dict.graceDaysShort}`
+          : ""),
+    });
+  if (lease.notice_period_days != null)
+    items.push({
+      label: dict.noticePeriodDays,
+      value: String(lease.notice_period_days),
+    });
+  if (lease.pets_allowed != null)
+    items.push({
+      label: dict.petsAllowed,
+      value: lease.pets_allowed ? "✓" : "✗",
+    });
+  if (lease.pet_deposit_cents != null)
+    items.push({
+      label: dict.petDeposit,
+      value: fmtDollars(lease.pet_deposit_cents),
+    });
+  if (lease.utilities_included)
+    items.push({
+      label: dict.utilitiesIncluded,
+      value: lease.utilities_included,
+    });
+  if (lease.payment_day_of_month != null)
+    items.push({
+      label: bv.paymentDay,
+      value: String(lease.payment_day_of_month),
+    });
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {dict.sectionTitle}
+      </p>
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item, i) => (
+          <div key={i}>
+            <dt className="text-xs text-slate-500">{item.label}</dt>
+            <dd className="text-sm font-medium text-slate-900">{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
 

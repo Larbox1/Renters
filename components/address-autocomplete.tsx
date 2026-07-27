@@ -63,6 +63,7 @@ export function AddressAutocomplete({
   postalCode,
   defaults,
   addressColSpanClass = "sm:col-span-2 lg:col-span-3",
+  disableSearch = false,
 }: {
   searchingLabel: string;
   noResultsLabel: string;
@@ -71,6 +72,11 @@ export function AddressAutocomplete({
   postalCode: AddressFieldConfig;
   defaults: { address: string; city: string; postalCode: string };
   addressColSpanClass?: string;
+  /**
+   * Renders the three fields as plain inputs without the BAN dropdown. The
+   * BAN API only covers French addresses, so US operators get manual entry.
+   */
+  disableSearch?: boolean;
 }) {
   const [addressValue, setAddressValue] = useState(defaults.address);
   const [cityValue, setCityValue] = useState(defaults.city);
@@ -89,6 +95,7 @@ export function AddressAutocomplete({
 
   // Debounced BAN lookup on the address query.
   useEffect(() => {
+    if (disableSearch) return;
     if (skipNextFetch.current) {
       skipNextFetch.current = false;
       return;
@@ -136,7 +143,7 @@ export function AddressAutocomplete({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [addressValue]);
+  }, [addressValue, disableSearch]);
 
   // Close the dropdown when clicking outside the field group.
   useEffect(() => {

@@ -9,6 +9,7 @@ import {
   type LeaseTypeValue,
   type OperationCountry,
 } from "@/lib/operation-country";
+import { currencyFor, localizeCurrencyLabel } from "@/lib/currency";
 import {
   createLeaseAction,
   updateLeaseAction,
@@ -47,6 +48,13 @@ type Lease = {
   deposit_cents: number;
   status: string;
   type: LeaseTypeValue | null;
+  us_state: string | null;
+  late_fee_cents: number | null;
+  late_fee_grace_days: number | null;
+  notice_period_days: number | null;
+  pets_allowed: boolean | null;
+  pet_deposit_cents: number | null;
+  utilities_included: string | null;
   duration: LeaseDuration | null;
   reduced_duration_months: number | null;
   reduced_duration_reason: string | null;
@@ -150,6 +158,8 @@ export function LeaseForm({
     if (cents != null) setRentEuros(centsToEuros(cents));
   };
 
+  const currency = currencyFor(operationCountry);
+  const money = (label: string) => localizeCurrencyLabel(label, currency);
   const countryTypes = leaseTypesFor(operationCountry);
   // Keep an out-of-country type selectable when editing a lease created
   // before the owner switched operation country.
@@ -174,6 +184,9 @@ export function LeaseForm({
       ? String(lease.reduced_duration_months)
       : "",
   );
+  const [petsAllowed, setPetsAllowed] = useState<boolean>(
+    lease?.pets_allowed ?? false,
+  );
 
   // Recompute the end date from the start date and selected duration. Called on
   // any change to those inputs; leaves the end date untouched (and manually
@@ -194,6 +207,7 @@ export function LeaseForm({
     selectedType === "bail_vide" || selectedType === "bail_meuble";
   const showCivilCommercial =
     selectedType === "bail_civil" || selectedType === "bail_commercial";
+  const showUsDetails = selectedType.startsWith("us_");
   const isMeuble = selectedType === "bail_meuble";
   const bv = dict.fields.bailVide;
   const durationOptions: LeaseDuration[] = isMeuble
@@ -330,7 +344,7 @@ export function LeaseForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>
-            {dict.fields.monthlyRent} <span className="text-red-500">*</span>
+            {money(dict.fields.monthlyRent)} <span className="text-red-500">*</span>
           </label>
           <input
             name="monthly_rent_cents"
@@ -345,7 +359,7 @@ export function LeaseForm({
           />
         </div>
         <div>
-          <label className={labelClass}>{dict.fields.deposit}</label>
+          <label className={labelClass}>{money(dict.fields.deposit)}</label>
           <input
             name="deposit_cents"
             type="number"
@@ -686,6 +700,129 @@ export function LeaseForm({
                 <option value="arrears">{bv.paymentArrears}</option>
               </select>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showUsDetails && (
+        <div className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-5">
+          <h2 className="text-base font-semibold text-slate-900">
+            {dict.fields.usLease.sectionTitle}
+          </h2>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label className={labelClass}>{dict.fields.usLease.state}</label>
+              <input
+                name="us_state"
+                type="text"
+                maxLength={2}
+                defaultValue={lease?.us_state ?? ""}
+                placeholder={dict.fields.usLease.statePlaceholder}
+                className={`${inputClass} uppercase`}
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                {dict.fields.usLease.stateHint}
+              </p>
+            </div>
+            <div>
+              <label className={labelClass}>{dict.fields.usLease.lateFee}</label>
+              <input
+                name="late_fee_cents"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={
+                  lease?.late_fee_cents != null
+                    ? centsToEuros(lease.late_fee_cents)
+                    : ""
+                }
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>
+                {dict.fields.usLease.lateFeeGraceDays}
+              </label>
+              <input
+                name="late_fee_grace_days"
+                type="number"
+                min="0"
+                max="31"
+                defaultValue={lease?.late_fee_grace_days ?? ""}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>
+                {dict.fields.usLease.noticePeriodDays}
+              </label>
+              <input
+                name="notice_period_days"
+                type="number"
+                min="0"
+                defaultValue={lease?.notice_period_days ?? ""}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className={labelClass}>{bv.paymentDay}</label>
+              <input
+                name="payment_day_of_month"
+                type="number"
+                min="1"
+                max="31"
+                defaultValue={lease?.payment_day_of_month ?? ""}
+                className={inputClass}
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <label className={labelClass}>
+                {dict.fields.usLease.utilitiesIncluded}
+              </label>
+              <input
+                name="utilities_included"
+                type="text"
+                defaultValue={lease?.utilities_included ?? ""}
+                placeholder={dict.fields.usLease.utilitiesIncludedPlaceholder}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                name="pets_allowed"
+                checked={petsAllowed}
+                onChange={(e) => setPetsAllowed(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              />
+              {dict.fields.usLease.petsAllowed}
+            </label>
+            {petsAllowed && (
+              <div className="sm:max-w-xs">
+                <label className={labelClass}>
+                  {dict.fields.usLease.petDeposit}
+                </label>
+                <input
+                  name="pet_deposit_cents"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={
+                    lease?.pet_deposit_cents != null
+                      ? centsToEuros(lease.pet_deposit_cents)
+                      : ""
+                  }
+                  className={inputClass}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

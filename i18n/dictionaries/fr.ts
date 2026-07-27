@@ -11,6 +11,15 @@ export const fr: Dictionary = {
     contactTitle: "Contact — Meskasas",
     contactDescription:
       "Une question sur Meskasas, votre compte ou vos données ? Écrivez-nous — un humain vous répond, souvent le jour même.",
+    legalNoticeTitle: "Mentions légales — Meskasas",
+    legalNoticeDescription:
+      "Mentions légales : éditeur du site, hébergeurs, propriété intellectuelle, données personnelles et droit applicable.",
+    privacyTitle: "Politique de confidentialité — Meskasas",
+    privacyDescription:
+      "Politique de confidentialité : données collectées, bases légales, durées de conservation, sous-traitants, sécurité et vos droits RGPD.",
+    termsTitle: "Conditions générales d'utilisation — Meskasas",
+    termsDescription:
+      "CGU : abonnements, obligations de l'utilisateur, responsabilité, propriété intellectuelle et droit applicable.",
   },
   contact: {
     kicker: "Contact",
@@ -326,6 +335,7 @@ export const fr: Dictionary = {
       addressSearching: "Recherche…",
       addressNoResults: "Aucune adresse correspondante",
       phone: "Numéro de téléphone",
+      zipCode: "Code ZIP",
       operationCountry: "Pays d'exploitation",
       operationCountryHint:
         "Le pays où se situent vos biens locatifs. Il détermine les types de baux et les documents légaux applicables.",
@@ -337,6 +347,8 @@ export const fr: Dictionary = {
       bankHint: "Affichées sur les quittances pour permettre au locataire de vous régler.",
       iban: "IBAN",
       bic: "BIC",
+      routingNumber: "Routing number",
+      accountNumber: "Numéro de compte",
       submit: "Enregistrer",
       submitting: "Enregistrement…",
       saved: "Enregistré",
@@ -539,6 +551,7 @@ export const fr: Dictionary = {
       cityPlaceholder: "Paris",
       postalCode: "Code postal",
       postalCodePlaceholder: "75001",
+      zipCode: "Code ZIP",
       country: "Pays",
       countryPlaceholder: "FR",
       monthlyRent: "Loyer mensuel (€)",
@@ -828,6 +841,20 @@ export const fr: Dictionary = {
         tenantFees: "Visite, dossier & rédaction du bail (€)",
         tenantInventoryFees: "État des lieux d'entrée (€)",
       },
+      usLease: {
+        sectionTitle: "Détails du bail américain",
+        state: "État",
+        statePlaceholder: "CA",
+        stateHint: "Code de l'État sur deux lettres (droit applicable).",
+        lateFee: "Pénalité de retard ($)",
+        lateFeeGraceDays: "Délai de grâce (jours)",
+        graceDaysShort: "jours de grâce",
+        noticePeriodDays: "Préavis (jours)",
+        petsAllowed: "Animaux autorisés",
+        petDeposit: "Dépôt animaux ($)",
+        utilitiesIncluded: "Services inclus dans le loyer",
+        utilitiesIncludedPlaceholder: "ex. eau, collecte des déchets",
+      },
     },
     status: {
       pending: "En attente",
@@ -1037,21 +1064,40 @@ export const fr: Dictionary = {
     tagline:
       "La gestion locative pour les bailleurs qui veulent garder leurs week-ends. Conçu en France.",
     product: "Produit",
-    productLinks: ["Fonctionnalités", "Tarifs", "Application mobile", "Nouveautés"],
+    productLinks: [
+      { label: "Fonctionnalités", href: "/#features" },
+      { label: "Tarifs", href: "/#pricing" },
+      { label: "Application mobile", href: null },
+      { label: "Nouveautés", href: null },
+    ],
     audience: "Pour qui",
     audienceLinks: [
-      "Bailleurs particuliers",
-      "SCI & investisseurs",
-      "Multi-propriétaires",
-      "Coliving",
+      { label: "Bailleurs particuliers", href: null },
+      { label: "SCI & investisseurs", href: null },
+      { label: "Multi-propriétaires", href: null },
+      { label: "Coliving", href: null },
     ],
     resources: "Ressources",
-    resourcesLinks: ["Guides bailleurs", "Blog", "Modèles de baux", "Support"],
+    resourcesLinks: [
+      { label: "Guides bailleurs", href: null },
+      { label: "Blog", href: null },
+      { label: "Modèles de baux", href: null },
+      { label: "Support", href: null },
+    ],
     company: "Société",
-    companyLinks: ["À propos", "Sécurité & RGPD", "Mentions légales", "Contact"],
-    contactLabel: "Contact",
+    companyLinks: [
+      { label: "Conditions générales d'utilisation", href: "/terms" },
+      { label: "Sécurité & RGPD", href: "/privacy" },
+      { label: "Mentions légales", href: "/legal-notice" },
+      { label: "Contact", href: "/contact" },
+    ],
     rights: "Hébergé en France · ★ 4,8 / 5",
-    legal: ["CGU", "Confidentialité", "Cookies", "Statut"],
+    legal: [
+      { label: "CGU", href: "/terms" },
+      { label: "Confidentialité", href: "/privacy" },
+      { label: "Cookies", href: null },
+      { label: "Statut", href: null },
+    ],
   },
   home: {
     hero: {

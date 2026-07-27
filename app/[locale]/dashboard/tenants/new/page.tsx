@@ -58,6 +58,7 @@ export default async function NewTenantPage({
           locale={locale as Locale}
           dict={dict.tenants}
           owners={owners}
+          operationCountry={session.operationCountry}
         />
       </div>
     </div>

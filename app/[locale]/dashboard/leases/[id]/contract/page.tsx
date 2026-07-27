@@ -10,6 +10,7 @@ import { PrintButton } from "./print-button";
 import { ContractDocument } from "./contract-document";
 import { ContractCivilDocument } from "./contract-civil-document";
 import { ContractCommercialDocument } from "./contract-commercial-document";
+import { ContractUsDocument } from "./contract-us-document";
 import { saveLeaseContractAction } from "./actions";
 
 const SUPPORTED_TYPES = [
@@ -17,6 +18,10 @@ const SUPPORTED_TYPES = [
   "bail_meuble",
   "bail_civil",
   "bail_commercial",
+  "us_fixed_term",
+  "us_month_to_month",
+  "us_sublease",
+  "us_commercial",
 ];
 
 type Props = {
@@ -134,7 +139,11 @@ export default async function ContractPage({ params, searchParams }: Props) {
             </div>
           </div>
 
-          {lease.type === "bail_civil" ? (
+          {typeof lease.type === "string" && lease.type.startsWith("us_") ? (
+            <ContractUsDocument
+              data={{ lease, property, tenant, ownerProfile }}
+            />
+          ) : lease.type === "bail_civil" ? (
             <ContractCivilDocument
               data={{ lease, property, tenant, ownerProfile }}
             />

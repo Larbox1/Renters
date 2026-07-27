@@ -5,6 +5,8 @@ import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { SignedTenantDocument } from "@/lib/tenants/documents";
+import type { OperationCountry } from "@/lib/operation-country";
+import { currencyFor, localizeCurrencyLabel } from "@/lib/currency";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import {
   createTenantAction,
@@ -89,13 +91,18 @@ export function TenantForm({
   tenant,
   owners,
   existingDocument,
+  operationCountry,
 }: {
   locale: Locale;
   dict: Dictionary["tenants"];
   tenant?: Tenant;
   owners?: OwnerOption[];
   existingDocument?: SignedTenantDocument | null;
+  operationCountry: OperationCountry;
 }) {
+  const isUS = operationCountry === "US";
+  const money = (label: string) =>
+    localizeCurrencyLabel(label, currencyFor(operationCountry));
   const action = tenant ? updateTenantAction : createTenantAction;
   const [state, formAction] = useActionState<TenantState, FormData>(action, {});
   const showOwnerSelect = Boolean(owners && owners.length > 0);
@@ -269,7 +276,7 @@ export function TenantForm({
                 />
               </div>
               <div>
-                <label className={labelClass}>{dict.fields.income}</label>
+                <label className={labelClass}>{money(dict.fields.income)}</label>
                 <input
                   name="income_cents"
                   type="number"
@@ -292,6 +299,7 @@ export function TenantForm({
                 searchingLabel={dict.fields.addressSearching}
                 noResultsLabel={dict.fields.addressNoResults}
                 addressColSpanClass="sm:col-span-3"
+                disableSearch={isUS}
                 address={{
                   name: "previous_address",
                   label: dict.fields.previousAddress,
@@ -355,7 +363,7 @@ export function TenantForm({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={labelClass}>{dict.fields.capital}</label>
+                <label className={labelClass}>{money(dict.fields.capital)}</label>
                 <input
                   name="capital_cents"
                   type="number"

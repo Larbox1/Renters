@@ -92,6 +92,7 @@ export default async function NewPropertyPage({
             locale={locale as Locale}
             dict={dict.properties}
             owners={owners}
+            operationCountry={session.operationCountry}
           />
         </div>
       )}

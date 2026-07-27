@@ -80,6 +80,7 @@ export default async function EditTenantPage({
           tenant={tenant}
           owners={owners}
           existingDocument={existingDocument}
+          operationCountry={session.operationCountry}
         />
       </div>
     </div>

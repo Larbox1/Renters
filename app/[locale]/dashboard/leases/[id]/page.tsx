@@ -6,6 +6,7 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
+import { currencyForLeaseType } from "@/lib/currency";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { signDocument } from "@/lib/documents/storage";
 import { deleteLeaseAction } from "../actions";
@@ -129,7 +130,9 @@ export default async function LeaseDetailPage({
             {(lease.type === "bail_vide" ||
               lease.type === "bail_meuble" ||
               lease.type === "bail_civil" ||
-              lease.type === "bail_commercial") && (
+              lease.type === "bail_commercial" ||
+              (typeof lease.type === "string" &&
+                lease.type.startsWith("us_"))) && (
               <Link
                 href={`/${locale}/dashboard/leases/${id}/contract`}
                 target="_blank"
@@ -196,6 +199,7 @@ export default async function LeaseDetailPage({
           dict={dict.leases.receipts}
           locale={locale as Locale}
           leaseId={id}
+          currency={currencyForLeaseType(lease.type, session.operationCountry)}
         />
       </section>
 
