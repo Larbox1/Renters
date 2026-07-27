@@ -6,6 +6,10 @@ import { useEffect, useId, useRef, useState } from "react";
 // https://adresse.data.gouv.fr/api-doc/adresse
 const BAN_ENDPOINT = "https://api-adresse.data.gouv.fr/search/";
 
+// Photon (Komoot) — free OSM-based worldwide geocoder, no API key. Covers the
+// addresses BAN can't (notably US). https://photon.komoot.io
+const PHOTON_ENDPOINT = "https://photon.komoot.io/api/";
+
 type Suggestion = {
   key: string;
   /** Street-level address, e.g. "8 Boulevard du Port". */
@@ -22,8 +26,120 @@ type BanFeature = {
     name?: string;
     city?: string;
     postcode?: string;
+    score?: number;
   };
 };
+
+type PhotonFeature = {
+  properties?: {
+    name?: string;
+    housenumber?: string;
+    street?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    district?: string;
+    state?: string;
+    postcode?: string;
+    countrycode?: string;
+  };
+};
+
+async function fetchBan(
+  q: string,
+  signal: AbortSignal,
+): Promise<{ suggestions: Suggestion[]; topScore: number }> {
+  const url = `${BAN_ENDPOINT}?q=${encodeURIComponent(q)}&limit=5&autocomplete=1`;
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error(`BAN ${res.status}`);
+  const data = (await res.json()) as { features?: BanFeature[] };
+  const features = data.features ?? [];
+  const suggestions = features.map((f, i) => {
+    const p = f.properties ?? {};
+    return {
+      key: `ban-${p.label ?? ""}-${i}`,
+      address: p.name ?? p.label ?? "",
+      city: p.city ?? "",
+      postcode: p.postcode ?? "",
+      label: p.label ?? p.name ?? "",
+    };
+  });
+  return { suggestions, topScore: features[0]?.properties?.score ?? 0 };
+}
+
+async function fetchPhoton(
+  q: string,
+  signal: AbortSignal,
+): Promise<Suggestion[]> {
+  const url = `${PHOTON_ENDPOINT}?q=${encodeURIComponent(q)}&limit=5`;
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error(`Photon ${res.status}`);
+  const data = (await res.json()) as { features?: PhotonFeature[] };
+  return (data.features ?? []).flatMap((f, i) => {
+    const p = f.properties ?? {};
+    const address =
+      p.housenumber && p.street
+        ? `${p.housenumber} ${p.street}`
+        : (p.street ?? p.name ?? "");
+    if (!address) return [];
+    const city = p.city ?? p.town ?? p.village ?? p.district ?? "";
+    const postcode = p.postcode ?? "";
+    // "123 Main St, Springfield, Illinois 62704" for the US;
+    // "8 Boulevard du Port, 34140 Mèze" style elsewhere.
+    const locality =
+      p.countrycode?.toUpperCase() === "US"
+        ? [city, [p.state, postcode].filter(Boolean).join(" ")]
+            .filter(Boolean)
+            .join(", ")
+        : [postcode, city].filter(Boolean).join(" ");
+    return [
+      {
+        key: `photon-${address}-${postcode}-${i}`,
+        address,
+        city,
+        postcode,
+        label: [address, locality].filter(Boolean).join(", "),
+      },
+    ];
+  });
+}
+
+/**
+ * Query BAN and Photon in parallel and merge their suggestions. BAN wins the
+ * top spots when it is confident (a French query); otherwise Photon leads
+ * (e.g. a US query, where BAN can only return irrelevant French matches).
+ * One provider failing never blocks the other's results.
+ */
+async function fetchSuggestions(
+  q: string,
+  signal: AbortSignal,
+): Promise<Suggestion[]> {
+  const [banResult, photonResult] = await Promise.allSettled([
+    fetchBan(q, signal),
+    fetchPhoton(q, signal),
+  ]);
+  if (signal.aborted) throw new DOMException("aborted", "AbortError");
+  const ban =
+    banResult.status === "fulfilled"
+      ? banResult.value
+      : { suggestions: [], topScore: 0 };
+  const photon = photonResult.status === "fulfilled" ? photonResult.value : [];
+
+  const ordered =
+    ban.topScore >= 0.4
+      ? [...ban.suggestions, ...photon]
+      : [...photon, ...ban.suggestions];
+
+  const seen = new Set<string>();
+  return ordered
+    .filter((s) => {
+      const dedupeKey = `${s.address}|${s.postcode}`.toLowerCase();
+      if (seen.has(dedupeKey)) return false;
+      seen.add(dedupeKey);
+      return true;
+    })
+    .slice(0, 8);
+}
 
 /** Configuration for one of the three rendered inputs. */
 export type AddressFieldConfig = {
@@ -48,8 +164,9 @@ function FieldLabel({ text, required }: { text: string; required?: boolean }) {
 }
 
 /**
- * Address input with a Base Adresse Nationale (BAN) autocomplete dropdown.
- * Picking a suggestion fills the address, city, and postal-code fields.
+ * Address input with an autocomplete dropdown backed by BAN and Photon
+ * queried together (French + worldwide coverage). Picking a suggestion fills
+ * the address, city, and postal-code fields.
  *
  * Renders a fragment of three field wrappers so it can drop into any parent
  * grid; the address wrapper spans `addressColSpanClass`. Country (or any other
@@ -63,7 +180,6 @@ export function AddressAutocomplete({
   postalCode,
   defaults,
   addressColSpanClass = "sm:col-span-2 lg:col-span-3",
-  disableSearch = false,
 }: {
   searchingLabel: string;
   noResultsLabel: string;
@@ -72,11 +188,6 @@ export function AddressAutocomplete({
   postalCode: AddressFieldConfig;
   defaults: { address: string; city: string; postalCode: string };
   addressColSpanClass?: string;
-  /**
-   * Renders the three fields as plain inputs without the BAN dropdown. The
-   * BAN API only covers French addresses, so US operators get manual entry.
-   */
-  disableSearch?: boolean;
 }) {
   const [addressValue, setAddressValue] = useState(defaults.address);
   const [cityValue, setCityValue] = useState(defaults.city);
@@ -93,9 +204,8 @@ export function AddressAutocomplete({
   const containerRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
 
-  // Debounced BAN lookup on the address query.
+  // Debounced BAN + Photon lookup on the address query.
   useEffect(() => {
-    if (disableSearch) return;
     if (skipNextFetch.current) {
       skipNextFetch.current = false;
       return;
@@ -112,20 +222,7 @@ export function AddressAutocomplete({
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const url = `${BAN_ENDPOINT}?q=${encodeURIComponent(q)}&limit=5&autocomplete=1`;
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error(`BAN ${res.status}`);
-        const data = (await res.json()) as { features?: BanFeature[] };
-        const next: Suggestion[] = (data.features ?? []).map((f, i) => {
-          const p = f.properties ?? {};
-          return {
-            key: `${p.label ?? ""}-${i}`,
-            address: p.name ?? p.label ?? "",
-            city: p.city ?? "",
-            postcode: p.postcode ?? "",
-            label: p.label ?? p.name ?? "",
-          };
-        });
+        const next = await fetchSuggestions(q, controller.signal);
         setSuggestions(next);
         setOpen(true);
         setActiveIndex(-1);
@@ -143,7 +240,7 @@ export function AddressAutocomplete({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [addressValue, disableSearch]);
+  }, [addressValue]);
 
   // Close the dropdown when clicking outside the field group.
   useEffect(() => {

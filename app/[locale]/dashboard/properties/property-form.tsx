@@ -289,7 +289,6 @@ export function PropertyForm({
         <AddressAutocomplete
           searchingLabel={dict.fields.addressSearching}
           noResultsLabel={dict.fields.addressNoResults}
-          disableSearch={isUS}
           address={{
             name: "address",
             label: dict.fields.address,

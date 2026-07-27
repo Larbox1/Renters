@@ -299,7 +299,6 @@ export function TenantForm({
                 searchingLabel={dict.fields.addressSearching}
                 noResultsLabel={dict.fields.addressNoResults}
                 addressColSpanClass="sm:col-span-3"
-                disableSearch={isUS}
                 address={{
                   name: "previous_address",
                   label: dict.fields.previousAddress,

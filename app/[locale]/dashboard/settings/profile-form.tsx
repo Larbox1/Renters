@@ -102,7 +102,6 @@ export function ProfileForm({
           searchingLabel={dict.addressSearching}
           noResultsLabel={dict.addressNoResults}
           addressColSpanClass="sm:col-span-3"
-          disableSearch={isUS}
           address={{ name: "address", label: dict.address }}
           city={{ name: "city", label: dict.city }}
           postalCode={{
