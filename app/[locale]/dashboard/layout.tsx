@@ -200,6 +200,25 @@ export default async function DashboardLayout({
     contract: dict.dashboard.breadcrumb.contract,
   };
 
+  // Sidebar group heading shown as the first crumb, keyed by the segment right
+  // after /dashboard. Groups aren't routes ("Management" has no URL), so they
+  // can't come from the path. Pages outside any group keep the Overview root.
+  const groupDict = dict.dashboard.sidebar.groups;
+  const crumbSections: Record<string, string> = {
+    properties: groupDict.management,
+    tenants: groupDict.management,
+    leases: groupDict.management,
+    documents: groupDict.management,
+    "my-lease": groupDict.management,
+    finance: groupDict.accounting,
+    accounting: groupDict.accounting,
+    messages: groupDict.operations,
+    "market-analysis": groupDict.operations,
+    "rental-yield": groupDict.operations,
+    users: groupDict.admin,
+    "the-hub": groupDict.admin,
+  };
+
   return (
     <div className="flex w-full flex-col md:h-screen md:flex-row md:overflow-hidden">
       {session && (
@@ -226,6 +245,7 @@ export default async function DashboardLayout({
           <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 md:px-6 print:hidden">
             <DashboardBreadcrumb
               labels={crumbLabels}
+              sections={crumbSections}
               fallback={dict.dashboard.breadcrumb.details}
             />
             <div className="flex shrink-0 items-center gap-2">

@@ -128,6 +128,7 @@ export function LeaseForm({
   tenants,
   lease,
   defaultPropertyId,
+  defaultTenantId,
   operationCountry,
 }: {
   locale: Locale;
@@ -136,6 +137,7 @@ export function LeaseForm({
   tenants: Tenant[];
   lease?: Lease;
   defaultPropertyId?: string;
+  defaultTenantId?: string;
   operationCountry: OperationCountry;
 }) {
   const action = lease ? updateLeaseAction : createLeaseAction;
@@ -294,7 +296,7 @@ export function LeaseForm({
           <select
             name="tenant_id"
             required
-            defaultValue={lease?.tenant_id ?? ""}
+            defaultValue={lease?.tenant_id ?? defaultTenantId ?? ""}
             className={selectClass}
           >
             <option value="">{dict.fields.tenantPlaceholder}</option>

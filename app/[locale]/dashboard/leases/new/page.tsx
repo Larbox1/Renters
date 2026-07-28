@@ -13,10 +13,10 @@ export default async function NewLeasePage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ property_id?: string }>;
+  searchParams: Promise<{ property_id?: string; tenant_id?: string }>;
 }) {
   const { locale } = await params;
-  const { property_id } = await searchParams;
+  const { property_id, tenant_id } = await searchParams;
   if (!isLocale(locale)) notFound();
   const dict = getDictionary(locale as Locale);
 
@@ -60,6 +60,7 @@ export default async function NewLeasePage({
           properties={properties ?? []}
           tenants={tenants ?? []}
           defaultPropertyId={property_id}
+          defaultTenantId={tenant_id}
           operationCountry={session.operationCountry}
         />
       </div>

@@ -68,9 +68,16 @@ const looksLikeId = (seg: string) => /^[0-9a-f-]{16,}$/i.test(seg);
  */
 export function DashboardBreadcrumb({
   labels,
+  sections = {},
   fallback,
 }: {
   labels: Record<string, string>;
+  /**
+   * Sidebar group heading per top-level segment (tenants → "Management").
+   * When the current page belongs to a group, the first crumb shows the group
+   * heading as plain text — groups aren't routes, so it doesn't link anywhere.
+   */
+  sections?: Record<string, string>;
   fallback: string;
 }) {
   const pathname = usePathname();
@@ -126,11 +133,20 @@ export function DashboardBreadcrumb({
 
   if (segments.length === 0) return null;
 
-  const crumbs = segments.map((segment, i) => ({
-    href: `/${parts.slice(0, start + i + 1).join("/")}`,
-    label: labels[segment] ?? names[segment] ?? fallback,
-    isLast: i === segments.length - 1,
-  }));
+  const sectionLabel =
+    segments.length > 1 ? sections[segments[1]] : undefined;
+
+  const crumbs = segments.map((segment, i) => {
+    const isSection = i === 0 && sectionLabel !== undefined;
+    return {
+      href: `/${parts.slice(0, start + i + 1).join("/")}`,
+      label: isSection
+        ? sectionLabel
+        : (labels[segment] ?? names[segment] ?? fallback),
+      isLast: i === segments.length - 1,
+      isSection,
+    };
+  });
 
   return (
     <nav
@@ -148,6 +164,8 @@ export function DashboardBreadcrumb({
             <span className="truncate font-semibold text-slate-900">
               {crumb.label}
             </span>
+          ) : crumb.isSection ? (
+            <span className="truncate text-slate-500">{crumb.label}</span>
           ) : (
             <Link
               href={crumb.href}
