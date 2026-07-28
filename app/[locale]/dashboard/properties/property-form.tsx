@@ -7,6 +7,7 @@ import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { SignedPhoto } from "@/lib/properties/photos";
 import type { OperationCountry } from "@/lib/operation-country";
 import { currencyFor, localizeCurrencyLabel } from "@/lib/currency";
+import { localizeSurfaceLabel, surfaceUnitFor } from "@/lib/surface";
 import { PhotoManager, type PhotoManagerHandle } from "./photo-manager";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import {
@@ -205,9 +206,18 @@ export function PropertyForm({
   );
   const [type, setType] = useState<string>(property?.type ?? "");
 
-  const isUS = operationCountry === "US";
+  // The property's own country is the authority for its legal regime (lease
+  // types, documents) and display currency; the profile country only seeds
+  // the default for new properties.
+  const [country, setCountry] = useState<OperationCountry>(
+    property?.country === "US" || property?.country === "FR"
+      ? property.country
+      : operationCountry,
+  );
+
+  const isUS = country === "US";
   const money = (label: string) =>
-    localizeCurrencyLabel(label, currencyFor(operationCountry));
+    localizeCurrencyLabel(label, currencyFor(country));
 
   const centsToEuros = (cents: number | null) =>
     cents != null ? (cents / 100).toFixed(2) : "";
@@ -316,13 +326,18 @@ export function PropertyForm({
           <label className="block text-sm font-medium text-slate-700">
             {dict.fields.country}
           </label>
-          <input
+          <select
             name="country"
-            type="text"
-            defaultValue={property?.country ?? (isUS ? "US" : "FR")}
-            placeholder={dict.fields.countryPlaceholder}
-            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
+            value={country}
+            onChange={(e) => setCountry(e.target.value as OperationCountry)}
+            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          >
+            {(["FR", "US"] as const).map((c) => (
+              <option key={c} value={c}>
+                {dict.fields.countries[c]}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -482,7 +497,7 @@ export function PropertyForm({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="block text-sm font-medium text-slate-700">
-              {dict.fields.surface}
+              {localizeSurfaceLabel(dict.fields.surface, surfaceUnitFor(country))}
             </label>
             <input
               name="surface_sqm"
@@ -685,7 +700,7 @@ export function PropertyForm({
         </fieldset>
       )}
 
-      {/* Energy diagnostic (DPE) — a French certificate; hidden for US operators */}
+      {/* Energy diagnostic (DPE) — a French certificate; hidden for US properties */}
       {!isUS && (
       <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
         <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">

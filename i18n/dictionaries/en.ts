@@ -119,9 +119,9 @@ export const en = {
         tenant: "Tenant",
         service_provider: "Service provider",
       },
-      operationCountry: "Operation country",
+      operationCountry: "Country",
       operationCountryHint:
-        "Where your rental properties are located. This determines which lease types and legal documents apply. You can change it later in Settings.",
+        "Where you mainly operate. Pre-selects the country of your new properties — each property's own country decides its lease types and legal documents. You can change it later in Settings.",
       operationCountries: {
         FR: "🇫🇷 France",
         US: "🇺🇸 United States",
@@ -329,9 +329,9 @@ export const en = {
       addressNoResults: "No matching address",
       phone: "Phone",
       zipCode: "ZIP code",
-      operationCountry: "Operation country",
+      operationCountry: "Default country",
       operationCountryHint:
-        "Where your rental properties are located. Determines which lease types and legal documents apply.",
+        "Pre-selects the country of new properties and sets your dashboard currency. Each property's own country decides its lease types and legal documents.",
       operationCountries: {
         FR: "🇫🇷 France",
         US: "🇺🇸 United States",
@@ -541,7 +541,10 @@ export const en = {
       postalCodePlaceholder: "75001",
       zipCode: "ZIP code",
       country: "Country",
-      countryPlaceholder: "FR",
+      countries: {
+        FR: "🇫🇷 France",
+        US: "🇺🇸 United States",
+      },
       monthlyRent: "Monthly rent (€)",
       monthlyRentPlaceholder: "1000",
       value: "Property value (€)",
@@ -759,6 +762,8 @@ export const en = {
     printContract: "Print",
     saveContract: "Save",
     contractSaved: "Saved to My Documents",
+    contractUnsupported:
+      "This lease type has no contract template yet. Switch the lease type to generate the document.",
     fields: {
       property: "Property",
       propertyPlaceholder: "Select a property",
@@ -866,6 +871,8 @@ export const en = {
       submit: "Save lease",
       submitting: "Saving…",
       errorGeneric: "Could not save lease. Please try again.",
+      typeCountryMismatch:
+        "This lease type does not match the property's country. Pick a lease type from the property's legal framework.",
     },
     receipts: {
       title: "Rent receipts",

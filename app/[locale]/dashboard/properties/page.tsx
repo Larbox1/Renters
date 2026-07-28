@@ -7,6 +7,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { currencyFor } from "@/lib/currency";
+import { formatSurface, surfaceUnitFor } from "@/lib/surface";
 import {
   signFirstPhoto,
   type PropertyPhoto,
@@ -84,6 +85,7 @@ type PropertyRow = {
   address: string;
   city: string;
   postal_code: string | null;
+  country: string | null;
   monthly_rent_cents: number | null;
   sell_price_cents: number | null;
   photos: PropertyPhoto[] | null;
@@ -131,7 +133,7 @@ export default async function PropertiesPage({
   let listQuery = supabase
     .from("properties")
     .select(
-      "id, label, address, city, postal_code, monthly_rent_cents, sell_price_cents, photos, type, surface_sqm, rooms, bedrooms, parking, basement, to_rent, to_sell",
+      "id, label, address, city, postal_code, country, monthly_rent_cents, sell_price_cents, photos, type, surface_sqm, rooms, bedrooms, parking, basement, to_rent, to_sell",
     )
     .order("created_at", { ascending: false });
 
@@ -185,10 +187,15 @@ export default async function PropertiesPage({
   );
   const rentedCount = rentedSet.size;
 
-  const fmtCurrency = (cents: number) =>
+  // Per-row amounts follow the property's country; portfolio aggregates keep
+  // the operator's currency (a mixed FR/US portfolio has no single truth).
+  const fmtCurrency = (cents: number, country?: string | null) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: currencyFor(session.operationCountry),
+      currency:
+        country !== undefined
+          ? currencyFor(country === "US" ? "US" : "FR")
+          : currencyFor(session.operationCountry),
       maximumFractionDigits: 0,
     }).format(cents / 100);
 
@@ -462,7 +469,7 @@ function CardsView({
   properties: PropertyRow[];
   photoCovers: Map<string, SignedPhoto>;
   dict: Dictionary["properties"];
-  fmtCurrency: (cents: number) => string;
+  fmtCurrency: (cents: number, country?: string | null) => string;
 }) {
   return (
     <ul className="flex flex-wrap gap-4">
@@ -470,7 +477,8 @@ function CardsView({
         const cover = photoCovers.get(p.id);
         const specs: string[] = [];
         if (p.type) specs.push(dict.types[p.type]);
-        if (p.surface_sqm != null) specs.push(`${p.surface_sqm} m²`);
+        if (p.surface_sqm != null)
+          specs.push(formatSurface(p.surface_sqm, surfaceUnitFor(p.country)));
         if (p.rooms != null)
           specs.push(`${p.rooms} ${dict.fields.rooms.toLowerCase()}`);
         if (p.bedrooms != null)
@@ -538,7 +546,7 @@ function CardsView({
                 <div className="mt-auto flex items-end justify-between gap-2 pt-3 text-sm">
                   {p.monthly_rent_cents != null && p.to_rent && (
                     <p className="font-semibold text-slate-900">
-                      {fmtCurrency(p.monthly_rent_cents)}
+                      {fmtCurrency(p.monthly_rent_cents, p.country)}
                       <span className="ml-1 text-xs font-normal text-slate-500">
                         /mo
                       </span>
@@ -546,7 +554,7 @@ function CardsView({
                   )}
                   {p.sell_price_cents != null && p.to_sell && (
                     <p className="text-right text-sm font-semibold text-amber-700">
-                      {fmtCurrency(p.sell_price_cents)}
+                      {fmtCurrency(p.sell_price_cents, p.country)}
                     </p>
                   )}
                 </div>
@@ -568,7 +576,7 @@ function TableView({
   locale: Locale;
   properties: PropertyRow[];
   dict: Dictionary["properties"];
-  fmtCurrency: (cents: number) => string;
+  fmtCurrency: (cents: number, country?: string | null) => string;
 }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -582,7 +590,8 @@ function TableView({
               {dict.fields.type}
             </th>
             <th className="px-4 py-3 text-left font-semibold text-slate-600">
-              {dict.fields.surface}
+              {/* Cells carry the per-property unit (m² or sq ft). */}
+              {dict.fields.surface.replace(/\s*\(.*\)\s*$/, "")}
             </th>
             <th className="px-4 py-3 text-left font-semibold text-slate-600">
               {dict.fields.rooms} / {dict.fields.bedrooms}
@@ -625,7 +634,9 @@ function TableView({
                   {p.type ? dict.types[p.type] : "—"}
                 </td>
                 <td className="px-4 py-3 text-slate-700">
-                  {p.surface_sqm != null ? `${p.surface_sqm} m²` : "—"}
+                  {p.surface_sqm != null
+                    ? formatSurface(p.surface_sqm, surfaceUnitFor(p.country))
+                    : "—"}
                 </td>
                 <td className="px-4 py-3 text-slate-700">
                   {p.rooms ?? "—"} / {p.bedrooms ?? "—"}
@@ -653,12 +664,12 @@ function TableView({
                 <td className="px-4 py-3 text-right">
                   {p.monthly_rent_cents != null && (
                     <p className="font-medium text-slate-700">
-                      {fmtCurrency(p.monthly_rent_cents)}
+                      {fmtCurrency(p.monthly_rent_cents, p.country)}
                     </p>
                   )}
                   {p.sell_price_cents != null && p.to_sell && (
                     <p className="text-xs font-medium text-amber-700">
-                      {fmtCurrency(p.sell_price_cents)}
+                      {fmtCurrency(p.sell_price_cents, p.country)}
                     </p>
                   )}
                   {p.monthly_rent_cents == null &&

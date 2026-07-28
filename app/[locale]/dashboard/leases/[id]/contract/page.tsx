@@ -12,17 +12,7 @@ import { ContractCivilDocument } from "./contract-civil-document";
 import { ContractCommercialDocument } from "./contract-commercial-document";
 import { ContractUsDocument } from "./contract-us-document";
 import { saveLeaseContractAction } from "./actions";
-
-const SUPPORTED_TYPES = [
-  "bail_vide",
-  "bail_meuble",
-  "bail_civil",
-  "bail_commercial",
-  "us_fixed_term",
-  "us_month_to_month",
-  "us_sublease",
-  "us_commercial",
-];
+import { contractVariant, hasContractTemplate } from "@/lib/operation-country";
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
@@ -51,7 +41,7 @@ export default async function ContractPage({ params, searchParams }: Props) {
     .maybeSingle();
 
   if (!lease) notFound();
-  if (!SUPPORTED_TYPES.includes(lease.type)) {
+  if (!hasContractTemplate(lease.type)) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
         <Link
@@ -61,10 +51,7 @@ export default async function ContractPage({ params, searchParams }: Props) {
           ← {dict.leases.backToList}
         </Link>
         <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-          The contract template currently only supports <strong>Bail vide</strong>,{" "}
-          <strong>Bail meublé</strong>, <strong>Bail civil</strong> and{" "}
-          <strong>Bail commercial</strong>. Switch the lease type to generate the
-          document.
+          {dict.leases.contractUnsupported}
         </p>
       </div>
     );
@@ -139,15 +126,15 @@ export default async function ContractPage({ params, searchParams }: Props) {
             </div>
           </div>
 
-          {typeof lease.type === "string" && lease.type.startsWith("us_") ? (
+          {contractVariant(lease.type) === "us" ? (
             <ContractUsDocument
               data={{ lease, property, tenant, ownerProfile }}
             />
-          ) : lease.type === "bail_civil" ? (
+          ) : contractVariant(lease.type) === "civil" ? (
             <ContractCivilDocument
               data={{ lease, property, tenant, ownerProfile }}
             />
-          ) : lease.type === "bail_commercial" ? (
+          ) : contractVariant(lease.type) === "commercial" ? (
             <ContractCommercialDocument
               data={{ lease, property, tenant, ownerProfile }}
             />

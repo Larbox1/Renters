@@ -7,6 +7,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { currencyForLeaseType } from "@/lib/currency";
+import { hasContractTemplate } from "@/lib/operation-country";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { signDocument } from "@/lib/documents/storage";
 import { deleteLeaseAction } from "../actions";
@@ -43,7 +44,7 @@ export default async function LeaseDetailPage({
 
   const { data: lease } = await supabase
     .from("leases")
-    .select("*, properties(id, label, address, city), tenants(id, full_name, email, phone)")
+    .select("*, properties(id, label, address, city, country), tenants(id, full_name, email, phone)")
     .eq("id", id)
     .maybeSingle();
 
@@ -127,12 +128,7 @@ export default async function LeaseDetailPage({
             <p className="mt-1 text-slate-600">{tenant?.full_name}</p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
-            {(lease.type === "bail_vide" ||
-              lease.type === "bail_meuble" ||
-              lease.type === "bail_civil" ||
-              lease.type === "bail_commercial" ||
-              (typeof lease.type === "string" &&
-                lease.type.startsWith("us_"))) && (
+            {hasContractTemplate(lease.type) && (
               <Link
                 href={`/${locale}/dashboard/leases/${id}/contract`}
                 target="_blank"
@@ -199,7 +195,10 @@ export default async function LeaseDetailPage({
           dict={dict.leases.receipts}
           locale={locale as Locale}
           leaseId={id}
-          currency={currencyForLeaseType(lease.type, session.operationCountry)}
+          currency={currencyForLeaseType(
+            lease.type,
+            property?.country === "US" ? "US" : "FR",
+          )}
         />
       </section>
 

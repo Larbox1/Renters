@@ -198,18 +198,16 @@ export function AddressAutocomplete({
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  // When true, the next value change came from picking a suggestion, so we
-  // skip the fetch that would otherwise reopen the dropdown.
-  const skipNextFetch = useRef(false);
+  // Last value set without typing (initial default or a picked suggestion).
+  // The lookup effect skips it so the dropdown only opens on actual typing —
+  // not on mount over a pre-filled address, and not after picking.
+  const committed = useRef(defaults.address);
   const containerRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
 
   // Debounced BAN + Photon lookup on the address query.
   useEffect(() => {
-    if (skipNextFetch.current) {
-      skipNextFetch.current = false;
-      return;
-    }
+    if (addressValue === committed.current) return;
     const q = addressValue.trim();
     if (q.length < 3) {
       setSuggestions([]);
@@ -253,7 +251,7 @@ export function AddressAutocomplete({
   }, [open]);
 
   const pick = (s: Suggestion) => {
-    skipNextFetch.current = true;
+    committed.current = s.address;
     setAddressValue(s.address);
     if (s.city) setCityValue(s.city);
     if (s.postcode) setPostalValue(s.postcode);

@@ -18,6 +18,7 @@ type PropertyRef = {
   label: string | null;
   address: string;
   city: string;
+  country: string | null;
 } | null;
 
 type TenantRef = {
@@ -50,8 +51,10 @@ export function LeaseDetailCards({
 }) {
   const propertyName =
     property?.label ?? `${property?.address}, ${property?.city}`;
-  // Untyped leases predate lease types and are all French → EUR fallback.
-  const symbol = currencySymbol(currencyForLeaseType(lease.type, "FR"));
+  // Untyped leases predate lease types → fall back to the property's country.
+  const symbol = currencySymbol(
+    currencyForLeaseType(lease.type, property?.country === "US" ? "US" : "FR"),
+  );
 
   return (
     <>

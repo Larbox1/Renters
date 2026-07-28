@@ -22,6 +22,7 @@ type Property = {
   label: string | null;
   address: string;
   city: string;
+  country: string | null;
   monthly_rent_cents: number | null;
 };
 type Tenant = { id: string; full_name: string };
@@ -145,6 +146,12 @@ export function LeaseForm({
   const propertyRentMap = new Map(
     properties.map((p) => [p.id, p.monthly_rent_cents] as const),
   );
+  // The selected property's country decides which legal regime (lease types,
+  // currency) applies; the profile country is only the fallback before a
+  // property is picked.
+  const propertyCountryMap = new Map<string, OperationCountry>(
+    properties.map((p) => [p.id, p.country === "US" ? "US" : "FR"] as const),
+  );
 
   const initialRentEuros = lease
     ? centsToEuros(lease.monthly_rent_cents)
@@ -153,24 +160,42 @@ export function LeaseForm({
       : "";
   const [rentEuros, setRentEuros] = useState<string>(initialRentEuros);
 
+  const [propertyId, setPropertyId] = useState<string>(
+    lease?.property_id ?? defaultPropertyId ?? "",
+  );
+  const [selectedType, setSelectedType] = useState<LeaseTypeValue | "">(
+    lease?.type ?? "",
+  );
+
+  const propertyCountry: OperationCountry =
+    propertyCountryMap.get(propertyId) ?? operationCountry;
+
   const handlePropertyChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const cents = propertyRentMap.get(e.target.value);
+    const id = e.target.value;
+    setPropertyId(id);
+    const cents = propertyRentMap.get(id);
     if (cents != null) setRentEuros(centsToEuros(cents));
+    // Switching to a property in the other country invalidates the current
+    // type choice (except a saved type, which stays selectable while editing).
+    const nextCountry = propertyCountryMap.get(id) ?? operationCountry;
+    if (
+      selectedType &&
+      selectedType !== lease?.type &&
+      !leaseTypesFor(nextCountry).includes(selectedType)
+    ) {
+      setSelectedType("");
+    }
   };
 
-  const currency = currencyFor(operationCountry);
+  const currency = currencyFor(propertyCountry);
   const money = (label: string) => localizeCurrencyLabel(label, currency);
-  const countryTypes = leaseTypesFor(operationCountry);
-  // Keep an out-of-country type selectable when editing a lease created
-  // before the owner switched operation country.
+  const countryTypes = leaseTypesFor(propertyCountry);
+  // Keep an out-of-country type selectable when editing a lease created under
+  // a different regime (e.g. the property's country was changed since).
   const leaseTypes: readonly LeaseTypeValue[] =
     lease?.type && !countryTypes.includes(lease.type)
       ? [...countryTypes, lease.type]
       : countryTypes;
-
-  const [selectedType, setSelectedType] = useState<LeaseTypeValue | "">(
-    lease?.type ?? "",
-  );
   const [duration, setDuration] = useState<LeaseDuration | "">(
     lease?.duration ?? "",
   );
@@ -249,7 +274,7 @@ export function LeaseForm({
           <select
             name="property_id"
             required
-            defaultValue={lease?.property_id ?? defaultPropertyId ?? ""}
+            value={propertyId}
             onChange={handlePropertyChange}
             className={selectClass}
           >

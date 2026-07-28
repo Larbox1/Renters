@@ -125,9 +125,9 @@ export const fr: Dictionary = {
         tenant: "Locataire",
         service_provider: "Prestataire de service",
       },
-      operationCountry: "Pays d'exploitation",
+      operationCountry: "Pays",
       operationCountryHint:
-        "Le pays où se situent vos biens locatifs. Il détermine les types de baux et les documents légaux applicables. Modifiable plus tard dans les paramètres.",
+        "Le pays où vous exercez principalement. Pré-sélectionne le pays de vos nouveaux biens — le pays propre à chaque bien détermine ses types de baux et documents légaux. Modifiable plus tard dans les paramètres.",
       operationCountries: {
         FR: "🇫🇷 France",
         US: "🇺🇸 États-Unis",
@@ -336,9 +336,9 @@ export const fr: Dictionary = {
       addressNoResults: "Aucune adresse correspondante",
       phone: "Numéro de téléphone",
       zipCode: "Code ZIP",
-      operationCountry: "Pays d'exploitation",
+      operationCountry: "Pays par défaut",
       operationCountryHint:
-        "Le pays où se situent vos biens locatifs. Il détermine les types de baux et les documents légaux applicables.",
+        "Pré-sélectionne le pays des nouveaux biens et la devise du tableau de bord. Le pays propre à chaque bien détermine ses types de baux et documents légaux.",
       operationCountries: {
         FR: "🇫🇷 France",
         US: "🇺🇸 États-Unis",
@@ -553,7 +553,10 @@ export const fr: Dictionary = {
       postalCodePlaceholder: "75001",
       zipCode: "Code ZIP",
       country: "Pays",
-      countryPlaceholder: "FR",
+      countries: {
+        FR: "🇫🇷 France",
+        US: "🇺🇸 États-Unis",
+      },
       monthlyRent: "Loyer mensuel (€)",
       monthlyRentPlaceholder: "1000",
       value: "Valeur du bien (€)",
@@ -771,6 +774,8 @@ export const fr: Dictionary = {
     printContract: "Imprimer",
     saveContract: "Enregistrer",
     contractSaved: "Enregistré dans Mes Documents",
+    contractUnsupported:
+      "Ce type de bail n'a pas encore de modèle de contrat. Changez le type de bail pour générer le document.",
     fields: {
       property: "Bien",
       propertyPlaceholder: "Sélectionnez un bien",
@@ -879,6 +884,8 @@ export const fr: Dictionary = {
       submit: "Enregistrer",
       submitting: "Enregistrement…",
       errorGeneric: "Impossible d'enregistrer le bail. Veuillez réessayer.",
+      typeCountryMismatch:
+        "Ce type de bail ne correspond pas au pays du bien. Choisissez un type de bail du cadre légal du pays du bien.",
     },
     receipts: {
       title: "Quittances de loyer",

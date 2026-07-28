@@ -110,7 +110,7 @@ function ContractUsPdfDoc({ data }: { data: ContractData }) {
           &quot;Premises&quot;). Type of property:{" "}
           <Text style={styles.bold}>{usBlank(d.nature)}</Text>
           {p?.surface_sqm != null
-            ? ` — approximate area: ${String(p.surface_sqm)} m²`
+            ? ` — approximate area: ${String(p.surface_sqm)} sq ft`
             : ""}
         </Text>
 

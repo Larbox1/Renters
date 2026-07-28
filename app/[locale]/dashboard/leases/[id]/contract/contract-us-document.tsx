@@ -84,7 +84,7 @@ export function ContractUsDocument({ data }: { data: ContractData }) {
           {p?.surface_sqm != null && (
             <>
               {" — "}approximate area:{" "}
-              <strong>{String(p.surface_sqm)}</strong> m²
+              <strong>{String(p.surface_sqm)}</strong> sq ft
             </>
           )}
         </p>

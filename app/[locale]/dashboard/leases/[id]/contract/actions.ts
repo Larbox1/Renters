@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { isLocale, defaultLocale } from "@/i18n/config";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { uploadDocumentBlob } from "@/lib/documents/storage";
+import { contractVariant, hasContractTemplate } from "@/lib/operation-country";
 
 // The PDF renderer (and react-pdf) are heavy and bring react-dom-server-like
 // internals. We import them dynamically so they never enter the page's
@@ -31,17 +32,7 @@ export async function saveLeaseContractAction(formData: FormData) {
     .eq("id", leaseId)
     .maybeSingle();
 
-  const SUPPORTED_TYPES = [
-    "bail_vide",
-    "bail_meuble",
-    "bail_civil",
-    "bail_commercial",
-    "us_fixed_term",
-    "us_month_to_month",
-    "us_sublease",
-    "us_commercial",
-  ];
-  if (leaseError || !lease || !SUPPORTED_TYPES.includes(lease.type)) return;
+  if (leaseError || !lease || !hasContractTemplate(lease.type)) return;
 
   const property = Array.isArray(lease.properties)
     ? lease.properties[0]
@@ -74,9 +65,10 @@ export async function saveLeaseContractAction(formData: FormData) {
 
   // Render the PDF buffer via dynamic import. Bail civil uses its own
   // renderer; bail vide / meublé share the loi Alur renderer.
+  const variant = contractVariant(lease.type);
   let pdfBuffer: Buffer;
   try {
-    if (typeof lease.type === "string" && lease.type.startsWith("us_")) {
+    if (variant === "us") {
       const { renderUsContractPdf } = await import("./contract-us-pdf");
       pdfBuffer = await renderUsContractPdf({
         lease,
@@ -84,7 +76,7 @@ export async function saveLeaseContractAction(formData: FormData) {
         tenant,
         ownerProfile,
       });
-    } else if (lease.type === "bail_civil") {
+    } else if (variant === "civil") {
       const { renderCivilContractPdf } = await import("./contract-civil-pdf");
       pdfBuffer = await renderCivilContractPdf({
         lease,
@@ -92,7 +84,7 @@ export async function saveLeaseContractAction(formData: FormData) {
         tenant,
         ownerProfile,
       });
-    } else if (lease.type === "bail_commercial") {
+    } else if (variant === "commercial") {
       const { renderCommercialContractPdf } = await import(
         "./contract-commercial-pdf"
       );

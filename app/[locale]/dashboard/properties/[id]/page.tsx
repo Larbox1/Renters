@@ -7,6 +7,11 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { currencyFor } from "@/lib/currency";
+import {
+  formatSurface,
+  localizeSurfaceLabel,
+  surfaceUnitFor,
+} from "@/lib/surface";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { signPhotos, type PropertyPhoto } from "@/lib/properties/photos";
@@ -94,9 +99,12 @@ export default async function PropertyDetailPage({
   const fmtCurrency = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: currencyFor(session.operationCountry),
+      // The property's own country decides its display currency.
+      currency: currencyFor(property.country === "US" ? "US" : "FR"),
       maximumFractionDigits: 0,
     }).format(cents / 100);
+
+  const surfaceUnit = surfaceUnitFor(property.country);
 
   const fmtDate = (iso: string) =>
     new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
@@ -259,7 +267,10 @@ export default async function PropertyDetailPage({
         property.dpe_class) && (
         <div className="mb-6 grid gap-4 grid-cols-2 sm:grid-cols-4">
           {property.surface_sqm != null && (
-            <KeyStat label={propDict.fields.surface} value={`${property.surface_sqm} m²`} />
+            <KeyStat
+              label={localizeSurfaceLabel(propDict.fields.surface, surfaceUnit)}
+              value={formatSurface(property.surface_sqm, surfaceUnit)}
+            />
           )}
           {property.rooms != null && (
             <KeyStat label={propDict.fields.rooms} value={String(property.rooms)} />
@@ -340,8 +351,8 @@ export default async function PropertyDetailPage({
             )}
             {property.surface_sqm != null && (
               <DlRow
-                label={propDict.fields.surface}
-                value={`${property.surface_sqm} m²`}
+                label={localizeSurfaceLabel(propDict.fields.surface, surfaceUnit)}
+                value={formatSurface(property.surface_sqm, surfaceUnit)}
               />
             )}
             {property.rooms != null && (

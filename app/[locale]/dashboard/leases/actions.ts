@@ -4,8 +4,30 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isLocale, defaultLocale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { leaseTypesFor, type OperationCountry } from "@/lib/operation-country";
 
 export type LeaseState = { error?: string };
+
+/**
+ * A lease's type must belong to the legal regime of its property's country
+ * (FR bail types vs US lease types). The form enforces this client-side;
+ * this is the authoritative check.
+ */
+async function leaseTypeMatchesProperty(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  propertyId: string,
+  typeRaw: string,
+): Promise<boolean> {
+  if (!typeRaw) return true;
+  const { data: property } = await supabase
+    .from("properties")
+    .select("country")
+    .eq("id", propertyId)
+    .maybeSingle();
+  const country: OperationCountry = property?.country === "US" ? "US" : "FR";
+  return (leaseTypesFor(country) as readonly string[]).includes(typeRaw);
+}
 
 function getLocale(formData: FormData) {
   const raw = String(formData.get("locale") ?? "");
@@ -217,11 +239,16 @@ export async function createLeaseAction(
 
   const endDateRaw = String(formData.get("end_date") ?? "").trim();
   const typeRaw = String(formData.get("type") ?? "").trim();
+  const propertyId = String(formData.get("property_id") ?? "");
+
+  if (!(await leaseTypeMatchesProperty(supabase, propertyId, typeRaw))) {
+    return { error: getDictionary(locale).leases.form.typeCountryMismatch };
+  }
 
   const { data: lease, error } = await supabase
     .from("leases")
     .insert({
-      property_id: String(formData.get("property_id") ?? ""),
+      property_id: propertyId,
       tenant_id: String(formData.get("tenant_id") ?? ""),
       start_date: String(formData.get("start_date") ?? ""),
       end_date: endDateRaw || null,
@@ -253,11 +280,29 @@ export async function updateLeaseAction(
 
   const endDateRaw = String(formData.get("end_date") ?? "").trim();
   const typeRaw = String(formData.get("type") ?? "").trim();
+  const propertyId = String(formData.get("property_id") ?? "");
+
+  // A lease created under a different regime (property country changed since)
+  // stays savable with its existing type; only a *changed* type must match
+  // the property's country.
+  const { data: current } = await supabase
+    .from("leases")
+    .select("type")
+    .eq("id", id)
+    .maybeSingle();
+  const typeUnchanged = (current?.type ?? null) === (typeRaw || null);
+
+  if (
+    !typeUnchanged &&
+    !(await leaseTypeMatchesProperty(supabase, propertyId, typeRaw))
+  ) {
+    return { error: getDictionary(locale).leases.form.typeCountryMismatch };
+  }
 
   const { error } = await supabase
     .from("leases")
     .update({
-      property_id: String(formData.get("property_id") ?? ""),
+      property_id: propertyId,
       tenant_id: String(formData.get("tenant_id") ?? ""),
       start_date: String(formData.get("start_date") ?? ""),
       end_date: endDateRaw || null,

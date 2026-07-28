@@ -13,8 +13,17 @@ import {
 } from "@/lib/properties/photos";
 import { isPlanId, planPropertyLimit, type PlanId } from "@/lib/plans";
 import { checkStorageQuota } from "@/lib/storage/quota";
+import { isOperationCountry } from "@/lib/operation-country";
 
 export type PropertyState = { error?: string };
+
+/** properties.country is constrained to FR/US; anything else falls back FR. */
+function readCountry(formData: FormData): "FR" | "US" {
+  const raw = String(formData.get("country") ?? "")
+    .trim()
+    .toUpperCase();
+  return isOperationCountry(raw) ? raw : "FR";
+}
 
 function getLocale(formData: FormData) {
   const raw = String(formData.get("locale") ?? "");
@@ -300,7 +309,7 @@ export async function createPropertyAction(
     address: String(formData.get("address") ?? "").trim(),
     city: String(formData.get("city") ?? "").trim(),
     postal_code: String(formData.get("postal_code") ?? "").trim() || null,
-    country: String(formData.get("country") ?? "FR").trim() || "FR",
+    country: readCountry(formData),
     monthly_rent_cents: rentCents,
     value_cents: valueCents,
     sell_price_cents: sellPriceCents,
@@ -380,7 +389,7 @@ export async function updatePropertyAction(
     address: String(formData.get("address") ?? "").trim(),
     city: String(formData.get("city") ?? "").trim(),
     postal_code: String(formData.get("postal_code") ?? "").trim() || null,
-    country: String(formData.get("country") ?? "FR").trim() || "FR",
+    country: readCountry(formData),
     monthly_rent_cents: rentCents,
     value_cents: valueCents,
     sell_price_cents: sellPriceCents,

@@ -16,6 +16,7 @@ type PropertyRef = {
   label: string | null;
   address: string;
   city: string;
+  country: string | null;
 } | null;
 
 type TenantRef = {
@@ -50,7 +51,7 @@ export default async function MyLeasePage({
   const { data: leasesData } = await supabase
     .from("leases")
     .select(
-      "*, properties(id, label, address, city), tenants(id, full_name, email, phone)",
+      "*, properties(id, label, address, city, country), tenants(id, full_name, email, phone)",
     )
     .order("start_date", { ascending: false });
   const leases = leasesData ?? [];
