@@ -6,7 +6,7 @@ import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
-import { currencyFor } from "@/lib/currency";
+import { currencyFor, localizeCurrencyLabel } from "@/lib/currency";
 import {
   formatSurface,
   localizeSurfaceLabel,
@@ -96,13 +96,18 @@ export default async function PropertyDetailPage({
     (property.photos ?? []) as PropertyPhoto[],
   );
 
+  // The property's own country decides its display currency.
+  const currency = currencyFor(property.country === "US" ? "US" : "FR");
+
   const fmtCurrency = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      // The property's own country decides its display currency.
-      currency: currencyFor(property.country === "US" ? "US" : "FR"),
+      currency,
       maximumFractionDigits: 0,
     }).format(cents / 100);
+
+  // Dictionary labels embed "€" — swap for "$" on US properties.
+  const money = (label: string) => localizeCurrencyLabel(label, currency);
 
   const surfaceUnit = surfaceUnitFor(property.country);
 
@@ -480,7 +485,7 @@ export default async function PropertyDetailPage({
             property.annual_energy_cost_year != null) && (
             <div className="mt-4 border-t border-slate-100 pt-4">
               <p className="text-xs text-slate-500">
-                {propDict.fields.annualEnergyCost}
+                {money(propDict.fields.annualEnergyCost)}
                 {property.annual_energy_cost_year
                   ? ` · ${property.annual_energy_cost_year}`
                   : ""}
@@ -505,19 +510,19 @@ export default async function PropertyDetailPage({
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
             {property.monthly_rent_cents != null && (
               <DlRow
-                label={propDict.fields.monthlyRent}
+                label={money(propDict.fields.monthlyRent)}
                 value={fmtCurrency(property.monthly_rent_cents)}
               />
             )}
             {property.value_cents != null && (
               <DlRow
-                label={propDict.fields.value}
+                label={money(propDict.fields.value)}
                 value={fmtCurrency(property.value_cents)}
               />
             )}
             {property.sell_price_cents != null && (
               <DlRow
-                label={propDict.fields.sellPrice}
+                label={money(propDict.fields.sellPrice)}
                 value={fmtCurrency(property.sell_price_cents)}
                 accent="amber"
               />
@@ -530,25 +535,25 @@ export default async function PropertyDetailPage({
             )}
             {property.acquisition_fees_cents != null && (
               <DlRow
-                label={propDict.fields.acquisitionFees}
+                label={money(propDict.fields.acquisitionFees)}
                 value={fmtCurrency(property.acquisition_fees_cents)}
               />
             )}
             {property.brokerage_fees_cents != null && (
               <DlRow
-                label={propDict.fields.brokerageFees}
+                label={money(propDict.fields.brokerageFees)}
                 value={fmtCurrency(property.brokerage_fees_cents)}
               />
             )}
             {property.housing_tax_cents != null && (
               <DlRow
-                label={propDict.fields.housingTax}
+                label={money(propDict.fields.housingTax)}
                 value={fmtCurrency(property.housing_tax_cents)}
               />
             )}
             {property.property_tax_cents != null && (
               <DlRow
-                label={propDict.fields.propertyTax}
+                label={money(propDict.fields.propertyTax)}
                 value={fmtCurrency(property.property_tax_cents)}
               />
             )}
