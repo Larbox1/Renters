@@ -16,6 +16,7 @@ import { ConfirmSubmit } from "@/components/confirm-submit";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { signPhotos, type PropertyPhoto } from "@/lib/properties/photos";
 import { deletePropertyAction } from "../actions";
+import { LoansSection, type PropertyLoan } from "./loans-section";
 
 type DpeClass = "A" | "B" | "C" | "D" | "E" | "F" | "G";
 
@@ -84,13 +85,22 @@ export default async function PropertyDetailPage({
 
   if (!property) notFound();
 
-  const { data: leases } = await supabase
-    .from("leases")
-    .select(
-      "id, status, start_date, end_date, monthly_rent_cents, tenant_id, tenants(full_name)",
-    )
-    .eq("property_id", id)
-    .order("start_date", { ascending: false });
+  const [{ data: leases }, { data: loans }] = await Promise.all([
+    supabase
+      .from("leases")
+      .select(
+        "id, status, start_date, end_date, monthly_rent_cents, charges_amount_cents, tenant_id, tenants(full_name)",
+      )
+      .eq("property_id", id)
+      .order("start_date", { ascending: false }),
+    supabase
+      .from("property_loans")
+      .select(
+        "id, label, principal_cents, annual_rate_bps, start_date, end_date",
+      )
+      .eq("property_id", id)
+      .order("start_date", { ascending: true }),
+  ]);
 
   const photos = await signPhotos(
     (property.photos ?? []) as PropertyPhoto[],
@@ -560,6 +570,15 @@ export default async function PropertyDetailPage({
           </dl>
         </Section>
       )}
+
+      {/* Loans */}
+      <LoansSection
+        locale={locale as Locale}
+        dict={propDict.loans}
+        propertyId={id}
+        currency={currency}
+        loans={(loans ?? []) as PropertyLoan[]}
+      />
 
       {/* Leases */}
       <div className="mt-8">
