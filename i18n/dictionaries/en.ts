@@ -227,6 +227,8 @@ export const en = {
   finance: {
     title: "My Finance",
     subtitle: "Income, deposits, and yield across your portfolio.",
+    fxNote:
+      "Totals converted at 1 € = {rate} $ (ECB daily rate); individual rows keep their own currency.",
     stats: {
       monthlyIncome: "Monthly income",
       annualIncome: "Annual income",
@@ -266,6 +268,14 @@ export const en = {
       vacant: "Vacant",
       rented: "Rented",
       empty: "No properties yet.",
+    },
+    charts: {
+      incomeByCategory: "Income by category",
+      expensesByCategory: "Expenses by category",
+      total: "Total",
+      uncategorized: "Uncategorized",
+      emptyIncome: "No income recorded in this period.",
+      emptyExpenses: "No expenses recorded in this period.",
     },
     transactions: {
       addButton: "Add income / expense",

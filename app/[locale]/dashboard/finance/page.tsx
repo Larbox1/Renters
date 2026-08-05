@@ -7,9 +7,16 @@ import { AccessDenied } from "@/components/access-denied";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { getCurrentSession } from "@/lib/auth/current-user";
 import { currencyFor, type CurrencyCode } from "@/lib/currency";
+import { convertCents, eurToUsdRate } from "@/lib/fx";
 import { loanFigures } from "@/lib/loan";
 import { AddTransactionModal } from "./transaction-modal";
 import { deleteTransactionAction } from "./actions";
+import { CategoryPie } from "./category-pie";
+import {
+  PIE_SLOTS,
+  PIE_UNCATEGORIZED,
+  type PieSlice,
+} from "@/lib/category-colors";
 
 type PropertyRow = {
   id: string;
@@ -148,12 +155,29 @@ export default async function FinancePage({
     properties.map((p) => [p.id, propertyLabel(p)] as const),
   );
 
+  // Each property's own country decides the currency it transacts in. Rows
+  // display in that currency; cross-property totals convert into the
+  // operator's currency at the ECB daily EUR/USD rate so a mixed FR/US
+  // portfolio sums correctly instead of adding € and $ cents together.
+  const currency = currencyFor(session.operationCountry);
+  const propertyCurrency = (p: PropertyRow) =>
+    currencyFor(p.country === "US" ? "US" : "FR");
+  const currencyByProperty = new Map(
+    properties.map((p) => [p.id, propertyCurrency(p)] as const),
+  );
+  const currencyOf = (propertyId: string): CurrencyCode =>
+    currencyByProperty.get(propertyId) ?? currency;
+  const hasMixedCurrencies = new Set(currencyByProperty.values()).size > 1;
+  const eurToUsd = await eurToUsdRate();
+  const toDisplay = (cents: number, from: CurrencyCode) =>
+    convertCents(cents, from, currency, eurToUsd);
+
   const recordedIncomeCents = transactions
     .filter((t) => t.kind === "income")
-    .reduce((s, t) => s + t.amount_cents, 0);
+    .reduce((s, t) => s + toDisplay(t.amount_cents, currencyOf(t.property_id)), 0);
   const recordedExpenseCents = transactions
     .filter((t) => t.kind === "expense")
-    .reduce((s, t) => s + t.amount_cents, 0);
+    .reduce((s, t) => s + toDisplay(t.amount_cents, currencyOf(t.property_id)), 0);
   const netCashflowCents = recordedIncomeCents - recordedExpenseCents;
 
   // Group active leases by property so a property with multiple tenants is
@@ -166,16 +190,16 @@ export default async function FinancePage({
   }
 
   const monthlyIncomeCents = activeLeases.reduce(
-    (s, l) => s + (l.monthly_rent_cents ?? 0),
+    (s, l) => s + toDisplay(l.monthly_rent_cents ?? 0, currencyOf(l.property_id)),
     0,
   );
   const annualIncomeCents = monthlyIncomeCents * 12;
   const depositsCents = activeLeases.reduce(
-    (s, l) => s + (l.deposit_cents ?? 0),
+    (s, l) => s + toDisplay(l.deposit_cents ?? 0, currencyOf(l.property_id)),
     0,
   );
   const portfolioValueCents = properties.reduce(
-    (s, p) => s + (p.value_cents ?? 0),
+    (s, p) => s + toDisplay(p.value_cents ?? 0, propertyCurrency(p)),
     0,
   );
   const yieldPct =
@@ -183,7 +207,6 @@ export default async function FinancePage({
       ? (annualIncomeCents / portfolioValueCents) * 100
       : 0;
 
-  const currency = currencyFor(session.operationCountry);
   const fmtCurrency = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
@@ -205,13 +228,6 @@ export default async function FinancePage({
     }).format(new Date(`${iso}T00:00:00`));
 
   const today = new Date().toISOString().slice(0, 10);
-
-  // Each property's own country decides the currency it transacts in.
-  const propertyCurrency = (p: PropertyRow) =>
-    currencyFor(p.country === "US" ? "US" : "FR");
-  const currencyByProperty = new Map(
-    properties.map((p) => [p.id, propertyCurrency(p)] as const),
-  );
 
   const fmtCurrencyIn = (cents: number, code: CurrencyCode) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
@@ -263,17 +279,17 @@ export default async function FinancePage({
     };
   });
 
-  // Totals mix currencies on a multi-country portfolio; they are shown in the
-  // operator's own currency, like the portfolio-value stat above.
+  // Totals are shown in the operator's own currency; rows in another currency
+  // convert at the ECB rate before summing.
   const assetTotals = assetRows.reduce(
     (acc, r) => ({
-      purchasePrice: acc.purchasePrice + r.purchasePrice,
-      fees: acc.fees + r.fees,
-      works: acc.works + r.works,
-      totalCost: acc.totalCost + r.totalCost,
-      loanAmount: acc.loanAmount + r.loanAmount,
-      remainingLoan: acc.remainingLoan + r.remainingLoan,
-      marketValue: acc.marketValue + (r.marketValue ?? 0),
+      purchasePrice: acc.purchasePrice + toDisplay(r.purchasePrice, r.currency),
+      fees: acc.fees + toDisplay(r.fees, r.currency),
+      works: acc.works + toDisplay(r.works, r.currency),
+      totalCost: acc.totalCost + toDisplay(r.totalCost, r.currency),
+      loanAmount: acc.loanAmount + toDisplay(r.loanAmount, r.currency),
+      remainingLoan: acc.remainingLoan + toDisplay(r.remainingLoan, r.currency),
+      marketValue: acc.marketValue + toDisplay(r.marketValue ?? 0, r.currency),
     }),
     {
       purchasePrice: 0,
@@ -301,6 +317,53 @@ export default async function FinancePage({
         : txDict.expenseCategories;
     return (map as Record<string, string>)[t.category] ?? t.category;
   };
+  // Same entity→color mapping as the donuts, so a category wears one hue
+  // across chart, legend and table.
+  const categoryColor = (t: Transaction): string => {
+    const keys = Object.keys(
+      t.kind === "income" ? txDict.incomeCategories : txDict.expenseCategories,
+    );
+    const i = t.category ? keys.indexOf(t.category) : -1;
+    return i >= 0 ? PIE_SLOTS[i % PIE_SLOTS.length] : PIE_UNCATEGORIZED;
+  };
+
+  // Category donuts, scoped by the same from/to range as the transactions
+  // list. Slices follow the fixed category order so a category keeps its
+  // color whatever the range shows; unknown/absent categories fold into a
+  // gray "Uncategorized" bucket. Amounts convert into the display currency
+  // like every other cross-property total.
+  const categorySlices = (kind: "income" | "expense"): PieSlice[] => {
+    const labels: Record<string, string> =
+      kind === "income" ? txDict.incomeCategories : txDict.expenseCategories;
+    const keys = Object.keys(labels);
+    const totals = new Map<string, number>();
+    for (const t of transactions) {
+      if (t.kind !== kind) continue;
+      const key = t.category && keys.includes(t.category) ? t.category : "__other";
+      totals.set(
+        key,
+        (totals.get(key) ?? 0) +
+          toDisplay(t.amount_cents, currencyOf(t.property_id)),
+      );
+    }
+    const slices: PieSlice[] = keys.map((key, i) => ({
+      key,
+      label: labels[key],
+      cents: totals.get(key) ?? 0,
+      formatted: fmtCurrency(totals.get(key) ?? 0),
+      color: PIE_SLOTS[i % PIE_SLOTS.length],
+    }));
+    slices.push({
+      key: "__other",
+      label: dict.finance.charts.uncategorized,
+      cents: totals.get("__other") ?? 0,
+      formatted: fmtCurrency(totals.get("__other") ?? 0),
+      color: PIE_UNCATEGORIZED,
+    });
+    return slices.filter((s) => s.cents > 0);
+  };
+  const incomeSlices = categorySlices("income");
+  const expenseSlices = categorySlices("expense");
 
   return (
     <div className="px-6 py-12">
@@ -365,25 +428,42 @@ export default async function FinancePage({
         <StatCard
           label={dict.finance.stats.monthlyIncome}
           value={fmtCurrency(monthlyIncomeCents)}
+          tone="emerald"
         />
         <StatCard
           label={dict.finance.stats.annualIncome}
           value={fmtCurrency(annualIncomeCents)}
           hint={dict.finance.stats.annualHint}
+          tone="emerald"
         />
         <StatCard
           label={dict.finance.stats.deposits}
           value={fmtCurrency(depositsCents)}
+          tone="brand"
         />
         <StatCard
           label={dict.finance.stats.portfolioValue}
           value={fmtCurrency(portfolioValueCents)}
+          tone="brand"
         />
         <StatCard
           label={dict.finance.stats.yield}
           value={`${yieldPct.toFixed(1)}%`}
+          tone="emerald"
         />
       </div>
+
+      {/* Only worth mentioning when a conversion actually happened. */}
+      {hasMixedCurrencies && (
+        <p className="-mt-6 mb-8 text-xs text-slate-500">
+          {dict.finance.fxNote.replace(
+            "{rate}",
+            new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
+              maximumFractionDigits: 4,
+            }).format(eurToUsd),
+          )}
+        </p>
+      )}
 
       {/* Real estate assets */}
       <section className="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -567,7 +647,7 @@ export default async function FinancePage({
                         {tenants.length > 0 ? tenants.join(", ") : "—"}
                       </td>
                       <td className="px-4 py-3 text-right font-medium text-slate-700">
-                        {isVacant ? "—" : fmtCurrency(propertyRent)}
+                        {isVacant ? "—" : fmtCurrencyIn(propertyRent, currencyOf(p.id))}
                       </td>
                     </tr>
                   );
@@ -597,15 +677,57 @@ export default async function FinancePage({
           <StatCard
             label={dict.finance.transactions.recordedIncome}
             value={fmtCurrency(recordedIncomeCents)}
+            tone="emerald"
+            tinted
           />
           <StatCard
             label={dict.finance.transactions.recordedExpenses}
             value={fmtCurrency(recordedExpenseCents)}
+            tone="red"
+            tinted
           />
           <StatCard
             label={dict.finance.transactions.netCashflow}
             value={fmtCurrency(netCashflowCents)}
+            tone={netCashflowCents >= 0 ? "emerald" : "red"}
+            tinted
           />
+        </div>
+
+        {/* Category breakdown of the same date range as the table below. */}
+        <div className="mb-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-5 py-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                {dict.finance.charts.incomeByCategory}
+              </h2>
+            </div>
+            <div className="px-5 py-4">
+              <CategoryPie
+                locale={locale as Locale}
+                slices={incomeSlices}
+                totalFormatted={fmtCurrency(recordedIncomeCents)}
+                totalLabel={dict.finance.charts.total}
+                emptyLabel={dict.finance.charts.emptyIncome}
+              />
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-5 py-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                {dict.finance.charts.expensesByCategory}
+              </h2>
+            </div>
+            <div className="px-5 py-4">
+              <CategoryPie
+                locale={locale as Locale}
+                slices={expenseSlices}
+                totalFormatted={fmtCurrency(recordedExpenseCents)}
+                totalLabel={dict.finance.charts.total}
+                emptyLabel={dict.finance.charts.emptyExpenses}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -650,9 +772,18 @@ export default async function FinancePage({
                           {propertyLabelById.get(t.property_id) ?? "—"}
                         </td>
                         <td className="px-4 py-3 text-slate-700">
-                          {categoryLabel(t) ?? "—"}
+                          <span className="flex items-center gap-2">
+                            <span
+                              aria-hidden
+                              className="h-2 w-2 shrink-0 rounded-full"
+                              style={{ backgroundColor: categoryColor(t) }}
+                            />
+                            {categoryLabel(t) ?? "—"}
+                          </span>
                           {t.note && (
-                            <p className="text-xs text-slate-500">{t.note}</p>
+                            <p className="pl-4 text-xs text-slate-500">
+                              {t.note}
+                            </p>
                           )}
                         </td>
                         <td
@@ -699,17 +830,37 @@ function StatCard({
   label,
   value,
   hint,
+  tone,
+  tinted = false,
 }: {
   label: string;
   value: string;
   hint?: string;
+  /** Colors the value; income/positive = emerald, expense/negative = red. */
+  tone?: "emerald" | "red" | "brand";
+  /** Washes the whole card in the tone — for the recorded income/expense trio. */
+  tinted?: boolean;
 }) {
+  const cardClass =
+    tinted && tone === "emerald"
+      ? "border-emerald-200 bg-emerald-50/60"
+      : tinted && tone === "red"
+        ? "border-red-200 bg-red-50/60"
+        : "border-slate-200 bg-white";
+  const valueClass =
+    tone === "emerald"
+      ? "text-emerald-700"
+      : tone === "red"
+        ? "text-red-600"
+        : tone === "brand"
+          ? "text-brand-700"
+          : "text-slate-900";
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className={`rounded-xl border p-5 shadow-sm ${cardClass}`}>
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
+      <p className={`mt-2 text-2xl font-bold ${valueClass}`}>{value}</p>
       {hint && <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>}
     </div>
   );

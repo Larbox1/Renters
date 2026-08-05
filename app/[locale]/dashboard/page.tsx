@@ -7,6 +7,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { logoutAction } from "@/lib/actions/auth";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { currencyFor } from "@/lib/currency";
+import { convertCents, eurToUsdRate } from "@/lib/fx";
 import {
   Calendar,
   type CalendarEvent,
@@ -181,7 +182,7 @@ export default async function DashboardPage({
       session.supabase
         .from("properties")
         .select("*", { count: "exact", head: true }),
-      session.supabase.from("properties").select("value_cents"),
+      session.supabase.from("properties").select("value_cents, country"),
       session.supabase
         .from("leases")
         .select("property_id")
@@ -189,8 +190,19 @@ export default async function DashboardPage({
     ]);
 
     propertiesCount = propsRes.count ?? 0;
+    // A mixed FR/US portfolio can't just add € and $ cents — convert each
+    // property into the operator's currency at the ECB daily rate.
+    const displayCurrency = currencyFor(session.operationCountry);
+    const eurToUsd = await eurToUsdRate();
     portfolioValueCents = (propsValues.data ?? []).reduce(
-      (sum, p) => sum + (p.value_cents ?? 0),
+      (sum, p) =>
+        sum +
+        convertCents(
+          p.value_cents ?? 0,
+          currencyFor(p.country === "US" ? "US" : "FR"),
+          displayCurrency,
+          eurToUsd,
+        ),
       0,
     );
     const leases = activeLeases.data ?? [];

@@ -234,6 +234,8 @@ export const fr: Dictionary = {
   finance: {
     title: "Mes finances",
     subtitle: "Revenus, dépôts et rentabilité de votre portefeuille.",
+    fxNote:
+      "Totaux convertis au taux 1 € = {rate} $ (taux quotidien BCE) ; chaque ligne conserve sa propre devise.",
     stats: {
       monthlyIncome: "Revenu mensuel",
       annualIncome: "Revenu annuel",
@@ -273,6 +275,14 @@ export const fr: Dictionary = {
       vacant: "Vacant",
       rented: "Loué",
       empty: "Aucun bien pour l'instant.",
+    },
+    charts: {
+      incomeByCategory: "Revenus par catégorie",
+      expensesByCategory: "Dépenses par catégorie",
+      total: "Total",
+      uncategorized: "Sans catégorie",
+      emptyIncome: "Aucun revenu enregistré sur cette période.",
+      emptyExpenses: "Aucune dépense enregistrée sur cette période.",
     },
     transactions: {
       addButton: "Ajouter un revenu / une dépense",

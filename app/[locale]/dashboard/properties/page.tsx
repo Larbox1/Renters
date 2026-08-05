@@ -7,6 +7,7 @@ import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
 import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { currencyFor } from "@/lib/currency";
+import { convertCents, eurToUsdRate } from "@/lib/fx";
 import { formatSurface, surfaceUnitFor } from "@/lib/surface";
 import {
   signFirstPhoto,
@@ -150,7 +151,7 @@ export default async function PropertiesPage({
   // Run the list query alongside the lightweight stats queries.
   const [listRes, valuesRes, activeLeasesRes, totalCountRes] = await Promise.all([
     listQuery,
-    supabase.from("properties").select("value_cents"),
+    supabase.from("properties").select("id, value_cents, country"),
     supabase
       .from("leases")
       .select("monthly_rent_cents, property_id")
@@ -177,18 +178,42 @@ export default async function PropertiesPage({
     filters.type !== "all" ||
     filters.status !== "all" ||
     filters.occupancy !== "all";
-  const portfolioValueCents = (valuesRes.data ?? []).reduce(
-    (s, p) => s + (p.value_cents ?? 0),
+  // Per-row amounts follow the property's country; portfolio aggregates
+  // convert into the operator's currency at the ECB daily EUR/USD rate so a
+  // mixed FR/US portfolio sums correctly.
+  const displayCurrency = currencyFor(session.operationCountry);
+  const eurToUsd = await eurToUsdRate();
+  const allValues = valuesRes.data ?? [];
+  const currencyById = new Map(
+    allValues.map((p) => [
+      p.id as string,
+      currencyFor(p.country === "US" ? "US" : "FR"),
+    ] as const),
+  );
+  const portfolioValueCents = allValues.reduce(
+    (s, p) =>
+      s +
+      convertCents(
+        p.value_cents ?? 0,
+        currencyFor(p.country === "US" ? "US" : "FR"),
+        displayCurrency,
+        eurToUsd,
+      ),
     0,
   );
   const monthlyRentCents = activeLeases.reduce(
-    (s, l) => s + (l.monthly_rent_cents ?? 0),
+    (s, l) =>
+      s +
+      convertCents(
+        l.monthly_rent_cents ?? 0,
+        currencyById.get(l.property_id) ?? displayCurrency,
+        displayCurrency,
+        eurToUsd,
+      ),
     0,
   );
   const rentedCount = rentedSet.size;
 
-  // Per-row amounts follow the property's country; portfolio aggregates keep
-  // the operator's currency (a mixed FR/US portfolio has no single truth).
   const fmtCurrency = (cents: number, country?: string | null) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
