@@ -201,12 +201,15 @@ export default async function PropertyDetailPage({
   const hasFinancials =
     property.monthly_rent_cents != null ||
     property.value_cents != null ||
+    property.market_value_cents != null ||
     property.sell_price_cents != null ||
     property.acquisition_date ||
     property.acquisition_fees_cents != null ||
     property.brokerage_fees_cents != null ||
+    property.works_cents != null ||
     property.housing_tax_cents != null ||
-    property.property_tax_cents != null;
+    property.property_tax_cents != null ||
+    property.insurance_monthly_cents != null;
 
   return (
     <div className="px-6 py-12">
@@ -530,6 +533,12 @@ export default async function PropertyDetailPage({
                 value={fmtCurrency(property.value_cents)}
               />
             )}
+            {property.market_value_cents != null && (
+              <DlRow
+                label={money(propDict.fields.marketValue)}
+                value={fmtCurrency(property.market_value_cents)}
+              />
+            )}
             {property.sell_price_cents != null && (
               <DlRow
                 label={money(propDict.fields.sellPrice)}
@@ -555,6 +564,12 @@ export default async function PropertyDetailPage({
                 value={fmtCurrency(property.brokerage_fees_cents)}
               />
             )}
+            {property.works_cents != null && (
+              <DlRow
+                label={money(propDict.fields.works)}
+                value={fmtCurrency(property.works_cents)}
+              />
+            )}
             {property.housing_tax_cents != null && (
               <DlRow
                 label={money(propDict.fields.housingTax)}
@@ -565,6 +580,12 @@ export default async function PropertyDetailPage({
               <DlRow
                 label={money(propDict.fields.propertyTax)}
                 value={fmtCurrency(property.property_tax_cents)}
+              />
+            )}
+            {property.insurance_monthly_cents != null && (
+              <DlRow
+                label={money(propDict.fields.insuranceMonthly)}
+                value={fmtCurrency(property.insurance_monthly_cents)}
               />
             )}
           </dl>

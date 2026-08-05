@@ -54,6 +54,7 @@ type Property = {
   country: string | null;
   monthly_rent_cents: number | null;
   value_cents: number | null;
+  market_value_cents: number | null;
   sell_price_cents: number | null;
   description: string | null;
   type: PropertyTypeValue | null;
@@ -77,8 +78,10 @@ type Property = {
   acquisition_date: string | null;
   acquisition_fees_cents: number | null;
   brokerage_fees_cents: number | null;
+  works_cents: number | null;
   housing_tax_cents: number | null;
   property_tax_cents: number | null;
+  insurance_monthly_cents: number | null;
   dpe_class: "A" | "B" | "C" | "D" | "E" | "F" | "G" | null;
   dpe_energy_consumption: number | null;
   dpe_ghg_emissions: number | null;
@@ -342,7 +345,7 @@ export function PropertyForm({
       </div>
 
       {/* Pricing */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <label className="block text-sm font-medium text-slate-700">
             {money(dict.fields.monthlyRent)}
@@ -370,6 +373,23 @@ export function PropertyForm({
             placeholder={dict.fields.valuePlaceholder}
             className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            {money(dict.fields.marketValue)}
+          </label>
+          <input
+            name="market_value_cents"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={centsToEuros(property?.market_value_cents ?? null)}
+            placeholder={dict.fields.valuePlaceholder}
+            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            {dict.fields.marketValueHint}
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">
@@ -462,6 +482,20 @@ export function PropertyForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">
+              {money(dict.fields.works)}
+            </label>
+            <input
+              name="works_cents"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={centsToEuros(property?.works_cents ?? null)}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+            <p className="mt-1 text-xs text-slate-500">{dict.fields.worksHint}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
               {money(dict.fields.housingTax)}
             </label>
             <input
@@ -483,6 +517,21 @@ export function PropertyForm({
               min="0"
               step="0.01"
               defaultValue={centsToEuros(property?.property_tax_cents ?? null)}
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">
+              {money(dict.fields.insuranceMonthly)}
+            </label>
+            <input
+              name="insurance_monthly_cents"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={centsToEuros(
+                property?.insurance_monthly_cents ?? null,
+              )}
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           </div>

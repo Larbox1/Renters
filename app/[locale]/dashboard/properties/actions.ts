@@ -204,17 +204,24 @@ function readFinancialFields(formData: FormData) {
   return {
     acquisition_date:
       String(formData.get("acquisition_date") ?? "").trim() || null,
+    market_value_cents: optionalCents(
+      String(formData.get("market_value_cents") ?? ""),
+    ),
     acquisition_fees_cents: optionalCents(
       String(formData.get("acquisition_fees_cents") ?? ""),
     ),
     brokerage_fees_cents: optionalCents(
       String(formData.get("brokerage_fees_cents") ?? ""),
     ),
+    works_cents: optionalCents(String(formData.get("works_cents") ?? "")),
     housing_tax_cents: optionalCents(
       String(formData.get("housing_tax_cents") ?? ""),
     ),
     property_tax_cents: optionalCents(
       String(formData.get("property_tax_cents") ?? ""),
+    ),
+    insurance_monthly_cents: optionalCents(
+      String(formData.get("insurance_monthly_cents") ?? ""),
     ),
   };
 }

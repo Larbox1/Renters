@@ -14,6 +14,7 @@ import {
 type PropertyOption = {
   id: string;
   label: string;
+  currency: CurrencyCode;
 };
 
 const inputClass =
@@ -74,10 +75,15 @@ function TransactionForm({
     {},
   );
   const [kind, setKind] = useState<"income" | "expense">("income");
+  const [propertyId, setPropertyId] = useState("");
 
   useEffect(() => {
     if (state.ok) onSuccess();
   }, [state, onSuccess]);
+
+  // The selected property's country decides the currency of the amount.
+  const activeCurrency =
+    properties.find((p) => p.id === propertyId)?.currency ?? currency;
 
   return (
     <form action={formAction} className="space-y-4">
@@ -112,7 +118,13 @@ function TransactionForm({
         <label className={labelClass}>
           {dict.fields.property} <span className="text-red-500">*</span>
         </label>
-        <select name="property_id" required defaultValue="" className={selectClass}>
+        <select
+          name="property_id"
+          required
+          value={propertyId}
+          onChange={(e) => setPropertyId(e.target.value)}
+          className={selectClass}
+        >
           <option value="" disabled>
             {dict.fields.propertyPlaceholder}
           </option>
@@ -127,7 +139,7 @@ function TransactionForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>
-            {localizeCurrencyLabel(dict.fields.amount, currency)}{" "}
+            {localizeCurrencyLabel(dict.fields.amount, activeCurrency)}{" "}
             <span className="text-red-500">*</span>
           </label>
           <input
