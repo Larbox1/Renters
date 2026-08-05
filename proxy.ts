@@ -33,8 +33,27 @@ export async function proxy(req: NextRequest) {
   );
 
   if (!hasLocale) {
-    const locale = pickLocale(req);
+    const cookie = req.cookies.get(LOCALE_COOKIE)?.value;
+    const cookieLocale =
+      cookie && (locales as readonly string[]).includes(cookie)
+        ? (cookie as Locale)
+        : null;
     const url = req.nextUrl.clone();
+
+    // Serve the default locale at the bare domain via rewrite (HTTP 200) so
+    // crawlers can index https://www.meskasas.com/ directly — a redirecting
+    // homepage is reported as "Page with redirect" in Search Console and
+    // stays out of the index. Visitors who explicitly switched language
+    // (locale cookie) still get their redirect below; crawlers carry no
+    // cookies, so they always see the stable 200. NOTE: the rewrite returns
+    // without refreshSession — a token rotation inside it would replace the
+    // rewrite with a plain next() response.
+    if (pathname === "/" && (!cookieLocale || cookieLocale === defaultLocale)) {
+      url.pathname = `/${defaultLocale}`;
+      return NextResponse.rewrite(url);
+    }
+
+    const locale = cookieLocale ?? pickLocale(req);
     url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
     return NextResponse.redirect(url);
   }

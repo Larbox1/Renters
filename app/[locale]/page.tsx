@@ -1,9 +1,32 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { isLocale, type Locale } from "@/i18n/config";
+import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { LandingPricingGrid } from "@/components/landing-pricing";
+
+// The bare domain serves the default-locale homepage via a proxy rewrite (see
+// proxy.ts), so "/" — not "/en" — is the canonical English homepage and the
+// x-default. Keeps Google from seeing the site root as a redirect.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  return {
+    alternates: {
+      canonical: locale === defaultLocale ? "/" : `/${locale}`,
+      languages: {
+        en: "/",
+        fr: "/fr",
+        "x-default": "/",
+      },
+    },
+  };
+}
 
 const TABLE_ROWS = [
   { ini: "JM", name: "Bastille T2 · J. Mercier", due: "05 nov.", amount: "910 €", status: "collected" as const },

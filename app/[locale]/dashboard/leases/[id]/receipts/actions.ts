@@ -109,10 +109,14 @@ export async function generateRentReceiptAction(formData: FormData) {
       .filter((part) => part && (part as string).trim())
       .join(", ") || null;
 
-  // Render the PDF buffer via dynamic import. US leases get the English
-  // rent-receipt document; everything else the French quittance.
+  // Render the PDF buffer via dynamic import. US-typed leases get the English
+  // rent-receipt document, FR-typed leases the French quittance (consistent
+  // with the contract templates); an untyped lease follows its property's
+  // country — the authority for the legal regime when the type doesn't say.
   const isUsLease =
-    typeof lease.type === "string" && lease.type.startsWith("us_");
+    typeof lease.type === "string" && lease.type.trim() !== ""
+      ? lease.type.startsWith("us_")
+      : property?.country === "US";
   let pdfBuffer: Buffer;
   try {
     const { renderReceiptPdf } = isUsLease

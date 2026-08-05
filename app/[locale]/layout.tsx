@@ -40,6 +40,10 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
   const dict = getDictionary(locale);
   return {
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+        "https://www.meskasas.com",
+    ),
     title: dict.meta.siteTitle,
     description: dict.meta.siteDescription,
   };
