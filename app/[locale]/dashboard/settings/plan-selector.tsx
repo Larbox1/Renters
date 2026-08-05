@@ -9,6 +9,7 @@ import {
   type BillingInterval,
   type PlanId,
 } from "@/lib/plans";
+import type { CurrencyCode } from "@/lib/currency";
 import { openBillingPortalAction, startCheckoutAction } from "./actions";
 
 export function PlanSelector({
@@ -18,6 +19,7 @@ export function PlanSelector({
   isSubscribed,
   dict,
   descriptions,
+  currency,
 }: {
   locale: Locale;
   currentPlan: PlanId;
@@ -25,6 +27,11 @@ export function PlanSelector({
   isSubscribed: boolean;
   dict: Dictionary["settings"]["plan"];
   descriptions: Record<PlanId, string>;
+  /**
+   * Display currency from the profile's operation country — matches the
+   * Stripe price checkout will actually charge (US operators → USD).
+   */
+  currency: CurrencyCode;
 }) {
   // Default the toggle to whatever the owner is already billed on, else monthly.
   const [interval, setInterval] = useState<BillingInterval>(
@@ -34,13 +41,13 @@ export function PlanSelector({
   const fmt = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
       style: "currency",
-      currency: "EUR",
+      currency,
       minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
     }).format(cents / 100);
 
   // Stable tier ordering by monthly price, so up/down styling doesn't flip
   // when the annual toggle is on.
-  const currentMonthly = planPriceCents(currentPlan, "month");
+  const currentMonthly = planPriceCents(currentPlan, "month", currency);
 
   return (
     <>
@@ -75,7 +82,7 @@ export function PlanSelector({
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {PLANS.map((p) => {
-          const price = planPriceCents(p.id, interval);
+          const price = planPriceCents(p.id, interval, currency);
           // Highlight the tier the owner is on. If their cadence is unknown
           // (legacy rows synced before plan_interval existed) fall back to
           // matching on tier alone so the badge still shows.
@@ -84,7 +91,8 @@ export function PlanSelector({
             (!isSubscribed ||
               currentInterval == null ||
               interval === currentInterval);
-          const isUpgrade = planPriceCents(p.id, "month") > currentMonthly;
+          const isUpgrade =
+            planPriceCents(p.id, "month", currency) > currentMonthly;
           const showAnnualEquiv =
             interval === "year" && p.id !== "free" && price > 0;
 

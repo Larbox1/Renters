@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { visitorDisplayCurrency } from "@/lib/geo";
 import { LandingPricingGrid } from "@/components/landing-pricing";
 
 // The bare domain serves the default-locale homepage via a proxy rewrite (see
@@ -55,6 +56,7 @@ export default async function HomePage({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const d = getDictionary(locale as Locale).home;
+  const displayCurrency = await visitorDisplayCurrency(locale as Locale);
 
   return (
     <div className="bg-paper text-ink">
@@ -349,6 +351,41 @@ export default async function HomePage({
         </div>
       </section>
 
+      {/* Supported countries */}
+      <section id="countries" className="border-t border-line bg-paper-sunk py-24">
+        <div className="mx-auto max-w-[1360px] px-7">
+          <div className="mb-14 max-w-[720px]">
+            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.countries.kicker}</span>
+            <h2 className="font-semibold tracking-[-0.028em] text-ink text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
+              {d.countries.h2A} <span className="font-serif italic font-normal text-ink-2">{d.countries.h2Serif}</span>
+            </h2>
+            <p className="mt-4 max-w-[56ch] text-[17px] text-ink-2">{d.countries.lede}</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[d.countries.fr, d.countries.us].map((c, i) => (
+              <article key={i} className="rounded-2xl border border-line bg-paper-elev p-8">
+                <div className="flex items-center gap-3">
+                  <span className="overflow-hidden rounded-[4px] border border-line leading-none">
+                    {i === 0 ? <FlagFr /> : <FlagUs />}
+                  </span>
+                  <h3 className="text-lg font-semibold tracking-[-0.01em]">{c.name}</h3>
+                </div>
+                <p className="mt-3 text-[14.5px] text-ink-3">{c.blurb}</p>
+                <ul className="mt-4 list-none border-b border-line p-0">
+                  {c.items.map((it, j) => (
+                    <li key={j} className="flex items-start gap-2.5 border-t border-line py-2.5 text-[14.5px] text-ink-2">
+                      <CheckIcon className="mt-0.5 h-4 w-4 flex-none text-accent" />
+                      {it}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+          <p className="mt-7 text-center text-[13px] text-ink-3">{d.countries.note}</p>
+        </div>
+      </section>
+
       {/* Numbers band */}
       <section className="bg-ink py-20 text-paper">
         <div className="mx-auto max-w-[1360px] px-7">
@@ -417,7 +454,11 @@ export default async function HomePage({
             </h2>
             <p className="mt-4 max-w-[56ch] text-[17px] text-ink-2">{d.pricing.lede}</p>
           </div>
-          <LandingPricingGrid locale={locale as Locale} dict={d.pricing} />
+          <LandingPricingGrid
+            locale={locale as Locale}
+            dict={d.pricing}
+            initialCurrency={displayCurrency}
+          />
           <p className="mt-7 text-center text-[13px] text-ink-3">{d.pricing.note}</p>
         </div>
       </section>
@@ -478,6 +519,40 @@ export default async function HomePage({
 }
 
 // ---------- helper components ----------
+
+// Inline SVG flags — emoji flags don't render on Windows browsers.
+function FlagFr() {
+  return (
+    <svg viewBox="0 0 30 20" className="block h-5 w-[30px]" aria-hidden>
+      <rect width="10" height="20" fill="#1e50a0" />
+      <rect x="10" width="10" height="20" fill="#ffffff" />
+      <rect x="20" width="10" height="20" fill="#d22f27" />
+    </svg>
+  );
+}
+
+function FlagUs() {
+  return (
+    <svg viewBox="0 0 30 20" className="block h-5 w-[30px]" aria-hidden>
+      <rect width="30" height="20" fill="#ffffff" />
+      {[0, 2, 4, 6, 8, 10, 12].map((i) => (
+        <rect
+          key={i}
+          y={(i * 20) / 13}
+          width="30"
+          height={20 / 13}
+          fill="#b22234"
+        />
+      ))}
+      <rect width="13" height={(20 / 13) * 7} fill="#3c3b6e" />
+      {[2.2, 4.6, 7].map((y) =>
+        [2.2, 5.4, 8.6, 11].map((x) => (
+          <circle key={`${x}-${y}`} cx={x} cy={y} r="0.75" fill="#ffffff" />
+        )),
+      )}
+    </svg>
+  );
+}
 
 function NavMockItem({
   label,

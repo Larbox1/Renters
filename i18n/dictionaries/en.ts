@@ -1443,6 +1443,33 @@ export const en = {
         "Got it Julie. Forwarding to Plomberie Lacaze, intervention tomorrow morning between 9 and 11.",
       msg3Meta: "You · 14:11 · ticket #T-2491 opened",
     },
+    countries: {
+      kicker: "Coverage",
+      h2A: "Built for",
+      h2Serif: "France and the United States",
+      lede: "Every document, lease type, and amount follows the rules of the country your property is in — no settings to fight with.",
+      note: "You can even mix both in one portfolio: each property follows its own country's rules and currency.",
+      fr: {
+        name: "France",
+        blurb: "Full French tenancy toolkit, aligned with the loi ALUR.",
+        items: [
+          "Bail vide, meublé, mobilité, étudiant, civil and commercial",
+          "Quittances de loyer and avis d'échéance",
+          "États des lieux (entry & exit)",
+          "Amounts in euros (€), address autocomplete",
+        ],
+      },
+      us: {
+        name: "United States",
+        blurb: "US residential and commercial rentals, in dollars.",
+        items: [
+          "Fixed-term, month-to-month, sublease and commercial leases",
+          "English rent receipts and payment notices",
+          "Lease agreements ready to sign",
+          "Amounts in dollars ($), US address autocomplete",
+        ],
+      },
+    },
     numbers: {
       kicker: "Day to day · 02",
       h2A: "What",
@@ -1614,7 +1641,7 @@ export const en = {
     mostPopular: "Most popular",
     forever: "forever",
     perMonth: "/month",
-    note: "Prices in euros. VAT applied where applicable.",
+    note: "Prices excl. tax. VAT or sales tax applied where applicable.",
     plans: [
       {
         name: "Free",

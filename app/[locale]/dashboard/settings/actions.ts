@@ -153,7 +153,13 @@ export async function startCheckoutAction(formData: FormData) {
     mode: "subscription",
     customer: customerId,
     client_reference_id: session.user.id,
-    line_items: [{ price: priceIdForPlan(plan, interval), quantity: 1 }],
+    line_items: [
+      // US operators subscribe on the USD price; everyone else on EUR.
+      {
+        price: priceIdForPlan(plan, interval, session.operationCountry),
+        quantity: 1,
+      },
+    ],
     allow_promotion_codes: true,
     success_url: `${settingsUrl}?billing=success`,
     cancel_url: `${settingsUrl}?billing=canceled`,

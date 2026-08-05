@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { type PlanId, type BillingInterval, isPlanId } from "./plans";
+import type { OperationCountry } from "./operation-country";
 
 /**
  * Server-only Stripe helpers. Never import this from a client component — it
@@ -19,6 +20,18 @@ const PRICE_ENV: Record<PaidPlanId, Record<BillingInterval, string>> = {
   unlimited: {
     month: "STRIPE_PRICE_UNLIMITED",
     year: "STRIPE_PRICE_UNLIMITED_ANNUAL",
+  },
+};
+
+// USD Prices for US operators (profiles.operation_country = "US"); same
+// tiers, same products, different currency. Falls back to the EUR price when
+// a US var is unset so a partial rollout never blocks checkout.
+const PRICE_ENV_US: Record<PaidPlanId, Record<BillingInterval, string>> = {
+  plus: { month: "STRIPE_PRICE_PLUS_US", year: "STRIPE_PRICE_PLUS_ANNUAL_US" },
+  pro: { month: "STRIPE_PRICE_PRO_US", year: "STRIPE_PRICE_PRO_ANNUAL_US" },
+  unlimited: {
+    month: "STRIPE_PRICE_UNLIMITED_US",
+    year: "STRIPE_PRICE_UNLIMITED_ANNUAL_US",
   },
 };
 
@@ -54,13 +67,24 @@ export function hasStripeEnv(): boolean {
 }
 
 /**
- * Stripe Price ID for a paid plan + cadence, or throws if that env var is
- * unset.
+ * Stripe Price ID for a paid plan + cadence in the operator's currency. US
+ * operators get the USD price; if its env var is unset, falls back to the EUR
+ * price (with a warning) rather than blocking checkout. Throws only when the
+ * base EUR var is missing too.
  */
 export function priceIdForPlan(
   plan: PaidPlanId,
   interval: BillingInterval,
+  country: OperationCountry = "FR",
 ): string {
+  if (country === "US") {
+    const usEnvName = PRICE_ENV_US[plan][interval];
+    const usId = process.env[usEnvName];
+    if (usId) return usId;
+    console.warn(
+      `[stripe] ${usEnvName} is not set — falling back to the EUR price for a US customer.`,
+    );
+  }
   const envName = PRICE_ENV[plan][interval];
   const id = process.env[envName];
   if (!id) {
@@ -73,7 +97,8 @@ export function priceIdForPlan(
 
 /**
  * Resolves a Stripe Price ID back to a plan + cadence, or null if it doesn't
- * match any configured tier (e.g. a Price from another product).
+ * match any configured tier (e.g. a Price from another product). Checks both
+ * the EUR and USD price tables — the plan/cadence is the same either way.
  */
 export function lookupPrice(
   priceId: string | null | undefined,
@@ -81,7 +106,10 @@ export function lookupPrice(
   if (!priceId) return null;
   for (const plan of ["plus", "pro", "unlimited"] as const) {
     for (const interval of ["month", "year"] as const) {
-      if (process.env[PRICE_ENV[plan][interval]] === priceId) {
+      if (
+        process.env[PRICE_ENV[plan][interval]] === priceId ||
+        process.env[PRICE_ENV_US[plan][interval]] === priceId
+      ) {
         return { plan, interval };
       }
     }

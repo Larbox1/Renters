@@ -7,13 +7,17 @@ import type { Dictionary } from "@/i18n/dictionaries/en";
 import { isPlanId, planPriceCents, type BillingInterval } from "@/lib/plans";
 import type { CurrencyCode } from "@/lib/currency";
 
-// USD amounts are set per-plan in lib/plans.ts (not converted from EUR), so
-// format them from cents here. Whole amounts drop the ".00" to match the EUR
-// dictionary strings ("€0", "0 €").
-function formatUsd(cents: number, locale: Locale): string {
+// EUR and USD amounts are both set per-plan in lib/plans.ts (USD is not a
+// conversion), so all prices format from cents here — one source of truth.
+// Whole amounts drop the ".00" ("€0", "0 €").
+function formatAmount(
+  cents: number,
+  locale: Locale,
+  currency: CurrencyCode,
+): string {
   return new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
     style: "currency",
-    currency: "USD",
+    currency,
     currencyDisplay: "narrowSymbol",
     minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
   }).format(cents / 100);
@@ -34,16 +38,18 @@ const CheckIcon = ({ className = "h-4 w-4" }: { className?: string }) => (
 export function LandingPricingGrid({
   locale,
   dict,
+  initialCurrency,
 }: {
   locale: Locale;
   dict: Dictionary["home"]["pricing"];
+  /**
+   * Default currency for the toggle — US visitors (Vercel geo header) get
+   * USD, everyone else EUR; see lib/geo.ts. The visitor can still flip it.
+   */
+  initialCurrency: CurrencyCode;
 }) {
   const [interval, setInterval] = useState<BillingInterval>("month");
-  // EUR strings come from the dictionary; USD amounts from lib/plans.ts
-  // (billing itself stays EUR). Default to USD on the English locale.
-  const [currency, setCurrency] = useState<CurrencyCode>(
-    locale === "fr" ? "EUR" : "USD",
-  );
+  const [currency, setCurrency] = useState<CurrencyCode>(initialCurrency);
 
   return (
     <>
@@ -101,12 +107,15 @@ export function LandingPricingGrid({
       <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {dict.plans.map((plan, i) => {
           const featured = "featured" in plan && plan.featured;
-          const price =
-            currency === "USD" && isPlanId(plan.dot)
-              ? formatUsd(planPriceCents(plan.dot, interval, "USD"), locale)
-              : interval === "year"
-                ? plan.priceAnnual
-                : plan.price;
+          const price = isPlanId(plan.dot)
+            ? formatAmount(
+                planPriceCents(plan.dot, interval, currency),
+                locale,
+                currency,
+              )
+            : interval === "year"
+              ? plan.priceAnnual
+              : plan.price;
           const per = interval === "year" ? plan.perAnnual : plan.per;
           return (
             <div

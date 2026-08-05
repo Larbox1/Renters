@@ -1454,6 +1454,33 @@ export const fr: Dictionary = {
         "Reçu Julie. Je transmets à Plomberie Lacaze, intervention demain matin entre 9h et 11h.",
       msg3Meta: "Vous · 14:11 · ticket #T-2491 ouvert",
     },
+    countries: {
+      kicker: "Couverture",
+      h2A: "Conçu pour la",
+      h2Serif: "France et les États-Unis",
+      lede: "Chaque document, type de bail et montant suit les règles du pays où se trouve votre bien — sans réglage à faire.",
+      note: "Vous pouvez même mélanger les deux dans un même portefeuille : chaque bien suit les règles et la devise de son pays.",
+      fr: {
+        name: "France",
+        blurb: "La panoplie locative française complète, conforme à la loi ALUR.",
+        items: [
+          "Bail vide, meublé, mobilité, étudiant, civil et commercial",
+          "Quittances de loyer et avis d'échéance",
+          "États des lieux d'entrée et de sortie",
+          "Montants en euros (€), autocomplétion d'adresse",
+        ],
+      },
+      us: {
+        name: "États-Unis",
+        blurb: "Locations résidentielles et commerciales américaines, en dollars.",
+        items: [
+          "Baux fixed-term, month-to-month, sublease et commerciaux",
+          "Rent receipts et avis de paiement en anglais",
+          "Contrats de bail prêts à signer",
+          "Montants en dollars ($), autocomplétion d'adresses US",
+        ],
+      },
+    },
     numbers: {
       kicker: "Au quotidien · 02",
       h2A: "Ce que",
@@ -1625,7 +1652,7 @@ export const fr: Dictionary = {
     mostPopular: "Le plus populaire",
     forever: "pour toujours",
     perMonth: "/mois",
-    note: "Prix en euros. TVA applicable le cas échéant.",
+    note: "Prix hors taxes. TVA ou taxe de vente applicable le cas échéant.",
     plans: [
       {
         name: "Gratuit",

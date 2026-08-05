@@ -15,6 +15,7 @@ import {
   type BillingInterval,
   type PlanId,
 } from "@/lib/plans";
+import { currencyFor } from "@/lib/currency";
 import {
   cancelSubscriptionAction,
   deleteOwnAccountAction,
@@ -233,6 +234,7 @@ export default async function SettingsPage({
             isSubscribed={isSubscribed}
             dict={dict.settings.plan}
             descriptions={planDescriptions}
+            currency={currencyFor(session.operationCountry)}
           />
         </section>
       )}
