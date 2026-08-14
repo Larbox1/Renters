@@ -81,6 +81,9 @@ export const en = {
       signupLink: "Sign up",
       forgotPassword: "Forgot password?",
       errorGeneric: "Could not log you in. Check your email and password.",
+      orDivider: "or",
+      googleButton: "Continue with Google",
+      googleError: "Could not connect to Google. Please try again.",
     },
     forgotPassword: {
       title: "Reset your password",
@@ -134,6 +137,9 @@ export const en = {
       emailSentBody:
         "We sent a confirmation link to {email}. Click it to activate your account.",
       errorGeneric: "Could not create your account. Please try again.",
+      orDivider: "or",
+      googleButton: "Continue with Google",
+      googleError: "Could not connect to Google. Please try again.",
     },
   },
   dashboard: {

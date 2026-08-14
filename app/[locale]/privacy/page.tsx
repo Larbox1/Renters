@@ -205,27 +205,42 @@ const SECTIONS: { title: string; blocks: Block[] }[] = [
     ],
   },
   {
-    title: "11. Droit de réclamation auprès de la CNIL",
+    title: "11. Demande de communication des données et suppression du compte",
+    blocks: [
+      "Vous pouvez à tout moment obtenir une copie des données personnelles associées à votre compte ou demander la suppression définitive de celui-ci.",
+      "Communication de vos données (droits d'accès et de portabilité) : adressez votre demande par e-mail à contact@meskasas.com, depuis l'adresse e-mail associée à votre compte, en précisant l'objet « Demande de communication de mes données ». Nous vous transmettrons une copie de vos données dans un format structuré et couramment utilisé, dans un délai maximal d'un mois à compter de la réception de la demande.",
+      "Suppression de votre compte : deux procédures sont à votre disposition :",
+      {
+        list: [
+          "Directement depuis l'application : connectez-vous à votre compte, ouvrez la page « Paramètres » depuis votre profil, puis, dans la section « Zone de danger », cliquez sur « Supprimer mon compte » et confirmez. La suppression est immédiate et irréversible : elle entraîne l'effacement de votre compte ainsi que de l'ensemble de vos biens, locataires, baux, documents, messages et fichiers téléversés.",
+          "Par e-mail : envoyez votre demande à contact@meskasas.com, depuis l'adresse e-mail associée à votre compte, en précisant l'objet « Suppression de mon compte ». Après vérification de votre identité, la suppression sera effectuée dans un délai maximal de 30 jours, et vous en serez informé par retour d'e-mail.",
+        ],
+      },
+      "Dans les deux cas, certaines données peuvent être conservées au-delà de la suppression du compte lorsque la loi l'exige (notamment les données comptables et de facturation, conservées 10 ans — voir section 5). Si vous disposez d'un abonnement payant en cours, la suppression du compte entraîne la résiliation de l'abonnement.",
+    ],
+  },
+  {
+    title: "12. Droit de réclamation auprès de la CNIL",
     blocks: [
       "Si vous estimez que le traitement de vos données personnelles n'est pas conforme au RGPD, vous avez le droit d'introduire une réclamation auprès de l'autorité de contrôle compétente :",
       "Commission Nationale de l'Informatique et des Libertés (CNIL)\n3 Place de Fontenoy, TSA 80715, 75334 Paris Cedex 07\nSite web : www.cnil.fr",
     ],
   },
   {
-    title: "12. Décisions automatisées",
+    title: "13. Décisions automatisées",
     blocks: [
       "Meskasas ne procède à aucune prise de décision entièrement automatisée produisant des effets juridiques significatifs vous concernant au sens de l'article 22 du RGPD. L'assistant IA intégré à l'application fournit des suggestions à titre informatif ; toute décision finale demeure du ressort de l'utilisateur.",
     ],
   },
   {
-    title: "13. Modification de la présente politique",
+    title: "14. Modification de la présente politique",
     blocks: [
       "La présente politique de confidentialité peut être modifiée à tout moment pour refléter les évolutions légales, réglementaires ou fonctionnelles du service. En cas de modification substantielle, nous vous en informerons par e-mail ou par une notification visible dans l'application au moins 15 jours avant l'entrée en vigueur des modifications. La date de la dernière mise à jour figure en haut de la présente page.",
       "Nous vous encourageons à consulter régulièrement cette page afin de prendre connaissance de la version en vigueur.",
     ],
   },
   {
-    title: "14. Contact",
+    title: "15. Contact",
     blocks: [
       "Pour toute question relative à la présente politique de confidentialité ou au traitement de vos données personnelles, vous pouvez nous contacter :",
       {
@@ -255,7 +270,7 @@ export default async function PrivacyPage({
             Politique de confidentialité
           </h1>
           <p className="mt-3 text-[13.5px] text-ink-3">
-            Dernière mise à jour : 27 Juillet 2026
+            Dernière mise à jour : 5 Août 2026
           </p>
 
           <div className="mt-12 flex flex-col gap-10">

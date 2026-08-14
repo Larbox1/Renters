@@ -6,6 +6,7 @@ import Link from "next/link";
 import { loginAction, type LoginState } from "./actions";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { GoogleAuthButton } from "@/components/google-auth-button";
 
 function SubmitButton({ labels }: { labels: { idle: string; busy: string } }) {
   const { pending } = useFormStatus();
@@ -86,6 +87,20 @@ export function LoginForm({
       )}
 
       <SubmitButton labels={{ idle: dict.submit, busy: dict.submitting }} />
+
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs uppercase text-slate-400">
+          {dict.orDivider}
+        </span>
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <GoogleAuthButton
+        locale={locale}
+        label={dict.googleButton}
+        errorLabel={dict.googleError}
+      />
 
       <p className="text-center text-sm text-slate-600">
         {dict.noAccount}{" "}

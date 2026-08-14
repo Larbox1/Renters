@@ -14,6 +14,7 @@ import {
   OPERATION_COUNTRIES,
   type OperationCountry,
 } from "@/lib/operation-country";
+import { GoogleAuthButton } from "@/components/google-auth-button";
 
 function SubmitButton({ labels }: { labels: { idle: string; busy: string } }) {
   const { pending } = useFormStatus();
@@ -178,6 +179,22 @@ export function SignupForm({
       )}
 
       <SubmitButton labels={{ idle: dict.submit, busy: dict.submitting }} />
+
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs uppercase text-slate-400">
+          {dict.orDivider}
+        </span>
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <GoogleAuthButton
+        locale={locale}
+        label={dict.googleButton}
+        errorLabel={dict.googleError}
+        signupRole={role}
+        signupCountry={role === "owner" ? operationCountry : undefined}
+      />
 
       <p className="text-center text-sm text-slate-600">
         {dict.haveAccount}{" "}

@@ -84,6 +84,9 @@ export const fr: Dictionary = {
       forgotPassword: "Mot de passe oublié ?",
       errorGeneric:
         "Connexion impossible. Vérifiez votre e-mail et votre mot de passe.",
+      orDivider: "ou",
+      googleButton: "Continuer avec Google",
+      googleError: "Connexion à Google impossible. Veuillez réessayer.",
     },
     forgotPassword: {
       title: "Réinitialiser votre mot de passe",
@@ -141,6 +144,9 @@ export const fr: Dictionary = {
         "Nous avons envoyé un lien de confirmation à {email}. Cliquez dessus pour activer votre compte.",
       errorGeneric:
         "Impossible de créer votre compte. Veuillez réessayer.",
+      orDivider: "ou",
+      googleButton: "Continuer avec Google",
+      googleError: "Connexion à Google impossible. Veuillez réessayer.",
     },
   },
   dashboard: {

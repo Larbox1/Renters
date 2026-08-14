@@ -101,6 +101,27 @@ serve(async (req) => {
     console.error("[delete-account] message attachments lookup:", err);
   }
 
+  // 1d. Everything under the user's documents-bucket folder: uploaded files,
+  // generated PDFs and condition-report photos (edl/<reportId>/ subfolders).
+  const documentPaths: string[] = [];
+  try {
+    const walk = async (prefix: string, depth: number): Promise<void> => {
+      if (depth > 3) return;
+      const { data } = await admin.storage
+        .from("documents")
+        .list(prefix, { limit: 1000 });
+      for (const entry of data ?? []) {
+        if (!entry.name) continue;
+        const path = `${prefix}/${entry.name}`;
+        if (entry.id) documentPaths.push(path);
+        else await walk(path, depth + 1); // folders have no id
+      }
+    };
+    await walk(userId, 0);
+  } catch (err) {
+    console.error("[delete-account] documents lookup:", err);
+  }
+
   // 2. Remove files from each bucket. Failures here are best-effort:
   // orphaned files are recoverable, but blocking the account deletion
   // would leave the user stuck.
@@ -121,6 +142,12 @@ serve(async (req) => {
       .from("message-attachments")
       .remove(attachmentPaths);
     if (error) console.error("[delete-account] message-attachments:", error);
+  }
+  if (documentPaths.length > 0) {
+    const { error } = await admin.storage
+      .from("documents")
+      .remove(documentPaths);
+    if (error) console.error("[delete-account] documents:", error);
   }
 
   // 3. Delete the auth user. The DB cascade handles profile, properties,
