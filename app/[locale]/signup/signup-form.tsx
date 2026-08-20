@@ -118,8 +118,10 @@ export function SignupForm({
         <legend className="text-sm font-medium text-slate-700">
           {dict.role}
         </legend>
-        <div className="mt-2 grid gap-2 sm:grid-cols-3">
-          {(["owner", "tenant", "service_provider"] as const).map(
+        {/* service_provider is hidden from signup for now — the role still
+            exists and can be granted by an admin. */}
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {(["owner", "tenant"] as const).map(
             (roleValue) => (
               <label
                 key={roleValue}
