@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Home } from "lucide-react";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -166,7 +167,7 @@ export default async function DashboardLayout({
           preview: dict.nav.propertyNotRented,
           unreadCount: 1,
           href: `/${locale}/dashboard/properties/${p.id}`,
-          icon: "🏠",
+          icon: <Home aria-hidden className="h-4 w-4" />,
         });
         added++;
       }

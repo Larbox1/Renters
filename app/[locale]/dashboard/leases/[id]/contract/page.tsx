@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -46,9 +47,9 @@ export default async function ContractPage({ params, searchParams }: Props) {
       <div className="mx-auto max-w-3xl px-6 py-12">
         <Link
           href={`/${locale}/dashboard/leases/${id}`}
-          className="text-sm text-brand-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
         >
-          ← {dict.leases.backToList}
+          <ArrowLeft aria-hidden className="h-4 w-4" /> {dict.leases.backToList}
         </Link>
         <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
           {dict.leases.contractUnsupported}
@@ -102,9 +103,9 @@ export default async function ContractPage({ params, searchParams }: Props) {
           <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
             <Link
               href={`/${locale}/dashboard/leases/${id}`}
-              className="text-sm text-brand-600 hover:underline"
+              className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
             >
-              ← {dict.leases.backToList}
+              <ArrowLeft aria-hidden className="h-4 w-4" /> {dict.leases.backToList}
             </Link>
             <div className="flex items-center gap-2">
               {saved === "1" && (

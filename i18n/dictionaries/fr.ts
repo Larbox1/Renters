@@ -132,8 +132,8 @@ export const fr: Dictionary = {
       operationCountryHint:
         "Le pays où vous exercez principalement. Pré-sélectionne le pays de vos nouveaux biens — le pays propre à chaque bien détermine ses types de baux et documents légaux. Modifiable plus tard dans les paramètres.",
       operationCountries: {
-        FR: "🇫🇷 France",
-        US: "🇺🇸 États-Unis",
+        FR: "France",
+        US: "États-Unis",
       },
       submit: "Créer un compte",
       submitting: "Création du compte…",
@@ -377,8 +377,8 @@ export const fr: Dictionary = {
       operationCountryHint:
         "Pré-sélectionne le pays des nouveaux biens et la devise du tableau de bord. Le pays propre à chaque bien détermine ses types de baux et documents légaux.",
       operationCountries: {
-        FR: "🇫🇷 France",
-        US: "🇺🇸 États-Unis",
+        FR: "France",
+        US: "États-Unis",
       },
       bankHeading: "Coordonnées bancaires",
       bankHint: "Affichées sur les quittances pour permettre au locataire de vous régler.",
@@ -591,8 +591,8 @@ export const fr: Dictionary = {
       zipCode: "Code ZIP",
       country: "Pays",
       countries: {
-        FR: "🇫🇷 France",
-        US: "🇺🇸 États-Unis",
+        FR: "France",
+        US: "États-Unis",
       },
       monthlyRent: "Loyer mensuel (€)",
       monthlyRentPlaceholder: "1000",
@@ -713,7 +713,11 @@ export const fr: Dictionary = {
         principal: "Montant emprunté (€)",
         rate: "Taux annuel (%)",
         startDate: "Date de début",
-        endDate: "Date de fin",
+        duration: "Durée du prêt",
+        durationPlaceholder: "Choisir une durée",
+        durationYearOne: "1 an",
+        durationYears: "{years} ans",
+        endDateComputed: "Date de fin : {date}",
       },
       figures: {
         monthlyPayment: "Mensualité",
@@ -739,7 +743,7 @@ export const fr: Dictionary = {
       errors: {
         invalid_amount: "Saisissez un montant supérieur à zéro.",
         invalid_rate: "Saisissez un taux annuel valide.",
-        invalid_dates: "La date de fin doit être postérieure à la date de début.",
+        invalid_dates: "Choisissez une date de début et une durée.",
         not_found: "Bien introuvable.",
         generic: "Impossible d'enregistrer l'emprunt. Veuillez réessayer.",
       },
@@ -1236,7 +1240,7 @@ export const fr: Dictionary = {
       { label: "Mentions légales", href: "/legal-notice" },
       { label: "Contact", href: "/contact" },
     ],
-    rights: "Hébergé en France · ★ 4,8 / 5",
+    rights: "Hébergé en France · 4,8 / 5",
     legal: [
       { label: "CGU", href: "/terms" },
       { label: "Confidentialité", href: "/privacy" },

@@ -126,8 +126,8 @@ export const en = {
       operationCountryHint:
         "Where you mainly operate. Pre-selects the country of your new properties — each property's own country decides its lease types and legal documents. You can change it later in Settings.",
       operationCountries: {
-        FR: "🇫🇷 France",
-        US: "🇺🇸 United States",
+        FR: "France",
+        US: "United States",
       },
       submit: "Create account",
       submitting: "Creating account…",
@@ -370,8 +370,8 @@ export const en = {
       operationCountryHint:
         "Pre-selects the country of new properties and sets your dashboard currency. Each property's own country decides its lease types and legal documents.",
       operationCountries: {
-        FR: "🇫🇷 France",
-        US: "🇺🇸 United States",
+        FR: "France",
+        US: "United States",
       },
       bankHeading: "Bank details",
       bankHint: "Shown on rent receipts so tenants can pay you.",
@@ -579,8 +579,8 @@ export const en = {
       zipCode: "ZIP code",
       country: "Country",
       countries: {
-        FR: "🇫🇷 France",
-        US: "🇺🇸 United States",
+        FR: "France",
+        US: "United States",
       },
       monthlyRent: "Monthly rent (€)",
       monthlyRentPlaceholder: "1000",
@@ -701,7 +701,11 @@ export const en = {
         principal: "Loan amount (€)",
         rate: "Annual rate (%)",
         startDate: "Start date",
-        endDate: "End date",
+        duration: "Loan duration",
+        durationPlaceholder: "Select a duration",
+        durationYearOne: "1 year",
+        durationYears: "{years} years",
+        endDateComputed: "End date: {date}",
       },
       figures: {
         monthlyPayment: "Monthly payment",
@@ -727,7 +731,7 @@ export const en = {
       errors: {
         invalid_amount: "Enter a loan amount greater than zero.",
         invalid_rate: "Enter a valid annual rate.",
-        invalid_dates: "The end date must be after the start date.",
+        invalid_dates: "Pick a start date and a loan duration.",
         not_found: "Property not found.",
         generic: "Could not save the loan. Please try again.",
       },
@@ -1225,7 +1229,7 @@ export const en = {
       { label: "Legal notice", href: "/legal-notice" },
       { label: "Contact", href: "/contact" },
     ],
-    rights: "Hosted in France · ★ 4.8 / 5",
+    rights: "Hosted in France · 4.8 / 5",
     legal: [
       { label: "Terms", href: "/terms" as string | null },
       { label: "Privacy", href: "/privacy" },

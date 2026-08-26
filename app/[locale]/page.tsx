@@ -66,7 +66,7 @@ export default async function HomePage({
           <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-elev py-1 pl-1 pr-3 text-[12.5px] text-ink-3">
-                <span className="rounded-full bg-accent-soft px-2.5 py-1 text-[11.5px] font-medium text-accent-deep">
+                <span className="rounded-full bg-azure-soft px-2.5 py-1 text-[11.5px] font-medium text-azure-deep">
                   {d.hero.eyebrowPill}
                 </span>
                 {d.hero.eyebrowText}
@@ -74,7 +74,7 @@ export default async function HomePage({
               <h1 className="mt-6 font-semibold tracking-[-0.035em] text-ink text-[44px] leading-[0.98] sm:text-[64px] lg:text-[88px]">
                 {d.hero.title1}
                 <br />
-                <span className="font-serif italic font-normal tracking-[-0.015em] text-accent-deep">
+                <span className="font-serif italic font-normal tracking-[-0.015em] text-azure-deep">
                   {d.hero.titleSerif}
                 </span>
                 .
@@ -85,16 +85,16 @@ export default async function HomePage({
               <div className="mt-8 flex flex-wrap items-center gap-2.5">
                 <Link
                   href={`/${locale}/signup`}
-                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-[18px] py-3 text-[15px] font-medium text-white shadow-sm transition hover:bg-accent-deep"
+                  className="inline-flex items-center gap-2 rounded-lg bg-azure px-[18px] py-3 text-[15px] font-medium text-white shadow-sm transition hover:bg-azure-deep"
                 >
                   {d.hero.ctaPrimary}
                   <ArrowIcon />
                 </Link>
               </div>
               <div className="mt-4 flex flex-wrap gap-5 text-[13px] text-ink-3">
-                <span className="inline-flex items-center gap-1.5"><CheckIcon className="h-3 w-3 text-accent" />{d.hero.metaNoCard}</span>
-                <span className="inline-flex items-center gap-1.5"><CheckIcon className="h-3 w-3 text-accent" />{d.hero.metaFreeUnits}</span>
-                <span className="inline-flex items-center gap-1.5"><CheckIcon className="h-3 w-3 text-accent" />{d.hero.metaHosted}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckIcon className="h-3 w-3 text-azure" />{d.hero.metaNoCard}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckIcon className="h-3 w-3 text-azure" />{d.hero.metaFreeUnits}</span>
+                <span className="inline-flex items-center gap-1.5"><CheckIcon className="h-3 w-3 text-azure" />{d.hero.metaHosted}</span>
               </div>
             </div>
 
@@ -207,7 +207,7 @@ export default async function HomePage({
                   <MobCard l={d.mock.mobileMonthLabel} v={d.mock.mobileMonthValue} meta={d.mock.mobileMonthMeta} />
                   <MobCard l={d.mock.mobileOkLabel} v={d.mock.mobileOkValue} meta={d.mock.mobileOkMeta} />
                   <MobCard l={d.mock.mobileLateLabel} v={d.mock.mobileLateValue} meta={d.mock.mobileLateMeta} />
-                  <div className="mx-3 mb-3 mt-1.5 rounded-[10px] bg-accent p-2.5 text-center text-[11.5px] font-medium text-white">
+                  <div className="mx-3 mb-3 mt-1.5 rounded-[10px] bg-azure p-2.5 text-center text-[11.5px] font-medium text-white">
                     {d.mock.mobileCta}
                   </div>
                 </div>
@@ -222,7 +222,7 @@ export default async function HomePage({
       <section id="features" className="py-24">
         <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
-            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.features.kicker}</span>
+            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-azure-deep">{d.features.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-ink text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
               {d.features.h2A} <span className="font-serif italic font-normal text-ink-2">{d.features.h2Serif}</span>
             </h2>
@@ -233,7 +233,7 @@ export default async function HomePage({
               <article key={i} className="flex min-h-[220px] flex-col gap-3 bg-paper-elev p-7">
                 <div
                   className={`mb-1 flex h-9 w-9 items-center justify-center rounded-lg ${
-                    f.comingSoon ? "bg-paper-sunk text-ink-4" : "bg-accent-soft text-accent-deep"
+                    f.comingSoon ? "bg-paper-sunk text-ink-4" : "bg-azure-soft text-azure-deep"
                   }`}
                 >
                   <FeatIcon icon={f.icon} />
@@ -313,7 +313,7 @@ export default async function HomePage({
                   <div className="mt-3 flex items-center gap-2.5">
                     <span className="font-mono text-[11px] text-ink-3">{d.show2.progressLabel}</span>
                     <div className="h-1 flex-1 overflow-hidden rounded-full bg-paper">
-                      <div className="h-full w-[70%] bg-accent" />
+                      <div className="h-full w-[70%] bg-azure" />
                     </div>
                     <span className="font-mono text-[11px]">{d.show2.progressValue}</span>
                   </div>
@@ -355,7 +355,7 @@ export default async function HomePage({
       <section id="countries" className="border-t border-line bg-paper-sunk py-24">
         <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
-            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.countries.kicker}</span>
+            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-azure-deep">{d.countries.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-ink text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
               {d.countries.h2A} <span className="font-serif italic font-normal text-ink-2">{d.countries.h2Serif}</span>
             </h2>
@@ -374,7 +374,7 @@ export default async function HomePage({
                 <ul className="mt-4 list-none border-b border-line p-0">
                   {c.items.map((it, j) => (
                     <li key={j} className="flex items-start gap-2.5 border-t border-line py-2.5 text-[14.5px] text-ink-2">
-                      <CheckIcon className="mt-0.5 h-4 w-4 flex-none text-accent" />
+                      <CheckIcon className="mt-0.5 h-4 w-4 flex-none text-azure" />
                       {it}
                     </li>
                   ))}
@@ -390,7 +390,7 @@ export default async function HomePage({
       <section className="bg-ink py-20 text-paper">
         <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
-            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent">{d.numbers.kicker}</span>
+            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-azure">{d.numbers.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-paper text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
               {d.numbers.h2A} <span className="font-serif italic font-normal text-paper">{d.numbers.h2Brand}</span> {d.numbers.h2B}
             </h2>
@@ -401,7 +401,7 @@ export default async function HomePage({
               <div key={i} className="border-t border-paper/20 pt-5">
                 <div className="text-[40px] font-medium leading-none tracking-[-0.03em] sm:text-[56px] lg:text-[64px]">
                   {s.value1}
-                  <span className="font-serif italic font-normal text-accent">{s.value2}</span>
+                  <span className="font-serif italic font-normal text-azure">{s.value2}</span>
                   {s.value3}
                 </div>
                 <p className="mt-2.5 max-w-[22ch] text-[13.5px] text-paper/65">{s.label}</p>
@@ -415,7 +415,7 @@ export default async function HomePage({
       <section className="py-24">
         <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
-            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.testimonials.kicker}</span>
+            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-azure-deep">{d.testimonials.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-ink text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
               {d.testimonials.h2A} <span className="font-serif italic font-normal text-ink-2">{d.testimonials.h2Serif}</span>
             </h2>
@@ -430,7 +430,7 @@ export default async function HomePage({
                   « {q.quote} »
                 </p>
                 <div className="mt-auto flex items-center gap-3 border-t border-line pt-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-gradient-to-br from-accent-soft to-paper-sunk font-semibold text-accent-deep">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-gradient-to-br from-accent-soft to-paper-sunk font-semibold text-azure-deep">
                     {q.author.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                   </span>
                   <div className="text-[13px]">
@@ -448,7 +448,7 @@ export default async function HomePage({
       <section id="pricing" className="border-y border-line bg-paper-sunk py-24">
         <div className="mx-auto max-w-[1360px] px-7">
           <div className="mb-14 max-w-[720px]">
-            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.pricing.kicker}</span>
+            <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-azure-deep">{d.pricing.kicker}</span>
             <h2 className="font-semibold tracking-[-0.028em] text-ink text-[34px] leading-[1.02] sm:text-[42px] lg:text-[56px]">
               {d.pricing.h2A} <span className="font-serif italic font-normal text-ink-2">{d.pricing.h2Serif}</span>
             </h2>
@@ -468,13 +468,13 @@ export default async function HomePage({
         <div className="mx-auto max-w-[1360px] px-7">
           <div className="grid items-start gap-14 lg:grid-cols-[1fr_1.4fr]">
             <div>
-              <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-accent-deep">{d.faq.kicker}</span>
+              <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.12em] text-azure-deep">{d.faq.kicker}</span>
               <h2 className="font-semibold tracking-[-0.028em] text-ink text-[28px] leading-[1.02] sm:text-[36px] lg:text-[44px]">
                 {d.faq.h2}
               </h2>
               <p className="mt-4 text-[15px] text-ink-2">
                 {d.faq.ledeBefore}{" "}
-                <a href={`mailto:${d.faq.ledeEmail}`} className="border-b border-accent text-accent-deep">{d.faq.ledeEmail}</a>
+                <a href={`mailto:${d.faq.ledeEmail}`} className="border-b border-azure text-azure-deep">{d.faq.ledeEmail}</a>
                 {d.faq.ledeAfter}
               </p>
             </div>
@@ -483,7 +483,7 @@ export default async function HomePage({
                 <details key={i} {...(i === 0 ? { open: true } : {})} className="group border-b border-line py-5">
                   <summary className="flex cursor-pointer list-none items-center justify-between text-[16.5px] font-medium tracking-[-0.005em] text-ink">
                     {item.q}
-                    <span className="text-lg text-ink-3 transition-transform group-open:rotate-45 group-open:text-accent">+</span>
+                    <span className="text-lg text-ink-3 transition-transform group-open:rotate-45 group-open:text-azure">+</span>
                   </summary>
                   <p className="mt-3.5 max-w-[60ch] text-[14.5px] leading-[1.6] text-ink-2">{item.a}</p>
                 </details>
@@ -494,18 +494,18 @@ export default async function HomePage({
       </section>
 
       {/* Final CTA */}
-      <section id="cta" className="border-y border-line bg-accent-soft">
+      <section id="cta" className="border-y border-line bg-azure-soft">
         <div className="mx-auto grid max-w-[1360px] items-center gap-10 px-7 py-20 lg:grid-cols-[1.4fr_0.6fr]">
           <div>
             <h2 className="font-semibold tracking-[-0.03em] text-ink text-[34px] leading-none sm:text-[44px] lg:text-[60px]">
-              {d.finalCta.h2A} <span className="font-serif italic font-normal text-accent-deep">{d.finalCta.h2Serif}</span>
+              {d.finalCta.h2A} <span className="font-serif italic font-normal text-azure-deep">{d.finalCta.h2Serif}</span>
             </h2>
             <p className="mt-4 max-w-[50ch] text-base text-ink-2">{d.finalCta.p}</p>
           </div>
           <div className="flex flex-col items-stretch gap-2.5">
             <Link
               href={`/${locale}/signup`}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-[18px] py-3 text-[15px] font-semibold text-white shadow-sm hover:bg-accent-deep"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-azure px-[18px] py-3 text-[15px] font-semibold text-white shadow-sm hover:bg-azure-deep"
             >
               {d.finalCta.primary}
               <ArrowIcon />
@@ -617,10 +617,10 @@ function NavMockItem({
         active ? "bg-paper-elev text-ink shadow-sm" : "text-ink-2"
       }`}
     >
-      <span className={active ? "text-accent" : "text-ink-3"}>{Icon}</span>
+      <span className={active ? "text-azure" : "text-ink-3"}>{Icon}</span>
       {label}
       {badge && (
-        <span className="ml-auto rounded-full bg-accent px-1.5 text-[11px] font-medium text-white">{badge}</span>
+        <span className="ml-auto rounded-full bg-azure px-1.5 text-[11px] font-medium text-white">{badge}</span>
       )}
     </div>
   );
@@ -717,13 +717,13 @@ function Showcase({
   return (
     <div className={`grid items-center gap-12 lg:grid-cols-2 ${flip ? "lg:[&>*:first-child]:order-2" : ""}`}>
       <div>
-        <span className="inline-block rounded font-mono text-[11.5px] tracking-[0.04em] text-accent-deep bg-accent-soft px-2.5 py-1">{tag}</span>
+        <span className="inline-block rounded font-mono text-[11.5px] tracking-[0.04em] text-azure-deep bg-azure-soft px-2.5 py-1">{tag}</span>
         <h3 className="mt-4 font-semibold tracking-[-0.025em] text-ink text-[28px] leading-[1.05] sm:text-[34px] lg:text-[40px]">{h3}</h3>
         <p className="mt-4 max-w-[48ch] text-[15.5px] text-ink-2">{p}</p>
         <ul className="mt-5 list-none border-b border-line p-0">
           {items.map((it, i) => (
             <li key={i} className="flex items-start gap-2.5 border-t border-line py-2.5 text-[14.5px] text-ink-2">
-              <CheckIcon className="mt-0.5 h-4 w-4 flex-none text-accent" />
+              <CheckIcon className="mt-0.5 h-4 w-4 flex-none text-azure" />
               {it}
             </li>
           ))}
@@ -823,7 +823,7 @@ function Msg({ from, children }: { from: string; children: React.ReactNode }) {
 function MsgMe({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-row-reverse items-start gap-2.5">
-      <div className="flex h-7 w-7 flex-none items-center justify-center rounded-full border border-accent bg-accent text-[11px] font-semibold text-white">
+      <div className="flex h-7 w-7 flex-none items-center justify-center rounded-full border border-azure bg-azure text-[11px] font-semibold text-white">
         SO
       </div>
       <div className="max-w-[80%] rounded-xl rounded-tr bg-ink px-3.5 py-2.5 text-[13.5px] text-paper">

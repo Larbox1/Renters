@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { Paperclip, X } from "lucide-react";
 import { sendMessageAction, type SendMessageState } from "../actions";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
@@ -95,7 +96,7 @@ export function ReplyForm({
             onClick={clearFiles}
             className="text-xs text-slate-500 hover:underline"
           >
-            ✕
+            <X aria-hidden className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
@@ -117,7 +118,8 @@ export function ReplyForm({
 
       <div className="flex items-center justify-between gap-2">
         <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-          <span>📎 {dict.addFiles}</span>
+          <Paperclip aria-hidden className="h-3.5 w-3.5" />
+          <span>{dict.addFiles}</span>
           <input
             ref={fileRef}
             name="files"

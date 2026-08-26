@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { MessageSquare } from "lucide-react";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 
@@ -14,8 +15,8 @@ export default async function MessagesEmptyStatePage({
   return (
     <div className="flex h-full items-center justify-center px-6 text-center">
       <div className="max-w-sm">
-        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-2xl">
-          💬
+        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+          <MessageSquare aria-hidden className="h-6 w-6" />
         </div>
         <p className="text-sm text-slate-600">
           {dict.messages.selectConversation}

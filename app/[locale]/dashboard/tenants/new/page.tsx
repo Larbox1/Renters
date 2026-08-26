@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -45,9 +46,9 @@ export default async function NewTenantPage({
       <div className="mb-6">
         <Link
           href={`/${locale}/dashboard/tenants`}
-          className="text-sm text-brand-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
         >
-          ← {dict.tenants.backToList}
+          <ArrowLeft aria-hidden className="h-4 w-4" /> {dict.tenants.backToList}
         </Link>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
           {dict.tenants.form.createTitle}

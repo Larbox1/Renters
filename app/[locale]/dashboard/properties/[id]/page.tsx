@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, Check } from "lucide-react";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -217,9 +218,9 @@ export default async function PropertyDetailPage({
       <div className="mb-8">
         <Link
           href={`/${locale}/dashboard/properties`}
-          className="text-sm text-brand-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
         >
-          ← {propDict.backToList}
+          <ArrowLeft aria-hidden className="h-4 w-4" /> {propDict.backToList}
         </Link>
         <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
@@ -434,10 +435,18 @@ export default async function PropertyDetailPage({
               />
             )}
             {property.parking && (
-              <DlRow label={propDict.fields.parking} value="✓" emphasized />
+              <DlRow
+                label={propDict.fields.parking}
+                value={<Check aria-hidden className="h-4 w-4" />}
+                emphasized
+              />
             )}
             {property.basement && (
-              <DlRow label={propDict.fields.basement} value="✓" emphasized />
+              <DlRow
+                label={propDict.fields.basement}
+                value={<Check aria-hidden className="h-4 w-4" />}
+                emphasized
+              />
             )}
           </dl>
         </Section>
@@ -452,9 +461,7 @@ export default async function PropertyDetailPage({
                 key={a.label}
                 className="flex items-center gap-2 text-sm text-slate-800"
               >
-                <span aria-hidden className="text-emerald-600">
-                  ✓
-                </span>
+                <Check aria-hidden className="h-4 w-4 text-emerald-600" />
                 {a.label}
               </li>
             ))}
@@ -690,7 +697,7 @@ function DlRow({
   accent,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   emphasized?: boolean;
   accent?: "amber";
 }) {

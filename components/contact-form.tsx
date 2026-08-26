@@ -11,7 +11,7 @@ import type { Dictionary } from "@/i18n/dictionaries/en";
 const initialState: ContactFormState = {};
 
 const inputClass =
-  "w-full rounded-lg border border-line bg-paper-elev px-3.5 py-2.5 text-[14.5px] text-ink placeholder:text-ink-4 transition focus:border-accent focus:outline-none";
+  "w-full rounded-lg border border-line bg-paper-elev px-3.5 py-2.5 text-[14.5px] text-ink placeholder:text-ink-4 transition focus:border-azure focus:outline-none";
 
 export function ContactForm({
   locale,
@@ -28,7 +28,7 @@ export function ContactForm({
   if (state.ok) {
     return (
       <div className="flex h-full min-h-[320px] flex-col items-start justify-center gap-3 rounded-2xl border border-line bg-paper-elev p-8">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-accent-deep">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-azure-soft text-azure-deep">
           <svg className="h-5 w-5" viewBox="0 0 16 16" fill="none">
             <path
               d="M3 8.5 6.5 12 13 4.5"
@@ -102,7 +102,7 @@ export function ContactForm({
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-accent px-[18px] py-3 text-[15px] font-medium text-white shadow-sm transition hover:bg-accent-deep disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-azure px-[18px] py-3 text-[15px] font-medium text-white shadow-sm transition hover:bg-azure-deep disabled:opacity-60"
       >
         {pending ? dict.submitting : dict.submit}
         <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">

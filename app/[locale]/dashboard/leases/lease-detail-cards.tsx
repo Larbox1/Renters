@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { currencyForLeaseType, currencySymbol } from "@/lib/currency";
@@ -203,7 +204,11 @@ function UsLeaseDetails({
   if (lease.pets_allowed != null)
     items.push({
       label: dict.petsAllowed,
-      value: lease.pets_allowed ? "✓" : "✗",
+      value: lease.pets_allowed ? (
+        <Check aria-hidden className="h-4 w-4" />
+      ) : (
+        <X aria-hidden className="h-4 w-4" />
+      ),
     });
   if (lease.pet_deposit_cents != null)
     items.push({
@@ -326,7 +331,10 @@ function BailVideDetails({
       value: fmtEuros(lease.rent_supplement_cents),
     });
   if (lease.is_zone_tendue) {
-    items.push({ label: dict.isZoneTendue, value: "✓" });
+    items.push({
+      label: dict.isZoneTendue,
+      value: <Check aria-hidden className="h-4 w-4" />,
+    });
     if (lease.reference_rent_cents_per_sqm != null)
       items.push({
         label: dict.referenceRent,

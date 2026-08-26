@@ -79,7 +79,7 @@ export function LandingPricingGrid({
             className={`rounded-full px-1.5 py-0.5 text-[10.5px] font-semibold ${
               interval === "year"
                 ? "bg-paper/20 text-paper"
-                : "bg-accent-soft text-accent-deep"
+                : "bg-azure-soft text-azure-deep"
             }`}
           >
             {dict.billingSave}
@@ -127,7 +127,7 @@ export function LandingPricingGrid({
               }`}
             >
               {featured && (
-                <span className="absolute right-6 -top-3 rounded-full bg-accent px-3 py-1 text-[11px] font-medium text-white">
+                <span className="absolute right-6 -top-3 rounded-full bg-azure px-3 py-1 text-[11px] font-medium text-white">
                   {dict.badgePopular}
                 </span>
               )}
@@ -137,9 +137,9 @@ export function LandingPricingGrid({
                     plan.dot === "free"
                       ? "bg-emerald-600"
                       : plan.dot === "plus"
-                        ? "bg-accent"
+                        ? "bg-azure"
                         : plan.dot === "pro"
-                          ? "bg-accent-deep"
+                          ? "bg-azure-deep"
                           : "bg-ink"
                   }`}
                 />
@@ -156,7 +156,7 @@ export function LandingPricingGrid({
                 href={`/${locale}/signup`}
                 className={`inline-flex items-center justify-center rounded-lg py-3 text-sm font-medium ${
                   featured
-                    ? "bg-accent text-white shadow-sm hover:bg-accent-deep"
+                    ? "bg-azure text-white shadow-sm hover:bg-azure-deep"
                     : "border border-line bg-paper-elev text-ink hover:border-ink-3"
                 }`}
               >
@@ -165,7 +165,7 @@ export function LandingPricingGrid({
               <ul className="flex flex-col gap-3 border-t border-line pt-4 text-[13.5px] text-ink-2">
                 {plan.features.map((f, j) => (
                   <li key={j} className="flex items-start gap-2.5">
-                    <CheckIcon className="mt-0.5 h-3.5 w-3.5 flex-none text-accent" />
+                    <CheckIcon className="mt-0.5 h-3.5 w-3.5 flex-none text-azure" />
                     <span
                       dangerouslySetInnerHTML={{
                         __html: f.replace(

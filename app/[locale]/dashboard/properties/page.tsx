@@ -1,5 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import {
+  CircleParking,
+  Home,
+  Package,
+  type LucideIcon,
+} from "lucide-react";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -510,9 +516,11 @@ function CardsView({
           specs.push(
             `${p.bedrooms} ${dict.fields.bedrooms.toLowerCase()}`,
           );
-        const amenities: string[] = [];
-        if (p.parking) amenities.push(`🅿 ${dict.fields.parking}`);
-        if (p.basement) amenities.push(`📦 ${dict.fields.basement}`);
+        const amenities: { icon: LucideIcon; label: string }[] = [];
+        if (p.parking)
+          amenities.push({ icon: CircleParking, label: dict.fields.parking });
+        if (p.basement)
+          amenities.push({ icon: Package, label: dict.fields.basement });
 
         return (
           <li key={p.id} className="w-full sm:w-[350px]">
@@ -529,8 +537,8 @@ function CardsView({
                     className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300">
-                    🏠
+                  <div className="flex h-full w-full items-center justify-center text-slate-300">
+                    <Home aria-hidden className="h-8 w-8" />
                   </div>
                 )}
                 {/* Status badges over the photo */}
@@ -563,8 +571,16 @@ function CardsView({
                   </p>
                 )}
                 {amenities.length > 0 && (
-                  <p className="mt-1 text-xs text-slate-500">
-                    {amenities.join(" · ")}
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                    {amenities.map((a) => (
+                      <span
+                        key={a.label}
+                        className="inline-flex items-center gap-1"
+                      >
+                        <a.icon aria-hidden className="h-3.5 w-3.5" />
+                        {a.label}
+                      </span>
+                    ))}
                   </p>
                 )}
 
@@ -637,9 +653,14 @@ function TableView({
         </thead>
         <tbody className="divide-y divide-slate-100">
           {properties.map((p) => {
-            const amenities: string[] = [];
-            if (p.parking) amenities.push("🅿");
-            if (p.basement) amenities.push("📦");
+            const amenities: { icon: LucideIcon; label: string }[] = [];
+            if (p.parking)
+              amenities.push({
+                icon: CircleParking,
+                label: dict.fields.parking,
+              });
+            if (p.basement)
+              amenities.push({ icon: Package, label: dict.fields.basement });
 
             return (
               <tr key={p.id} className="hover:bg-slate-50 align-top">
@@ -666,8 +687,14 @@ function TableView({
                 <td className="px-4 py-3 text-slate-700">
                   {p.rooms ?? "—"} / {p.bedrooms ?? "—"}
                   {amenities.length > 0 && (
-                    <span className="ml-2 text-xs text-slate-500">
-                      {amenities.join(" ")}
+                    <span className="ml-2 inline-flex items-center gap-1 align-middle text-slate-500">
+                      {amenities.map((a) => (
+                        <a.icon
+                          key={a.label}
+                          aria-label={a.label}
+                          className="h-3.5 w-3.5"
+                        />
+                      ))}
                     </span>
                   )}
                 </td>

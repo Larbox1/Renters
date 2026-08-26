@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { Camera, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { ConfirmSubmit } from "@/components/confirm-submit";
@@ -504,7 +505,7 @@ export function ReportEditor({
                               </a>
                             ) : (
                               <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-slate-400">
-                                📷
+                                <Camera aria-hidden className="h-4 w-4" />
                               </div>
                             )}
                             <button
@@ -515,7 +516,7 @@ export function ReportEditor({
                               aria-label={dict.removePhoto}
                               className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] font-bold text-slate-500 shadow-sm hover:bg-red-50 hover:text-red-600"
                             >
-                              ✕
+                              <X aria-hidden className="h-3 w-3" />
                             </button>
                           </div>
                         );
@@ -523,13 +524,14 @@ export function ReportEditor({
                       {(element.photos?.length ?? 0) <
                         MAX_PHOTOS_PER_ELEMENT && (
                         <label
-                          className={`${smallButtonClass} cursor-pointer ${
+                          className={`${smallButtonClass} inline-flex cursor-pointer items-center gap-1.5 ${
                             uploadingKey === `${roomIndex}:${elementIndex}`
                               ? "animate-pulse opacity-60"
                               : ""
                           }`}
                         >
-                          📷 {dict.addPhoto}
+                          <Camera aria-hidden className="h-4 w-4" />
+                          {dict.addPhoto}
                           <input
                             type="file"
                             accept="image/*"

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { Check, CheckCheck, Paperclip } from "lucide-react";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import {
   deleteMessageAction,
@@ -152,7 +153,7 @@ export function MessageBubble({
                         : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                     }`}
                   >
-                    <span>📎</span>
+                    <Paperclip aria-hidden className="h-3.5 w-3.5 shrink-0" />
                     <span className="max-w-[16rem] truncate">{a.name}</span>
                     <span
                       className={
@@ -175,12 +176,15 @@ export function MessageBubble({
         >
           <time>{createdAtLabel}</time>
           {showReadIndicator && readAtLabel && (
-            <span className="text-brand-600">
-              ✓✓ {dict.readAt.replace("{time}", readAtLabel)}
+            <span className="inline-flex items-center gap-1 text-brand-600">
+              <CheckCheck aria-hidden className="h-3.5 w-3.5" />
+              {dict.readAt.replace("{time}", readAtLabel)}
             </span>
           )}
           {showReadIndicator && !readAtLabel && (
-            <span className="text-slate-400">✓</span>
+            <span className="inline-flex items-center text-slate-400">
+              <Check aria-hidden className="h-3.5 w-3.5" />
+            </span>
           )}
           {canMutate && !editing && (
             <>

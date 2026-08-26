@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -107,9 +108,9 @@ export default async function ConditionReportPage({
       <div className="mb-6">
         <Link
           href={`/${locale}/dashboard/leases/${id}`}
-          className="text-sm text-brand-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
         >
-          ← {editorDict.backToLease}
+          <ArrowLeft aria-hidden className="h-4 w-4" /> {editorDict.backToLease}
         </Link>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
           {title}

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { Home } from "lucide-react";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -224,8 +225,8 @@ export default async function TheHubPage({
                           className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300">
-                          🏠
+                        <div className="flex h-full w-full items-center justify-center text-slate-300">
+                          <Home aria-hidden className="h-8 w-8" />
                         </div>
                       )}
                     </div>

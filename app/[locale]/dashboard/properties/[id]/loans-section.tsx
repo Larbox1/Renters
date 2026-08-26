@@ -28,6 +28,27 @@ const inputClass =
   "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
 const labelClass = "block text-sm font-medium text-slate-700";
 
+// Loan durations offered in the picker; the end date is derived from the
+// start date + the chosen term instead of being typed by hand.
+const LOAN_DURATION_YEARS = Array.from({ length: 30 }, (_, i) => i + 1);
+
+// Date math on the YYYY-MM-DD string keeps it timezone-free; Feb 29 clamps to
+// Feb 28 when the target year is not a leap year.
+function addYears(dateStr: string, years: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const ty = y + years;
+  const leap = (ty % 4 === 0 && ty % 100 !== 0) || ty % 400 === 0;
+  const day = m === 2 && d === 29 && !leap ? 28 : d;
+  return `${ty}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function yearsBetween(start: string, end: string): number {
+  const [sy, sm, sd] = start.split("-").map(Number);
+  const [ey, em, ed] = end.split("-").map(Number);
+  const months = (ey - sy) * 12 + (em - sm) + (ed >= sd ? 0 : -1);
+  return Math.round(months / 12);
+}
+
 function LoanForm({
   locale,
   dict,
@@ -54,6 +75,38 @@ function LoanForm({
   }, [state, onDone]);
 
   const money = (label: string) => localizeCurrencyLabel(label, currency);
+
+  const [startDate, setStartDate] = useState(loan?.start_date ?? "");
+  // Existing loans keep their stored end date until start or duration is
+  // touched; the picker just shows the nearest whole-year term.
+  const [endDate, setEndDate] = useState(loan?.end_date ?? "");
+  const [durationYears, setDurationYears] = useState<number | "">(
+    loan ? Math.min(30, Math.max(1, yearsBetween(loan.start_date, loan.end_date))) : "",
+  );
+
+  function changeStartDate(value: string) {
+    setStartDate(value);
+    if (value && durationYears !== "") setEndDate(addYears(value, durationYears));
+  }
+
+  function selectDuration(years: number) {
+    setDurationYears(years);
+    if (startDate) setEndDate(addYears(startDate, years));
+  }
+
+  const durationLabel = (years: number) =>
+    years === 1
+      ? dict.fields.durationYearOne
+      : dict.fields.durationYears.replace("{years}", String(years));
+
+  const endDateHint = endDate
+    ? dict.fields.endDateComputed.replace(
+        "{date}",
+        new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
+          dateStyle: "medium",
+        }).format(new Date(`${endDate}T00:00:00`)),
+      )
+    : null;
 
   return (
     <form
@@ -115,21 +168,34 @@ function LoanForm({
             name="start_date"
             type="date"
             required
-            defaultValue={loan?.start_date ?? ""}
+            value={startDate}
+            onChange={(e) => changeStartDate(e.target.value)}
             className={inputClass}
           />
         </div>
         <div>
           <label className={labelClass}>
-            {dict.fields.endDate} <span className="text-red-500">*</span>
+            {dict.fields.duration} <span className="text-red-500">*</span>
           </label>
-          <input
-            name="end_date"
-            type="date"
+          <select
             required
-            defaultValue={loan?.end_date ?? ""}
+            value={durationYears}
+            onChange={(e) => selectDuration(Number(e.target.value))}
             className={inputClass}
-          />
+          >
+            <option value="" disabled>
+              {dict.fields.durationPlaceholder}
+            </option>
+            {LOAN_DURATION_YEARS.map((years) => (
+              <option key={years} value={years}>
+                {durationLabel(years)}
+              </option>
+            ))}
+          </select>
+          <input type="hidden" name="end_date" value={endDate} />
+          {endDateHint && (
+            <p className="mt-1 text-xs text-slate-500">{endDateHint}</p>
+          )}
         </div>
       </div>
 

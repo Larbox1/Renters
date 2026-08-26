@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Camera, X } from "lucide-react";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { SignedPhoto } from "@/lib/properties/photos";
 
@@ -117,8 +118,8 @@ export function PhotoManager({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                  📷
+                <div className="flex h-full w-full items-center justify-center text-slate-400">
+                  <Camera aria-hidden className="h-4 w-4" />
                 </div>
               )}
               <button
@@ -127,7 +128,7 @@ export function PhotoManager({
                 aria-label={dict.removeButton}
                 className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white opacity-0 transition group-hover:opacity-100"
               >
-                ✕
+                <X aria-hidden className="h-3.5 w-3.5" />
               </button>
             </div>
           ))}
@@ -150,7 +151,7 @@ export function PhotoManager({
                 aria-label={dict.removeButton}
                 className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white opacity-0 transition group-hover:opacity-100"
               >
-                ✕
+                <X aria-hidden className="h-3.5 w-3.5" />
               </button>
             </div>
           ))}
@@ -172,7 +173,10 @@ export function PhotoManager({
           disabled={totalCount >= MAX_PHOTOS}
           className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          📷 {dict.addButton}
+          <span className="inline-flex items-center gap-2">
+            <Camera aria-hidden className="h-4 w-4" />
+            {dict.addButton}
+          </span>
         </button>
       </div>
 
