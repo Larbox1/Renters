@@ -135,6 +135,19 @@ export default async function SettingsPage({
         {dict.settings.title}
       </h1>
 
+      <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+          {dict.settings.profile.heading}
+        </h2>
+        <ProfileForm
+          locale={locale as Locale}
+          dict={dict.settings.profile}
+          profile={profile}
+          email={session.user.email ?? ""}
+          showOperationCountry={isOwner}
+        />
+      </section>
+
       {isOwner && (
         <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-1 text-lg font-semibold text-slate-900">
@@ -238,19 +251,6 @@ export default async function SettingsPage({
           />
         </section>
       )}
-
-      <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
-          {dict.settings.profile.heading}
-        </h2>
-        <ProfileForm
-          locale={locale as Locale}
-          dict={dict.settings.profile}
-          profile={profile}
-          email={session.user.email ?? ""}
-          showOperationCountry={isOwner}
-        />
-      </section>
 
       <section className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-1 text-lg font-semibold text-slate-900">

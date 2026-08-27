@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -198,6 +199,7 @@ export function DashboardSidebar({
   unreadMessages = 0,
   fullName,
   email,
+  avatarUrl,
   roleLabel,
   plan,
 }: {
@@ -207,10 +209,14 @@ export function DashboardSidebar({
   unreadMessages?: number;
   fullName: string;
   email: string;
+  /** Profile picture (uploaded or from the auth provider); initials otherwise. */
+  avatarUrl?: string | null;
   roleLabel: string;
   plan?: PlanCard;
 }) {
   const pathname = usePathname();
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const showAvatar = !!avatarUrl && !avatarFailed;
   const groups = buildGroups(role, locale, dict, unreadMessages);
   const overviewHref = `/${locale}/dashboard`;
   const settingsHref = `/${locale}/dashboard/settings`;
@@ -333,12 +339,26 @@ export function DashboardSidebar({
               type="button"
               className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-slate-100"
             >
-              <span
-                aria-hidden
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white"
-              >
-                {initialsOf(fullName, email)}
-              </span>
+              {showAvatar ? (
+                // Plain <img>: provider avatars (Google) and Supabase storage
+                // would otherwise need next/image remotePatterns entries.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl!}
+                  alt=""
+                  aria-hidden
+                  className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={() => setAvatarFailed(true)}
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white"
+                >
+                  {initialsOf(fullName, email)}
+                </span>
+              )}
               <span className="hidden min-w-0 flex-1 md:block">
                 <span className="block truncate text-sm font-semibold text-slate-900">
                   {fullName || email}

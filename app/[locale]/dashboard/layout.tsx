@@ -235,6 +235,7 @@ export default async function DashboardLayout({
             unreadMessages={unreadMessages}
             fullName={session.fullName}
             email={session.user.email ?? ""}
+            avatarUrl={session.avatarUrl}
             roleLabel={dict.roles[session.role]}
             plan={plan}
           />

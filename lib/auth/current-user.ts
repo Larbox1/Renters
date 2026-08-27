@@ -30,6 +30,7 @@ export type Profile = {
   role: Role;
   full_name: string | null;
   operation_country?: OperationCountry | null;
+  avatar_url?: string | null;
 };
 
 export type CurrentSession = {
@@ -38,6 +39,8 @@ export type CurrentSession = {
   profile: Profile | null;
   role: Role;
   fullName: string;
+  /** Profile picture: uploaded avatar first, then the auth provider's. */
+  avatarUrl: string | null;
   hasProfile: boolean;
   operationCountry: OperationCountry;
 };
@@ -79,7 +82,11 @@ async function bootstrapAdmin(
       console.error("[admin-bootstrap] upsert failed:", error);
       return profile;
     }
-    return { role: "admin", full_name: fullName };
+    return {
+      role: "admin",
+      full_name: fullName,
+      avatar_url: profile?.avatar_url ?? null,
+    };
   } catch (err) {
     console.error("[admin-bootstrap] unexpected error:", err);
     return profile;
@@ -95,7 +102,7 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
 
   const { data: rawProfile } = await supabase
     .from("profiles")
-    .select("role, full_name, operation_country")
+    .select("role, full_name, operation_country, avatar_url")
     .eq("id", user.id)
     .maybeSingle<Profile>();
 
@@ -122,6 +129,14 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
       user.user_metadata?.full_name ??
       user.email ??
       "",
+    avatarUrl:
+      profile?.avatar_url ??
+      (typeof user.user_metadata?.avatar_url === "string"
+        ? user.user_metadata.avatar_url
+        : null) ??
+      (typeof user.user_metadata?.picture === "string"
+        ? user.user_metadata.picture
+        : null),
     hasProfile: profile !== null,
     operationCountry: isOperationCountry(profile?.operation_country)
       ? profile.operation_country
