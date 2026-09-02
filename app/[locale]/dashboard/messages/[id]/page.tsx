@@ -15,12 +15,14 @@ import { markConversationReadAction } from "../actions";
 import { ReplyForm } from "./reply-form";
 import { MessageBubble } from "./message-bubble";
 import { ScrollAnchor } from "./scroll-anchor";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Counterpart = {
   id: string;
   full_name: string | null;
   email: string | null;
   role: Role;
+  avatar_url: string | null;
 };
 
 type RawMessageRow = {
@@ -119,9 +121,14 @@ export default async function ConversationPage({
         >
           <ArrowLeft aria-hidden className="h-4 w-4" />
         </Link>
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold uppercase text-brand-700">
-          {cpName.charAt(0)}
-        </div>
+        <Avatar>
+          {counterpart.avatar_url && (
+            <AvatarImage src={counterpart.avatar_url} alt="" />
+          )}
+          <AvatarFallback className="text-sm">
+            {cpName.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900">
             {cpName}
@@ -149,6 +156,8 @@ export default async function ConversationPage({
               key={m.id}
               locale={locale as Locale}
               isOutbound={m.sender_id === myId}
+              senderAvatarUrl={counterpart.avatar_url}
+              senderInitial={cpName.charAt(0)}
               isLastOutbound={i === lastOutboundIndex}
               createdAtLabel={fmtTime(m.created_at)}
               readAtLabel={m.read_at ? fmtDateTime(m.read_at) : null}

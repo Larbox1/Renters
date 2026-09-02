@@ -12,6 +12,7 @@ import {
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { SignedAttachment } from "@/lib/messages/attachments";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export type BubbleMessage = {
   id: string;
@@ -40,6 +41,8 @@ export function MessageBubble({
   message,
   isOutbound,
   isLastOutbound,
+  senderAvatarUrl,
+  senderInitial,
   createdAtLabel,
   readAtLabel,
   dict,
@@ -48,6 +51,9 @@ export function MessageBubble({
   message: BubbleMessage;
   isOutbound: boolean;
   isLastOutbound: boolean;
+  /** Counterpart avatar, shown beside inbound bubbles only. */
+  senderAvatarUrl?: string | null;
+  senderInitial?: string;
   createdAtLabel: string;
   readAtLabel: string | null;
   dict: Dictionary["messages"];
@@ -61,7 +67,19 @@ export function MessageBubble({
   const showReadIndicator = isOutbound && isLastOutbound;
 
   return (
-    <div className={`flex ${isOutbound ? "justify-end" : "justify-start"}`}>
+    <div
+      className={`flex ${
+        isOutbound ? "justify-end" : "items-end justify-start gap-2"
+      }`}
+    >
+      {!isOutbound && (
+        <Avatar className="mb-5 h-7 w-7">
+          {senderAvatarUrl && <AvatarImage src={senderAvatarUrl} alt="" />}
+          <AvatarFallback className="text-[10px]">
+            {senderInitial ?? "?"}
+          </AvatarFallback>
+        </Avatar>
+      )}
       <div className="max-w-[80%] flex-col">
         <div
           className={`rounded-2xl px-4 py-2.5 text-sm shadow-sm ${

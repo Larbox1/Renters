@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient, hasServiceRoleKey } from "@/lib/supabase/admin";
 import { defaultLocale } from "@/i18n/config";
 import { isOperationCountry } from "@/lib/operation-country";
 
@@ -32,16 +33,24 @@ export async function GET(request: Request) {
       // OAuth signups can't carry metadata the way email signups do, so the
       // profile trigger defaulted them to tenant/FR. Apply what the user
       // picked on the signup form. Never grants admin: the role is checked
-      // against the same public list the signup form offers.
+      // against the same public list the signup form offers. Must go through
+      // the admin client — profiles.role is trigger-locked (0065) against
+      // non-service-role writes.
       if (isNewUser && role && (SIGNUP_ROLES as readonly string[]).includes(role)) {
-        await supabase
-          .from("profiles")
-          .update({
-            role,
-            operation_country:
-              country && isOperationCountry(country) ? country : "FR",
-          })
-          .eq("id", user.id);
+        if (hasServiceRoleKey()) {
+          await createAdminClient()
+            .from("profiles")
+            .update({
+              role,
+              operation_country:
+                country && isOperationCountry(country) ? country : "FR",
+            })
+            .eq("id", user.id);
+        } else {
+          console.warn(
+            "[auth-callback] SUPABASE_SERVICE_ROLE_KEY not set; cannot apply signup_role",
+          );
+        }
       }
 
       return NextResponse.redirect(`${origin}${next}`);

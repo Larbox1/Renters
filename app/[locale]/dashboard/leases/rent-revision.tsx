@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type IrlQuarter = { period: string; value: number };
 type Bv = Dictionary["leases"]["fields"]["bailVide"];
@@ -152,11 +153,9 @@ export function RentRevision({
         </div>
         <div>
           <label className={labelClass}>{bv.revisionDate}</label>
-          <input
+          <DatePicker
             name="revision_date"
-            type="date"
             defaultValue={defaultRevisionDate ?? ""}
-            className={inputClass}
           />
         </div>
       </div>
@@ -205,12 +204,10 @@ export function RentRevision({
         </div>
         <div>
           <label className={labelClass}>{bv.revisionDate}</label>
-          <input
+          <DatePicker
             name="revision_date"
-            type="date"
             value={revisionDate}
-            onChange={(e) => setRevisionDate(e.target.value)}
-            className={inputClass}
+            onChange={setRevisionDate}
           />
         </div>
       </div>

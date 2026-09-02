@@ -41,6 +41,7 @@ type ProfileRow = {
 type BillingRow = {
   plan: PlanId;
   plan_interval: BillingInterval | null;
+  plan_provider: "stripe" | "play" | "app_store" | null;
   subscription_status: string | null;
   plan_current_period_end: string | null;
   plan_cancel_at_period_end: boolean | null;
@@ -73,7 +74,7 @@ export default async function SettingsPage({
     const { data } = await session.supabase
       .from("profiles")
       .select(
-        "plan, plan_interval, subscription_status, plan_current_period_end, plan_cancel_at_period_end",
+        "plan, plan_interval, plan_provider, subscription_status, plan_current_period_end, plan_cancel_at_period_end",
       )
       .eq("id", session.user.id)
       .maybeSingle<BillingRow>();
@@ -81,8 +82,14 @@ export default async function SettingsPage({
     currentPlan = data?.plan ?? "free";
   }
   // Subscribed = on a paid tier. Switches/cancellations then go through the
-  // Stripe Customer Portal; only free users see Checkout buttons.
+  // Stripe Customer Portal; only free users see Checkout buttons. A plan
+  // bought in the mobile app (Google Play via RevenueCat) is managed there,
+  // so the Stripe controls are hidden entirely.
   const isSubscribed = isOwner && currentPlan !== "free";
+  const storeManaged =
+    isSubscribed &&
+    (billingState?.plan_provider === "play" ||
+      billingState?.plan_provider === "app_store");
   const periodEnd = billingState?.plan_current_period_end
     ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
         dateStyle: "long",
@@ -183,7 +190,27 @@ export default async function SettingsPage({
             </p>
           )}
 
-          {isSubscribed && (
+          {storeManaged && (
+            <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-sm font-semibold text-slate-900">
+                {dict.settings.plan.currentBadge}:{" "}
+                {dict.settings.plan.names[currentPlan]}
+                {billingState?.plan_interval && (
+                  <span className="ml-1.5 font-normal text-slate-500">
+                    ·{" "}
+                    {billingState.plan_interval === "year"
+                      ? dict.settings.plan.billingAnnual
+                      : dict.settings.plan.billingMonthly}
+                  </span>
+                )}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {dict.settings.plan.managedInApp}
+              </p>
+            </div>
+          )}
+
+          {isSubscribed && !storeManaged && (
             <div className="mb-4 flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-slate-900">
@@ -240,15 +267,17 @@ export default async function SettingsPage({
             </div>
           )}
 
-          <PlanSelector
-            locale={locale as Locale}
-            currentPlan={currentPlan}
-            currentInterval={billingState?.plan_interval ?? null}
-            isSubscribed={isSubscribed}
-            dict={dict.settings.plan}
-            descriptions={planDescriptions}
-            currency={currencyFor(session.operationCountry)}
-          />
+          {!storeManaged && (
+            <PlanSelector
+              locale={locale as Locale}
+              currentPlan={currentPlan}
+              currentInterval={billingState?.plan_interval ?? null}
+              isSubscribed={isSubscribed}
+              dict={dict.settings.plan}
+              descriptions={planDescriptions}
+              currency={currencyFor(session.operationCountry)}
+            />
+          )}
         </section>
       )}
 

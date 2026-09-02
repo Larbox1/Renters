@@ -87,6 +87,7 @@ export const fr: Dictionary = {
       orDivider: "ou",
       googleButton: "Continuer avec Google",
       googleError: "Connexion à Google impossible. Veuillez réessayer.",
+      appleButton: "Continuer avec Apple",
     },
     forgotPassword: {
       title: "Réinitialiser votre mot de passe",
@@ -147,6 +148,7 @@ export const fr: Dictionary = {
       orDivider: "ou",
       googleButton: "Continuer avec Google",
       googleError: "Connexion à Google impossible. Veuillez réessayer.",
+      appleButton: "Continuer avec Apple",
     },
   },
   dashboard: {
@@ -181,6 +183,21 @@ export const fr: Dictionary = {
       net: "Net",
       monthsSuffix: "mois",
       empty: "Aucune transaction sur cette période.",
+    },
+    occupancy: {
+      heading: "Taux d'occupation",
+      occupied: "Occupés",
+      vacant: "Vacants",
+      empty: "Ajoutez votre premier bien pour suivre l'occupation.",
+    },
+    incomeByProperty: {
+      heading: "Résultat net par bien",
+      subtitle: "Transactions enregistrées sur les 12 derniers mois",
+      empty: "Aucune transaction enregistrée pour le moment.",
+    },
+    upcoming: {
+      heading: "Les 30 prochains jours",
+      empty: "Rien à venir.",
     },
     calendar: {
       heading: "Calendrier",
@@ -249,11 +266,31 @@ export const fr: Dictionary = {
       deposits: "Dépôts détenus",
       portfolioValue: "Valeur du portefeuille",
       yield: "Rentabilité annuelle",
+      equity: "Valeur nette",
+      equityHint: "Valeur de marché − capital restant dû",
+      netYieldHint: "Net : {pct} % après dépenses enregistrées",
     },
     range: {
       from: "Du",
       to: "Au",
       apply: "Filtrer",
+      presets: {
+        thisMonth: "Ce mois-ci",
+        lastMonth: "Mois dernier",
+        thisYear: "Cette année",
+        last12Months: "12 derniers mois",
+      },
+    },
+    filters: {
+      allProperties: "Tous les biens",
+      allKinds: "Revenus et dépenses",
+    },
+    collection: {
+      heading: "Encaissement des loyers",
+      summary: "{collected} encaissés sur {expected} attendus",
+      hint: "Basé sur {months} mois de loyers actuels",
+      outstanding: "{amount} en attente",
+      complete: "Tous les loyers sont encaissés",
     },
     assets: {
       heading: "Actifs immobiliers",
@@ -269,6 +306,8 @@ export const fr: Dictionary = {
         loanAmount: "Montant emprunté",
         remainingLoan: "Capital restant dû",
         marketValue: "Valeur de marché estimée",
+        capitalGain: "Plus-value",
+        equity: "Valeur nette",
       },
     },
     breakdown: {
@@ -303,6 +342,9 @@ export const fr: Dictionary = {
       submit: "Enregistrer",
       submitting: "Enregistrement…",
       delete: "Supprimer",
+      edit: "Modifier",
+      modalTitleEdit: "Modifier la transaction",
+      export: "Exporter en CSV",
       deleteConfirm: "Supprimer cette transaction ?",
       kind: {
         income: "Revenu",
@@ -411,6 +453,8 @@ export const fr: Dictionary = {
       manageBilling: "Gérer l'abonnement",
       manageHint:
         "Modifiez votre carte, changez de forfait ou résiliez à tout moment.",
+      managedInApp:
+        "Cet abonnement a été souscrit dans l'application mobile et est facturé par Google Play. Gérez-le ou résiliez-le depuis l'application Android, ou dans Google Play → Abonnements.",
       cancelSubscription: "Résilier l'abonnement",
       resumeSubscription: "Réactiver l'abonnement",
       confirmCancel:
@@ -1212,6 +1256,12 @@ export const fr: Dictionary = {
   footer: {
     tagline:
       "La gestion locative pour les bailleurs qui veulent garder leurs week-ends. Conçu en France.",
+    storeBadges: {
+      googlePlayTop: "Disponible sur",
+      googlePlayName: "Google Play",
+      appStoreName: "App Store",
+      appStoreSoon: "Bientôt disponible",
+    },
     product: "Produit",
     productLinks: [
       { label: "Fonctionnalités", href: "/#features" },
@@ -1313,6 +1363,7 @@ export const fr: Dictionary = {
       lede:
         "Neuf modules qui se parlent entre eux. Vous saisissez l'information une fois, Meskasas s'occupe du reste : génération, envoi, archivage, comptabilité.",
       comingSoonBadge: "Bientôt disponible",
+      newBadge: "Nouveau",
       items: [
         {
           title: "Quittances & appels de loyer",
@@ -1321,6 +1372,7 @@ export const fr: Dictionary = {
           label: "01 / RECOUVREMENT",
           icon: "receipt",
           comingSoon: false,
+          isNew: false,
         },
         {
           title: "Locataires & baux",
@@ -1329,6 +1381,7 @@ export const fr: Dictionary = {
           label: "02 / OCCUPATION",
           icon: "users",
           comingSoon: false,
+          isNew: false,
         },
         {
           title: "Communication intégrée",
@@ -1337,38 +1390,43 @@ export const fr: Dictionary = {
           label: "03 / RELATION",
           icon: "mail",
           comingSoon: false,
-        },
-        {
-          title: "Travaux & sinistres",
-          description:
-            "Tickets, devis, photos, suivi de l'avancement. Gardez un historique propre par lot et par locataire.",
-          label: "04 / OPS",
-          icon: "works",
-          comingSoon: false,
+          isNew: false,
         },
         {
           title: "Espace locataire",
           description:
             "Vos locataires consultent leurs quittances, signalent un incident, paient en ligne. Sans appli à installer.",
-          label: "05 / PORTAIL",
+          label: "04 / PORTAIL",
           icon: "portal",
           comingSoon: false,
-        },
-        {
-          title: "Comptabilité & déclaration",
-          description:
-            "Saisie automatique de chaque encaissement, déduction des charges, export 2044 / 2031 prêt à signer.",
-          label: "06 / FISCAL",
-          icon: "chart",
-          comingSoon: true,
+          isNew: false,
         },
         {
           title: "État des lieux numérique",
           description:
             "Pièce par pièce, avec photos. Comparaison entrée / sortie, signature sur place, PDF horodaté.",
-          label: "07 / TERRAIN",
+          label: "05 / TERRAIN",
           icon: "report",
-          comingSoon: true,
+          comingSoon: false,
+          isNew: true,
+        },
+        {
+          title: "Travaux & sinistres",
+          description:
+            "Tickets, devis, photos, suivi de l'avancement. Gardez un historique propre par lot et par locataire.",
+          label: "06 / OPS",
+          icon: "works",
+          comingSoon: false,
+          isNew: false,
+        },
+        {
+          title: "Application mobile",
+          description:
+            "Sur Android pour le moment — iOS arrive bientôt. Photographiez un état des lieux, validez un loyer, scannez une facture en deux taps.",
+          label: "07 / MOBILE",
+          icon: "phone",
+          comingSoon: false,
+          isNew: true,
         },
         {
           title: "Signature électronique",
@@ -1377,14 +1435,16 @@ export const fr: Dictionary = {
           label: "08 / DOCUMENTS",
           icon: "signature",
           comingSoon: true,
+          isNew: false,
         },
         {
-          title: "Application mobile",
+          title: "Comptabilité & déclaration",
           description:
-            "iOS et Android. Photographiez un état des lieux, validez un loyer, scannez une facture en deux taps.",
-          label: "09 / MOBILE",
-          icon: "phone",
+            "Saisie automatique de chaque encaissement, déduction des charges, export 2044 / 2031 prêt à signer.",
+          label: "09 / FISCAL",
+          icon: "chart",
           comingSoon: true,
+          isNew: false,
         },
       ],
     },

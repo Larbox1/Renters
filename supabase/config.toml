@@ -1,0 +1,23 @@
+# Supabase project config. Records the per-function JWT posture so it is
+# reviewable and survives redeploys (previously only a deploy-time flag).
+project_id = "cwjzjsfonhvcbednfaqm"
+
+# User-facing functions: a valid Supabase JWT is required; each also does its
+# own authorization (role/ownership checks) on top.
+[functions.tenant-invite]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.property-photo-sign-upload]
+verify_jwt = true
+
+[functions.property-photo-delete]
+verify_jwt = true
+
+# RevenueCat has no Supabase JWT — it authenticates with a shared secret in the
+# Authorization header (verified constant-time against REVENUECAT_WEBHOOK_SECRET),
+# so JWT verification must stay OFF for this one.
+[functions.revenuecat-webhook]
+verify_jwt = false

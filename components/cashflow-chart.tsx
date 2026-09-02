@@ -1,8 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 export type MonthlyCashflow = {
   month: string; // "YYYY-MM"
@@ -17,10 +33,12 @@ export function CashflowChart({
   locale,
   data,
   dict,
+  currency = "EUR",
 }: {
   locale: Locale;
   data: MonthlyCashflow[]; // 12 months, oldest → newest
   dict: Dictionary["dashboard"]["cashflow"];
+  currency?: string;
 }) {
   const [range, setRange] = useState<Range>(6);
 
@@ -29,10 +47,20 @@ export function CashflowChart({
     () =>
       new Intl.NumberFormat(intl, {
         style: "currency",
-        currency: "EUR",
+        currency,
         maximumFractionDigits: 0,
       }),
-    [intl],
+    [intl, currency],
+  );
+  const fmtCompact = useMemo(
+    () =>
+      new Intl.NumberFormat(intl, {
+        style: "currency",
+        currency,
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }),
+    [intl, currency],
   );
   const monthLabel = useMemo(() => {
     const f = new Intl.DateTimeFormat(intl, { month: "short" });
@@ -50,12 +78,26 @@ export function CashflowChart({
     return { income, expense, net: income - expense };
   }, [visible]);
 
-  const maxCents = Math.max(
-    1,
-    ...visible.map((m) => Math.max(m.incomeCents, m.expenseCents)),
+  const chartConfig = useMemo(
+    () =>
+      ({
+        income: { label: dict.revenues, color: "hsl(var(--chart-2))" },
+        expense: { label: dict.expenses, color: "hsl(var(--chart-3))" },
+        net: { label: dict.net, color: "hsl(var(--chart-1))" },
+      }) satisfies ChartConfig,
+    [dict],
   );
-  const barHeight = (cents: number) =>
-    cents <= 0 ? "0%" : `${Math.max(3, (cents / maxCents) * 100)}%`;
+
+  const rows = useMemo(
+    () =>
+      visible.map((m) => ({
+        month: monthLabel(m.month),
+        income: m.incomeCents / 100,
+        expense: m.expenseCents / 100,
+        net: (m.incomeCents - m.expenseCents) / 100,
+      })),
+    [visible, monthLabel],
+  );
 
   const isEmpty = totals.income === 0 && totals.expense === 0;
 
@@ -86,12 +128,12 @@ export function CashflowChart({
         <Summary
           label={dict.revenues}
           value={fmtCurrency.format(totals.income / 100)}
-          dotClass="bg-emerald-500"
+          dotClass="bg-emerald-600"
         />
         <Summary
           label={dict.expenses}
           value={fmtCurrency.format(totals.expense / 100)}
-          dotClass="bg-red-500"
+          dotClass="bg-red-600"
         />
         <Summary
           label={dict.net}
@@ -103,27 +145,67 @@ export function CashflowChart({
       {isEmpty ? (
         <p className="py-10 text-center text-sm text-slate-500">{dict.empty}</p>
       ) : (
-        <div className="flex items-end gap-2">
-          {visible.map((m) => (
-            <div key={m.month} className="flex flex-1 flex-col items-center">
-              <div className="flex h-40 w-full items-end justify-center gap-1">
-                <div
-                  title={`${dict.revenues}: ${fmtCurrency.format(m.incomeCents / 100)}`}
-                  style={{ height: barHeight(m.incomeCents) }}
-                  className="w-2.5 rounded-t bg-emerald-500 sm:w-3.5"
+        <ChartContainer config={chartConfig} className="h-64 w-full">
+          <ComposedChart data={rows} barGap={2} margin={{ left: 0, right: 8 }}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              className="capitalize"
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              width={52}
+              tickFormatter={(v: number) => fmtCompact.format(v)}
+            />
+            <ChartTooltip
+              cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
+              content={
+                <ChartTooltipContent
+                  formatter={(value, name) => (
+                    <div className="flex w-full items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                        style={{ backgroundColor: `var(--color-${name})` }}
+                      />
+                      <span className="text-muted-foreground">
+                        {chartConfig[name as keyof typeof chartConfig]?.label ??
+                          name}
+                      </span>
+                      <span className="ml-auto pl-4 font-medium tabular-nums text-foreground">
+                        {fmtCurrency.format(Number(value))}
+                      </span>
+                    </div>
+                  )}
                 />
-                <div
-                  title={`${dict.expenses}: ${fmtCurrency.format(m.expenseCents / 100)}`}
-                  style={{ height: barHeight(m.expenseCents) }}
-                  className="w-2.5 rounded-t bg-red-500 sm:w-3.5"
-                />
-              </div>
-              <span className="mt-1.5 text-[10px] capitalize text-slate-500">
-                {monthLabel(m.month)}
-              </span>
-            </div>
-          ))}
-        </div>
+              }
+            />
+            <Bar
+              dataKey="income"
+              fill="var(--color-income)"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={28}
+            />
+            <Bar
+              dataKey="expense"
+              fill="var(--color-expense)"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={28}
+            />
+            <Line
+              type="monotone"
+              dataKey="net"
+              stroke="var(--color-net)"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
+            <ChartLegend content={<ChartLegendContent />} />
+          </ComposedChart>
+        </ChartContainer>
       )}
     </section>
   );

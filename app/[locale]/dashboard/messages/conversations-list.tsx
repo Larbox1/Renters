@@ -5,12 +5,14 @@ import { useParams } from "next/navigation";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Role } from "@/lib/auth/current-user";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export type ConversationRow = {
   counterpart_id: string;
   counterpart_name: string | null;
   counterpart_email: string | null;
   counterpart_role: Role;
+  counterpart_avatar_url: string | null;
   last_message_id: string;
   last_message_body: string;
   last_message_at: string;
@@ -74,9 +76,14 @@ export function ConversationsList({
                         : "hover:bg-slate-50"
                   }`}
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold uppercase text-brand-700">
-                    {name.charAt(0)}
-                  </div>
+                  <Avatar className="h-9 w-9">
+                    {c.counterpart_avatar_url && (
+                      <AvatarImage src={c.counterpart_avatar_url} alt="" />
+                    )}
+                    <AvatarFallback className="text-xs">
+                      {name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p

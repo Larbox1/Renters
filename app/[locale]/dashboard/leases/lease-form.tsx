@@ -16,6 +16,7 @@ import {
   type LeaseState,
 } from "./actions";
 import { RentRevision } from "./rent-revision";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Property = {
   id: string;
@@ -344,26 +345,22 @@ export function LeaseForm({
           <label className={labelClass}>
             {dict.fields.startDate} <span className="text-red-500">*</span>
           </label>
-          <input
+          <DatePicker
             name="start_date"
-            type="date"
             required
             value={startDate}
-            onChange={(e) => {
-              setStartDate(e.target.value);
-              applyEndDate(e.target.value, duration, reducedMonths);
+            onChange={(v) => {
+              setStartDate(v);
+              applyEndDate(v, duration, reducedMonths);
             }}
-            className={inputClass}
           />
         </div>
         <div>
           <label className={labelClass}>{dict.fields.endDate}</label>
-          <input
+          <DatePicker
             name="end_date"
-            type="date"
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className={inputClass}
+            onChange={setEndDate}
           />
         </div>
       </div>

@@ -6,6 +6,7 @@ import type { Dictionary } from "@/i18n/dictionaries/en";
 import { localizeCurrencyLabel, type CurrencyCode } from "@/lib/currency";
 import { amortizationPoints, loanFigures, rateBpsToPercent } from "@/lib/loan";
 import { ConfirmSubmit } from "@/components/confirm-submit";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   createLoanAction,
   updateLoanAction,
@@ -164,13 +165,11 @@ function LoanForm({
           <label className={labelClass}>
             {dict.fields.startDate} <span className="text-red-500">*</span>
           </label>
-          <input
+          <DatePicker
             name="start_date"
-            type="date"
             required
             value={startDate}
-            onChange={(e) => changeStartDate(e.target.value)}
-            className={inputClass}
+            onChange={changeStartDate}
           />
         </div>
         <div>

@@ -84,6 +84,7 @@ export const en = {
       orDivider: "or",
       googleButton: "Continue with Google",
       googleError: "Could not connect to Google. Please try again.",
+      appleButton: "Continue with Apple",
     },
     forgotPassword: {
       title: "Reset your password",
@@ -140,6 +141,7 @@ export const en = {
       orDivider: "or",
       googleButton: "Continue with Google",
       googleError: "Could not connect to Google. Please try again.",
+      appleButton: "Continue with Apple",
     },
   },
   dashboard: {
@@ -174,6 +176,21 @@ export const en = {
       net: "Net",
       monthsSuffix: "months",
       empty: "No transactions in this period.",
+    },
+    occupancy: {
+      heading: "Occupancy",
+      occupied: "Occupied",
+      vacant: "Vacant",
+      empty: "Add your first property to track occupancy.",
+    },
+    incomeByProperty: {
+      heading: "Net income by property",
+      subtitle: "Trailing 12 months of recorded transactions",
+      empty: "No transactions recorded yet.",
+    },
+    upcoming: {
+      heading: "Next 30 days",
+      empty: "Nothing coming up.",
     },
     calendar: {
       heading: "Calendar",
@@ -242,11 +259,31 @@ export const en = {
       deposits: "Deposits held",
       portfolioValue: "Portfolio value",
       yield: "Annual yield",
+      equity: "Net equity",
+      equityHint: "Market value − remaining loans",
+      netYieldHint: "Net: {pct}% after recorded expenses",
     },
     range: {
       from: "From",
       to: "To",
       apply: "Apply",
+      presets: {
+        thisMonth: "This month",
+        lastMonth: "Last month",
+        thisYear: "This year",
+        last12Months: "Last 12 months",
+      },
+    },
+    filters: {
+      allProperties: "All properties",
+      allKinds: "Income & expenses",
+    },
+    collection: {
+      heading: "Rent collection",
+      summary: "{collected} collected of {expected} expected",
+      hint: "Based on {months} month(s) of the current rent roll",
+      outstanding: "{amount} outstanding",
+      complete: "All rent collected",
     },
     assets: {
       heading: "Real estate assets",
@@ -262,6 +299,8 @@ export const en = {
         loanAmount: "Loan amount",
         remainingLoan: "Remaining loan",
         marketValue: "Estimated market value",
+        capitalGain: "Capital gain",
+        equity: "Equity",
       },
     },
     breakdown: {
@@ -296,6 +335,9 @@ export const en = {
       submit: "Save",
       submitting: "Saving…",
       delete: "Delete",
+      edit: "Edit",
+      modalTitleEdit: "Edit transaction",
+      export: "Export CSV",
       deleteConfirm: "Delete this transaction?",
       kind: {
         income: "Income",
@@ -403,6 +445,8 @@ export const en = {
       switchPlan: "Switch",
       manageBilling: "Manage billing",
       manageHint: "Update your card, switch tiers, or cancel anytime.",
+      managedInApp:
+        "This subscription was purchased in the mobile app and is billed by Google Play. Manage or cancel it from the Android app, or in Google Play → Subscriptions.",
       cancelSubscription: "Cancel subscription",
       resumeSubscription: "Resume subscription",
       confirmCancel:
@@ -1199,6 +1243,12 @@ export const en = {
   footer: {
     tagline:
       "Rental management for landlords who want to keep their weekends. Built in France.",
+    storeBadges: {
+      googlePlayTop: "Get it on",
+      googlePlayName: "Google Play",
+      appStoreName: "App Store",
+      appStoreSoon: "Available soon",
+    },
     product: "Product",
     // href is a locale-relative path ("/contact", "/#pricing"); null renders
     // as a dead link until the target page exists.
@@ -1302,6 +1352,7 @@ export const en = {
       lede:
         "Nine modules that talk to each other. Enter information once — Meskasas takes care of the rest: generation, sending, archiving, accounting.",
       comingSoonBadge: "Coming soon",
+      newBadge: "New",
       items: [
         {
           title: "Receipts & rent calls",
@@ -1310,6 +1361,7 @@ export const en = {
           label: "01 / COLLECTION",
           icon: "receipt",
           comingSoon: false,
+          isNew: false,
         },
         {
           title: "Tenants & leases",
@@ -1318,6 +1370,7 @@ export const en = {
           label: "02 / OCCUPANCY",
           icon: "users",
           comingSoon: false,
+          isNew: false,
         },
         {
           title: "Built-in messaging",
@@ -1326,38 +1379,43 @@ export const en = {
           label: "03 / RELATIONSHIP",
           icon: "mail",
           comingSoon: false,
-        },
-        {
-          title: "Works & incidents",
-          description:
-            "Tickets, quotes, photos, progress tracking. Keep a clean history per unit and per tenant.",
-          label: "04 / OPS",
-          icon: "works",
-          comingSoon: false,
+          isNew: false,
         },
         {
           title: "Tenant portal",
           description:
             "Tenants check their receipts, report incidents, pay online. No app to install.",
-          label: "05 / PORTAL",
+          label: "04 / PORTAL",
           icon: "portal",
           comingSoon: false,
-        },
-        {
-          title: "Accounting & tax filing",
-          description:
-            "Every payment recorded automatically, charges deducted, 2044 / 2031 exports ready to sign.",
-          label: "06 / TAX",
-          icon: "chart",
-          comingSoon: true,
+          isNew: false,
         },
         {
           title: "Digital condition reports",
           description:
             "Room by room with photos. Move-in / move-out comparison, on-the-spot signature, timestamped PDF.",
-          label: "07 / FIELD",
+          label: "05 / FIELD",
           icon: "report",
-          comingSoon: true,
+          comingSoon: false,
+          isNew: true,
+        },
+        {
+          title: "Works & incidents",
+          description:
+            "Tickets, quotes, photos, progress tracking. Keep a clean history per unit and per tenant.",
+          label: "06 / OPS",
+          icon: "works",
+          comingSoon: false,
+          isNew: false,
+        },
+        {
+          title: "Mobile app",
+          description:
+            "Android for now — iOS coming soon. Snap a condition report, validate a rent, scan an invoice in two taps.",
+          label: "07 / MOBILE",
+          icon: "phone",
+          comingSoon: false,
+          isNew: true,
         },
         {
           title: "E-signature",
@@ -1366,14 +1424,16 @@ export const en = {
           label: "08 / DOCUMENTS",
           icon: "signature",
           comingSoon: true,
+          isNew: false,
         },
         {
-          title: "Mobile app",
+          title: "Accounting & tax filing",
           description:
-            "iOS and Android. Snap a condition report, validate a rent, scan an invoice in two taps.",
-          label: "09 / MOBILE",
-          icon: "phone",
+            "Every payment recorded automatically, charges deducted, 2044 / 2031 exports ready to sign.",
+          label: "09 / TAX",
+          icon: "chart",
           comingSoon: true,
+          isNew: false,
         },
       ],
     },

@@ -15,6 +15,7 @@ import {
   type OperationCountry,
 } from "@/lib/operation-country";
 import { GoogleAuthButton } from "@/components/google-auth-button";
+import { AppleAuthButton } from "@/components/apple-auth-button";
 
 function SubmitButton({ labels }: { labels: { idle: string; busy: string } }) {
   const { pending } = useFormStatus();
@@ -197,6 +198,8 @@ export function SignupForm({
         signupRole={role}
         signupCountry={role === "owner" ? operationCountry : undefined}
       />
+
+      <AppleAuthButton label={dict.appleButton} />
 
       <p className="text-center text-sm text-slate-600">
         {dict.haveAccount}{" "}

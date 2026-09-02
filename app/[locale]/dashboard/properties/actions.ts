@@ -17,6 +17,9 @@ import { isOperationCountry } from "@/lib/operation-country";
 
 export type PropertyState = { error?: string };
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** properties.country is constrained to FR/US; anything else falls back FR. */
 function readCountry(formData: FormData): "FR" | "US" {
   const raw = String(formData.get("country") ?? "")
@@ -359,11 +362,18 @@ export async function updatePropertyAction(
   const newFiles = readNewPhotos(formData);
   const keepPaths = readKeepPaths(formData);
 
+  // Ownership gate BEFORE any service-role upload: photos are written into a
+  // "<id>/..." storage prefix with the admin client, so an unverified id would
+  // let a caller plant files in another owner's folder. This RLS-scoped read
+  // returns a row only if the caller owns it (or is admin); a UUID check keeps
+  // malformed ids out of the storage path.
+  if (!UUID_RE.test(id)) return { error: "not_found" };
   const { data: current } = await session.supabase
     .from("properties")
     .select("photos")
     .eq("id", id)
     .maybeSingle();
+  if (!current) return { error: "not_found" };
   const existingPhotos = (current?.photos ?? []) as PropertyPhoto[];
 
   const kept = existingPhotos.filter((p) => keepPaths.has(p.path));

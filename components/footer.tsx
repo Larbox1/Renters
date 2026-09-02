@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { StoreBadges } from "@/components/store-badges";
 
 export function Footer({
   locale,
@@ -38,6 +39,7 @@ export function Footer({
             <p className="mt-4 max-w-[30ch] text-[13.5px] text-ink-3">
               {dict.tagline}
             </p>
+            <StoreBadges dict={dict.storeBadges} />
           </div>
 
           {columns.map((col) => (

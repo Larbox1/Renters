@@ -249,6 +249,11 @@ export default async function HomePage({
                       {d.features.comingSoonBadge}
                     </span>
                   )}
+                  {f.isNew && !f.comingSoon && (
+                    <span className="ml-2 inline-flex translate-y-[-1px] rounded-full bg-emerald-100 px-2 py-0.5 align-middle text-[10.5px] font-medium text-emerald-800">
+                      {d.features.newBadge}
+                    </span>
+                  )}
                 </h3>
                 <p className={`text-[14px] leading-[1.55] ${f.comingSoon ? "text-ink-4" : "text-ink-3"}`}>
                   {f.description}

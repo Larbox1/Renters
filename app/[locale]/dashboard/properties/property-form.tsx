@@ -10,6 +10,7 @@ import { currencyFor, localizeCurrencyLabel } from "@/lib/currency";
 import { localizeSurfaceLabel, surfaceUnitFor } from "@/lib/surface";
 import { PhotoManager, type PhotoManagerHandle } from "./photo-manager";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   createPropertyAction,
   updatePropertyAction,
@@ -447,11 +448,11 @@ export function PropertyForm({
             <label className="block text-sm font-medium text-slate-700">
               {dict.fields.acquisitionDate}
             </label>
-            <input
+            <DatePicker
               name="acquisition_date"
-              type="date"
               defaultValue={property?.acquisition_date ?? ""}
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              fromYear={1950}
+              toYear={new Date().getFullYear()}
             />
           </div>
           <div>

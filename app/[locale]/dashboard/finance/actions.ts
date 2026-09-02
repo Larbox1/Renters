@@ -94,6 +94,66 @@ export async function createTransactionAction(
   return { ok: true };
 }
 
+export async function updateTransactionAction(
+  _prev: TransactionState,
+  formData: FormData,
+): Promise<TransactionState> {
+  const locale = getLocale(formData);
+  const session = await getCurrentSession();
+  if (!session) redirect(`/${locale}/login`);
+  if (!isOwnerOrAdmin(session.role)) return { error: "forbidden" };
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return { error: "generic" };
+
+  const kindRaw = String(formData.get("kind") ?? "").trim();
+  if (!(KINDS as readonly string[]).includes(kindRaw)) {
+    return { error: "kind_required" };
+  }
+
+  const propertyId = String(formData.get("property_id") ?? "").trim();
+  if (!propertyId) return { error: "property_required" };
+
+  const occurredOn = String(formData.get("occurred_on") ?? "").trim();
+  if (!occurredOn) return { error: "date_required" };
+
+  const amountCents = eurosToCents(String(formData.get("amount_cents") ?? ""));
+  if (amountCents <= 0) return { error: "amount_required" };
+
+  const { data: prop } = await session.supabase
+    .from("properties")
+    .select("id")
+    .eq("id", propertyId)
+    .maybeSingle();
+  if (!prop) return { error: "property_not_found" };
+
+  const categoryRaw = String(formData.get("category") ?? "").trim();
+  const category = CATEGORIES[kindRaw as (typeof KINDS)[number]].includes(
+    categoryRaw,
+  )
+    ? categoryRaw
+    : null;
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  // RLS restricts the update to the caller's own rows.
+  const { error } = await session.supabase
+    .from("finance_transactions")
+    .update({
+      property_id: propertyId,
+      kind: kindRaw,
+      category,
+      amount_cents: amountCents,
+      occurred_on: occurredOn,
+      note,
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/${locale}/dashboard/finance`);
+  return { ok: true };
+}
+
 export async function deleteTransactionAction(formData: FormData) {
   const locale = getLocale(formData);
   const id = String(formData.get("id") ?? "");

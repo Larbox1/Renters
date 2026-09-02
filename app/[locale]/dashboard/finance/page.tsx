@@ -1,17 +1,27 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { Download } from "lucide-react";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { SetupNotice } from "@/components/setup-notice";
 import { AccessDenied } from "@/components/access-denied";
-import { ConfirmSubmit } from "@/components/confirm-submit";
 import { getCurrentSession } from "@/lib/auth/current-user";
 import { currencyFor, type CurrencyCode } from "@/lib/currency";
 import { convertCents, eurToUsdRate } from "@/lib/fx";
 import { loanFigures } from "@/lib/loan";
+import { makeMoneyFormatter } from "@/lib/money";
+import {
+  CashflowChart,
+  type MonthlyCashflow,
+} from "@/components/cashflow-chart";
 import { AddTransactionModal } from "./transaction-modal";
-import { deleteTransactionAction } from "./actions";
+import { DatePicker } from "@/components/ui/date-picker";
 import { CategoryPie } from "./category-pie";
+import { CollectionCard } from "./collection-card";
+import { AssetsTable, type AssetRow, type AssetTotals } from "./assets-table";
+import { RentRollTable, type RentRollLease } from "./rent-roll-table";
+import { TransactionsTable, type TransactionRow } from "./transactions-table";
 import {
   PIE_SLOTS,
   PIE_UNCATEGORIZED,
@@ -39,44 +49,7 @@ type LoanRow = {
   end_date: string;
 };
 
-/** One row of the real-estate assets table; all amounts in cents. */
-type AssetRow = {
-  property: PropertyRow;
-  currency: CurrencyCode;
-  purchasePrice: number;
-  fees: number;
-  works: number;
-  totalCost: number;
-  loanAmount: number;
-  remainingLoan: number;
-  marketValue: number | null;
-};
-
-type ActiveLease = {
-  property_id: string;
-  monthly_rent_cents: number;
-  deposit_cents: number;
-  tenants:
-    | { full_name: string }
-    | { full_name: string }[]
-    | null;
-};
-
-type Transaction = {
-  id: string;
-  property_id: string;
-  kind: "income" | "expense";
-  category: string | null;
-  amount_cents: number;
-  occurred_on: string;
-  note: string | null;
-};
-
-function tenantName(t: ActiveLease["tenants"]): string | null {
-  if (!t) return null;
-  if (Array.isArray(t)) return t[0]?.full_name ?? null;
-  return t.full_name;
-}
+type ActiveLease = RentRollLease & { deposit_cents: number };
 
 function propertyLabel(p: PropertyRow): string {
   return p.label ?? `${p.address}, ${p.city}`;
@@ -88,12 +61,26 @@ function isoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** Calendar months touched by [from, to], for the expected-rent estimate. */
+function monthsInRange(from: string, to: string): number {
+  const months =
+    (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 +
+    (Number(to.slice(5, 7)) - Number(from.slice(5, 7))) +
+    1;
+  return Math.max(1, Math.min(120, months));
+}
+
 export default async function FinancePage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{
+    from?: string;
+    to?: string;
+    property?: string;
+    kind?: string;
+  }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
@@ -116,8 +103,34 @@ export default async function FinancePage({
   const to = ISO_DATE.test(sp.to ?? "")
     ? (sp.to as string)
     : isoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  const propertyFilter = (sp.property ?? "").trim() || null;
+  // The kind filter narrows only the transactions listing; totals, donuts and
+  // the collection tracker always look at both sides.
+  const kindFilter =
+    sp.kind === "income" || sp.kind === "expense" ? sp.kind : null;
 
-  const [propsRes, leasesRes, txRes, loansRes] = await Promise.all([
+  // Trailing 12 months feed the cashflow chart and the net-yield hint,
+  // independent of the selected range.
+  const chartWindowStart = isoDate(
+    new Date(now.getFullYear(), now.getMonth() - 11, 1),
+  );
+
+  let rangeQuery = session.supabase
+    .from("finance_transactions")
+    .select("id, property_id, kind, category, amount_cents, occurred_on, note")
+    .gte("occurred_on", from)
+    .lte("occurred_on", to)
+    .order("occurred_on", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (propertyFilter) rangeQuery = rangeQuery.eq("property_id", propertyFilter);
+
+  let chartQuery = session.supabase
+    .from("finance_transactions")
+    .select("kind, amount_cents, occurred_on, property_id")
+    .gte("occurred_on", chartWindowStart);
+  if (propertyFilter) chartQuery = chartQuery.eq("property_id", propertyFilter);
+
+  const [propsRes, leasesRes, txRes, loansRes, chartRes] = await Promise.all([
     session.supabase
       .from("properties")
       .select(
@@ -130,26 +143,25 @@ export default async function FinancePage({
         "property_id, monthly_rent_cents, deposit_cents, tenants(full_name)",
       )
       .eq("status", "active"),
-    session.supabase
-      .from("finance_transactions")
-      .select(
-        "id, property_id, kind, category, amount_cents, occurred_on, note",
-      )
-      .gte("occurred_on", from)
-      .lte("occurred_on", to)
-      .order("occurred_on", { ascending: false })
-      .order("created_at", { ascending: false }),
+    rangeQuery,
     session.supabase
       .from("property_loans")
       .select(
         "property_id, principal_cents, annual_rate_bps, start_date, end_date",
       ),
+    chartQuery,
   ]);
 
   const properties = (propsRes.data ?? []) as PropertyRow[];
   const activeLeases = (leasesRes.data ?? []) as ActiveLease[];
-  const transactions = (txRes.data ?? []) as Transaction[];
+  const transactions = (txRes.data ?? []) as TransactionRow[];
   const loans = (loansRes.data ?? []) as LoanRow[];
+  const chartTx = (chartRes.data ?? []) as {
+    kind: string;
+    amount_cents: number;
+    occurred_on: string;
+    property_id: string;
+  }[];
 
   const propertyLabelById = new Map(
     properties.map((p) => [p.id, propertyLabel(p)] as const),
@@ -171,6 +183,9 @@ export default async function FinancePage({
   const eurToUsd = await eurToUsdRate();
   const toDisplay = (cents: number, from: CurrencyCode) =>
     convertCents(cents, from, currency, eurToUsd);
+
+  const money = makeMoneyFormatter(locale as Locale);
+  const fmtCurrency = (cents: number) => money(cents, currency);
 
   const recordedIncomeCents = transactions
     .filter((t) => t.kind === "income")
@@ -207,34 +222,7 @@ export default async function FinancePage({
       ? (annualIncomeCents / portfolioValueCents) * 100
       : 0;
 
-  const fmtCurrency = (cents: number) =>
-    new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(cents / 100);
-
-  const fmtCurrencyPrecise = (cents: number, code = currency) =>
-    new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
-      style: "currency",
-      currency: code,
-    }).format(cents / 100);
-
-  const fmtDate = (iso: string) =>
-    new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(`${iso}T00:00:00`));
-
   const today = new Date().toISOString().slice(0, 10);
-
-  const fmtCurrencyIn = (cents: number, code: CurrencyCode) =>
-    new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
-      style: "currency",
-      currency: code,
-      maximumFractionDigits: 0,
-    }).format(cents / 100);
 
   // Real-estate assets: borrowed / still-owed amounts are aggregated per
   // property; the remaining balance is derived from the loan inputs (see
@@ -267,7 +255,7 @@ export default async function FinancePage({
     const works = p.works_cents ?? 0;
 
     return {
-      property: p,
+      property: { id: p.id, label: p.label, address: p.address, city: p.city },
       currency: propertyCurrency(p),
       purchasePrice,
       fees,
@@ -281,7 +269,7 @@ export default async function FinancePage({
 
   // Totals are shown in the operator's own currency; rows in another currency
   // convert at the ECB rate before summing.
-  const assetTotals = assetRows.reduce(
+  const assetTotals: AssetTotals = assetRows.reduce(
     (acc, r) => ({
       purchasePrice: acc.purchasePrice + toDisplay(r.purchasePrice, r.currency),
       fees: acc.fees + toDisplay(r.fees, r.currency),
@@ -302,6 +290,63 @@ export default async function FinancePage({
     },
   );
 
+  const equityCents =
+    assetTotals.marketValue > 0
+      ? assetTotals.marketValue - assetTotals.remainingLoan
+      : null;
+
+  // Cashflow chart: trailing 12 monthly buckets in the display currency.
+  const cashflow: MonthlyCashflow[] = [];
+  {
+    const byMonth = new Map<string, MonthlyCashflow>();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const bucket: MonthlyCashflow = {
+        month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+        incomeCents: 0,
+        expenseCents: 0,
+      };
+      cashflow.push(bucket);
+      byMonth.set(bucket.month, bucket);
+    }
+    for (const t of chartTx) {
+      const bucket = byMonth.get(t.occurred_on.slice(0, 7));
+      if (!bucket) continue;
+      const cents = toDisplay(t.amount_cents, currencyOf(t.property_id));
+      if (t.kind === "income") bucket.incomeCents += cents;
+      else if (t.kind === "expense") bucket.expenseCents += cents;
+    }
+  }
+
+  // Net-yield hint: annual rent minus the last 12 months of recorded
+  // expenses, over the full acquisition cost (price + fees + works).
+  const trailingExpensesCents = cashflow.reduce(
+    (s, m) => s + m.expenseCents,
+    0,
+  );
+  const netYieldPct =
+    assetTotals.totalCost > 0
+      ? ((annualIncomeCents - trailingExpensesCents) / assetTotals.totalCost) *
+        100
+      : null;
+
+  // Rent collection for the range: expected = rent roll × months in range
+  // (scoped by the property filter), collected = recorded "rent" income.
+  const collectionLeases = propertyFilter
+    ? activeLeases.filter((l) => l.property_id === propertyFilter)
+    : activeLeases;
+  const months = monthsInRange(from, to);
+  const expectedRentCents =
+    collectionLeases.reduce(
+      (s, l) =>
+        s + toDisplay(l.monthly_rent_cents ?? 0, currencyOf(l.property_id)),
+      0,
+    ) * months;
+  const collectedRentCents = transactions
+    .filter((t) => t.kind === "income" && t.category === "rent")
+    .reduce((s, t) => s + toDisplay(t.amount_cents, currencyOf(t.property_id)), 0);
+  const outstandingCents = expectedRentCents - collectedRentCents;
+
   const propertyOptions = properties.map((p) => ({
     id: p.id,
     label: propertyLabel(p),
@@ -309,7 +354,7 @@ export default async function FinancePage({
   }));
 
   const txDict = dict.finance.transactions;
-  const categoryLabel = (t: Transaction): string | null => {
+  const categoryLabel = (t: TransactionRow): string | null => {
     if (!t.category) return null;
     const map =
       t.kind === "income"
@@ -319,7 +364,7 @@ export default async function FinancePage({
   };
   // Same entity→color mapping as the donuts, so a category wears one hue
   // across chart, legend and table.
-  const categoryColor = (t: Transaction): string => {
+  const categoryColor = (t: TransactionRow): string => {
     const keys = Object.keys(
       t.kind === "income" ? txDict.incomeCategories : txDict.expenseCategories,
     );
@@ -365,6 +410,52 @@ export default async function FinancePage({
   const incomeSlices = categorySlices("income");
   const expenseSlices = categorySlices("expense");
 
+  // The kind filter narrows the listing only.
+  const tableTransactions = kindFilter
+    ? transactions.filter((t) => t.kind === kindFilter)
+    : transactions;
+
+  // Preset ranges keep the property/kind filters; the export link keeps the
+  // property filter (the CSV always carries both kinds).
+  const filterQuery = (f: string, t: string) => {
+    const q = new URLSearchParams({ from: f, to: t });
+    if (propertyFilter) q.set("property", propertyFilter);
+    if (kindFilter) q.set("kind", kindFilter);
+    return `?${q.toString()}`;
+  };
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const presets = [
+    {
+      key: "thisMonth" as const,
+      from: isoDate(new Date(y, m, 1)),
+      to: isoDate(new Date(y, m + 1, 0)),
+    },
+    {
+      key: "lastMonth" as const,
+      from: isoDate(new Date(y, m - 1, 1)),
+      to: isoDate(new Date(y, m, 0)),
+    },
+    {
+      key: "thisYear" as const,
+      from: `${y}-01-01`,
+      to: `${y}-12-31`,
+    },
+    {
+      key: "last12Months" as const,
+      from: isoDate(new Date(y, m - 11, 1)),
+      to: isoDate(new Date(y, m + 1, 0)),
+    },
+  ];
+  const exportQuery = (() => {
+    const q = new URLSearchParams({ from, to });
+    if (propertyFilter) q.set("property", propertyFilter);
+    return `?${q.toString()}`;
+  })();
+
+  const selectClass =
+    "rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
+
   return (
     <div className="px-6 py-12">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -375,47 +466,17 @@ export default async function FinancePage({
           <p className="mt-1 text-sm text-slate-600">{dict.finance.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {/* Date range for recorded transactions (GET form, no client JS) */}
-          <form
-            method="get"
-            className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 shadow-sm"
+          <a
+            href={`/${locale}/dashboard/finance/export${exportQuery}`}
+            download
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
           >
-            <label
-              htmlFor="tx-from"
-              className="text-sm font-medium text-slate-600"
-            >
-              {dict.finance.range.from}
-            </label>
-            <input
-              id="tx-from"
-              name="from"
-              type="date"
-              defaultValue={from}
-              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            />
-            <label
-              htmlFor="tx-to"
-              className="text-sm font-medium text-slate-600"
-            >
-              {dict.finance.range.to}
-            </label>
-            <input
-              id="tx-to"
-              name="to"
-              type="date"
-              defaultValue={to}
-              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            />
-            <button
-              type="submit"
-              className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:border-brand-400 hover:text-brand-700"
-            >
-              {dict.finance.range.apply}
-            </button>
-          </form>
+            <Download className="h-4 w-4" aria-hidden />
+            {txDict.export}
+          </a>
           <AddTransactionModal
             locale={locale as Locale}
-            dict={dict.finance.transactions}
+            dict={txDict}
             properties={propertyOptions}
             today={today}
             currency={currency}
@@ -423,8 +484,84 @@ export default async function FinancePage({
         </div>
       </div>
 
+      {/* Range + filters (plain GET form) with one-click presets */}
+      <div className="mb-8 space-y-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+        <form method="get" className="flex flex-wrap items-center gap-2">
+          <label
+            htmlFor="tx-from"
+            className="text-sm font-medium text-slate-600"
+          >
+            {dict.finance.range.from}
+          </label>
+          <DatePicker
+            id="tx-from"
+            name="from"
+            defaultValue={from}
+            displayFormat="P"
+            className="mt-0 w-36 rounded-md px-2 py-1"
+          />
+          <label htmlFor="tx-to" className="text-sm font-medium text-slate-600">
+            {dict.finance.range.to}
+          </label>
+          <DatePicker
+            id="tx-to"
+            name="to"
+            defaultValue={to}
+            displayFormat="P"
+            className="mt-0 w-36 rounded-md px-2 py-1"
+          />
+          <select
+            name="property"
+            defaultValue={propertyFilter ?? ""}
+            aria-label={txDict.fields.property}
+            className={selectClass}
+          >
+            <option value="">{dict.finance.filters.allProperties}</option>
+            {propertyOptions.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <select
+            name="kind"
+            defaultValue={kindFilter ?? ""}
+            aria-label={txDict.cols.category}
+            className={selectClass}
+          >
+            <option value="">{dict.finance.filters.allKinds}</option>
+            <option value="income">{txDict.kind.income}</option>
+            <option value="expense">{txDict.kind.expense}</option>
+          </select>
+          <button
+            type="submit"
+            className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:border-brand-400 hover:text-brand-700"
+          >
+            {dict.finance.range.apply}
+          </button>
+        </form>
+        <div className="flex flex-wrap items-center gap-1 border-t border-slate-100 pt-2">
+          {presets.map((p) => {
+            const active = p.from === from && p.to === to;
+            return (
+              <Link
+                key={p.key}
+                href={filterQuery(p.from, p.to)}
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  active
+                    ? "bg-brand-50 text-brand-700"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                }`}
+              >
+                {dict.finance.range.presets[p.key]}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Stats */}
-      <div className="mb-8 grid gap-4 grid-cols-2 lg:grid-cols-5">
+      <div className="mb-8 grid gap-4 grid-cols-2 lg:grid-cols-6">
         <StatCard
           label={dict.finance.stats.monthlyIncome}
           value={fmtCurrency(monthlyIncomeCents)}
@@ -447,8 +584,22 @@ export default async function FinancePage({
           tone="brand"
         />
         <StatCard
+          label={dict.finance.stats.equity}
+          value={equityCents != null ? fmtCurrency(equityCents) : "—"}
+          hint={dict.finance.stats.equityHint}
+          tone="brand"
+        />
+        <StatCard
           label={dict.finance.stats.yield}
           value={`${yieldPct.toFixed(1)}%`}
+          hint={
+            netYieldPct != null
+              ? dict.finance.stats.netYieldHint.replace(
+                  "{pct}",
+                  netYieldPct.toFixed(1),
+                )
+              : undefined
+          }
           tone="emerald"
         />
       </div>
@@ -465,232 +616,68 @@ export default async function FinancePage({
         </p>
       )}
 
-      {/* Real estate assets */}
-      <section className="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-5 py-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            {dict.finance.assets.heading}
-          </h2>
-        </div>
-        {assetRows.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-600">
-            {dict.finance.assets.empty}
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-600">
-                    {dict.finance.assets.cols.property}
-                  </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                    {dict.finance.assets.cols.purchasePrice}
-                  </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                    {dict.finance.assets.cols.fees}
-                    <span className="block text-[11px] font-normal text-slate-400">
-                      {dict.finance.assets.cols.feesHint}
-                    </span>
-                  </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                    {dict.finance.assets.cols.works}
-                  </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                    {dict.finance.assets.cols.totalCost}
-                  </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                    {dict.finance.assets.cols.loanAmount}
-                  </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                    {dict.finance.assets.cols.remainingLoan}
-                  </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                    {dict.finance.assets.cols.marketValue}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {assetRows.map((r) => {
-                  // Zero means "nothing recorded" for every money column here,
-                  // so a dash reads better than a formatted 0.
-                  const amount = (cents: number | null) =>
-                    cents ? fmtCurrencyIn(cents, r.currency) : "—";
-                  return (
-                    <tr key={r.property.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900">
-                          {r.property.label ?? r.property.address}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {r.property.address}, {r.property.city}
-                        </p>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-slate-700">
-                        {amount(r.purchasePrice)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-slate-700">
-                        {amount(r.fees)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-slate-700">
-                        {amount(r.works)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-900">
-                        {amount(r.totalCost)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-slate-700">
-                        {amount(r.loanAmount)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-slate-700">
-                        {amount(r.remainingLoan)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-900">
-                        {amount(r.marketValue)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot className="bg-slate-50">
-                <tr>
-                  <td className="px-4 py-3 text-sm font-semibold text-slate-700">
-                    {dict.finance.assets.total}
-                  </td>
-                  {[
-                    assetTotals.purchasePrice,
-                    assetTotals.fees,
-                    assetTotals.works,
-                    assetTotals.totalCost,
-                    assetTotals.loanAmount,
-                    assetTotals.remainingLoan,
-                    assetTotals.marketValue,
-                  ].map((cents, i) => (
-                    <td
-                      key={i}
-                      className="whitespace-nowrap px-4 py-3 text-right text-sm font-bold text-slate-900"
-                    >
-                      {cents ? fmtCurrency(cents) : "—"}
-                    </td>
-                  ))}
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </section>
+      <AssetsTable
+        locale={locale as Locale}
+        rows={assetRows}
+        totals={assetTotals}
+        currency={currency}
+        money={money}
+        dict={dict.finance.assets}
+      />
 
-      {/* Breakdown */}
-      <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-5 py-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            {dict.finance.breakdown.heading}
-          </h2>
-        </div>
-        {properties.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-600">
-            {dict.finance.breakdown.empty}
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-600">
-                    {dict.finance.breakdown.property}
-                  </th>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-600">
-                    {dict.finance.breakdown.status}
-                  </th>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-600">
-                    {dict.finance.breakdown.tenant}
-                  </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                    {dict.finance.breakdown.rent}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {properties.map((p) => {
-                  const leases = leasesByProperty.get(p.id) ?? [];
-                  const propertyRent = leases.reduce(
-                    (s, l) => s + (l.monthly_rent_cents ?? 0),
-                    0,
-                  );
-                  const tenants = leases
-                    .map((l) => tenantName(l.tenants))
-                    .filter((n): n is string => Boolean(n));
-                  const isVacant = leases.length === 0;
-                  return (
-                    <tr key={p.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-900">
-                          {p.label ?? p.address}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {p.address}, {p.city}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                            isVacant
-                              ? "bg-slate-100 text-slate-600"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {isVacant
-                            ? dict.finance.breakdown.vacant
-                            : dict.finance.breakdown.rented}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-slate-700">
-                        {tenants.length > 0 ? tenants.join(", ") : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-700">
-                        {isVacant ? "—" : fmtCurrencyIn(propertyRent, currencyOf(p.id))}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot className="bg-slate-50">
-                <tr>
-                  <td
-                    colSpan={3}
-                    className="px-4 py-3 text-right text-sm font-semibold text-slate-700"
-                  >
-                    {dict.finance.breakdown.total}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
-                    {fmtCurrency(monthlyIncomeCents)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </section>
+      <RentRollTable
+        properties={properties}
+        leasesByProperty={leasesByProperty}
+        currencyOf={currencyOf}
+        money={money}
+        totalFormatted={fmtCurrency(monthlyIncomeCents)}
+        dict={dict.finance.breakdown}
+      />
 
       {/* Recorded income & expenses */}
       <section className="mt-8">
         <div className="mb-4 grid gap-4 grid-cols-1 sm:grid-cols-3">
           <StatCard
-            label={dict.finance.transactions.recordedIncome}
+            label={txDict.recordedIncome}
             value={fmtCurrency(recordedIncomeCents)}
             tone="emerald"
             tinted
           />
           <StatCard
-            label={dict.finance.transactions.recordedExpenses}
+            label={txDict.recordedExpenses}
             value={fmtCurrency(recordedExpenseCents)}
             tone="red"
             tinted
           />
           <StatCard
-            label={dict.finance.transactions.netCashflow}
+            label={txDict.netCashflow}
             value={fmtCurrency(netCashflowCents)}
             tone={netCashflowCents >= 0 ? "emerald" : "red"}
             tinted
+          />
+        </div>
+
+        {expectedRentCents > 0 && (
+          <CollectionCard
+            collected={fmtCurrency(collectedRentCents)}
+            expected={fmtCurrency(expectedRentCents)}
+            fraction={
+              expectedRentCents > 0 ? collectedRentCents / expectedRentCents : 0
+            }
+            outstanding={
+              outstandingCents > 0 ? fmtCurrency(outstandingCents) : null
+            }
+            months={months}
+            dict={dict.finance.collection}
+          />
+        )}
+
+        <div className="mb-4">
+          <CashflowChart
+            locale={locale as Locale}
+            data={cashflow}
+            dict={dict.dashboard.cashflow}
+            currency={currency}
           />
         </div>
 
@@ -730,97 +717,19 @@ export default async function FinancePage({
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              {dict.finance.transactions.heading}
-            </h2>
-          </div>
-          {transactions.length === 0 ? (
-            <p className="px-5 py-6 text-sm text-slate-600">
-              {dict.finance.transactions.empty}
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left font-semibold text-slate-600">
-                      {dict.finance.transactions.cols.date}
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold text-slate-600">
-                      {dict.finance.transactions.cols.property}
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold text-slate-600">
-                      {dict.finance.transactions.cols.category}
-                    </th>
-                    <th className="px-4 py-2 text-right font-semibold text-slate-600">
-                      {dict.finance.transactions.cols.amount}
-                    </th>
-                    <th className="px-4 py-2" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {transactions.map((t) => {
-                    const isIncome = t.kind === "income";
-                    return (
-                      <tr key={t.id} className="hover:bg-slate-50">
-                        <td className="whitespace-nowrap px-4 py-3 text-slate-700">
-                          {fmtDate(t.occurred_on)}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          {propertyLabelById.get(t.property_id) ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">
-                          <span className="flex items-center gap-2">
-                            <span
-                              aria-hidden
-                              className="h-2 w-2 shrink-0 rounded-full"
-                              style={{ backgroundColor: categoryColor(t) }}
-                            />
-                            {categoryLabel(t) ?? "—"}
-                          </span>
-                          {t.note && (
-                            <p className="pl-4 text-xs text-slate-500">
-                              {t.note}
-                            </p>
-                          )}
-                        </td>
-                        <td
-                          className={`whitespace-nowrap px-4 py-3 text-right font-medium ${
-                            isIncome ? "text-emerald-700" : "text-red-600"
-                          }`}
-                        >
-                          {isIncome ? "+" : "−"}
-                          {fmtCurrencyPrecise(
-                            t.amount_cents,
-                            currencyByProperty.get(t.property_id) ?? currency,
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <form action={deleteTransactionAction}>
-                            <input
-                              type="hidden"
-                              name="locale"
-                              value={locale}
-                            />
-                            <input type="hidden" name="id" value={t.id} />
-                            <ConfirmSubmit
-                              message={dict.finance.transactions.deleteConfirm}
-                              className="text-xs font-medium text-slate-400 hover:text-red-600"
-                            >
-                              {dict.finance.transactions.delete}
-                            </ConfirmSubmit>
-                          </form>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        <TransactionsTable
+          locale={locale as Locale}
+          transactions={tableTransactions}
+          propertyLabelById={propertyLabelById}
+          currencyOf={currencyOf}
+          money={money}
+          categoryLabel={categoryLabel}
+          categoryColor={categoryColor}
+          propertyOptions={propertyOptions}
+          displayCurrency={currency}
+          today={today}
+          dict={txDict}
+        />
       </section>
     </div>
   );

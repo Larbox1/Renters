@@ -20,6 +20,12 @@ import {
   StorageUsageTable,
   type StorageUsageRow,
 } from "@/components/storage-usage-table";
+import { OccupancyDonut } from "@/components/occupancy-donut";
+import { UpcomingEvents } from "@/components/upcoming-events";
+import {
+  IncomeByProperty,
+  type PropertyIncome,
+} from "@/components/income-by-property";
 
 function parseMonth(raw: string | undefined): Date {
   if (raw && /^\d{4}-\d{2}$/.test(raw)) {
@@ -176,13 +182,22 @@ export default async function DashboardPage({
   let occupiedCount = 0;
   let activeLeasesCount = 0;
   let portfolioValueCents = 0;
+  let propertyRows: {
+    id: string;
+    label: string | null;
+    address: string | null;
+    country: string | null;
+  }[] = [];
+  let eurToUsd = 1;
 
   if (showOwnerNav) {
     const [propsRes, propsValues, activeLeases] = await Promise.all([
       session.supabase
         .from("properties")
         .select("*", { count: "exact", head: true }),
-      session.supabase.from("properties").select("value_cents, country"),
+      session.supabase
+        .from("properties")
+        .select("id, label, address, value_cents, country"),
       session.supabase
         .from("leases")
         .select("property_id")
@@ -193,7 +208,7 @@ export default async function DashboardPage({
     // A mixed FR/US portfolio can't just add € and $ cents — convert each
     // property into the operator's currency at the ECB daily rate.
     const displayCurrency = currencyFor(session.operationCountry);
-    const eurToUsd = await eurToUsdRate();
+    eurToUsd = await eurToUsdRate();
     portfolioValueCents = (propsValues.data ?? []).reduce(
       (sum, p) =>
         sum +
@@ -205,6 +220,7 @@ export default async function DashboardPage({
         ),
       0,
     );
+    propertyRows = propsValues.data ?? [];
     const leases = activeLeases.data ?? [];
     activeLeasesCount = leases.length;
     occupiedCount = new Set(leases.map((l) => l.property_id)).size;
@@ -238,6 +254,7 @@ export default async function DashboardPage({
   }
 
   let calendarEvents: CalendarEvent[] = [];
+  let upcomingEvents: CalendarEvent[] = [];
   if (showCalendar) {
     // RLS scopes this per role: owners/admins see every lease, tenants only
     // their own. We expand each lease into calendar events client-side.
@@ -249,12 +266,33 @@ export default async function DashboardPage({
     if (error) {
       console.error("[dashboard.calendar] leases fetch failed:", error);
     } else {
+      const rows = (data ?? []) as LeaseCalendarRow[];
+      const asOwner = isOwnerOrAdmin(role);
       calendarEvents = buildCalendarEvents(
-        (data ?? []) as LeaseCalendarRow[],
-        isOwnerOrAdmin(role),
+        rows,
+        asOwner,
         monthDate.getFullYear(),
         monthDate.getMonth(),
       );
+
+      // "Next 30 days" is always relative to today, independent of the month
+      // being browsed — the window spans two months, so build both and slice.
+      const now = new Date();
+      const todayIso = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30);
+      const endIso = `${end.getFullYear()}-${pad2(end.getMonth() + 1)}-${pad2(end.getDate())}`;
+      const sameMonth =
+        end.getFullYear() === now.getFullYear() &&
+        end.getMonth() === now.getMonth();
+      upcomingEvents = [
+        ...buildCalendarEvents(rows, asOwner, now.getFullYear(), now.getMonth()),
+        ...(sameMonth
+          ? []
+          : buildCalendarEvents(rows, asOwner, end.getFullYear(), end.getMonth())),
+      ]
+        .filter((e) => e.date >= todayIso && e.date <= endIso)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 8);
     }
   }
 
@@ -262,12 +300,13 @@ export default async function DashboardPage({
   // chart's range selector (3/6/12) slices this client-side, so we fetch the
   // full window once.
   let cashflow: MonthlyCashflow[] = [];
+  let incomeByProperty: PropertyIncome[] = [];
   if (role === "owner") {
     const now = new Date();
     const windowStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
     const { data, error } = await session.supabase
       .from("finance_transactions")
-      .select("kind, amount_cents, occurred_on")
+      .select("kind, amount_cents, occurred_on, property_id")
       .gte(
         "occurred_on",
         `${windowStart.getFullYear()}-${pad2(windowStart.getMonth() + 1)}-01`,
@@ -275,15 +314,38 @@ export default async function DashboardPage({
     if (error) {
       console.error("[dashboard.cashflow] finance fetch failed:", error);
     } else {
-      cashflow = buildCashflow(
-        (data ?? []) as {
-          kind: string;
-          amount_cents: number;
-          occurred_on: string;
-        }[],
-        now.getFullYear(),
-        now.getMonth(),
-      );
+      const txRows = (data ?? []) as {
+        kind: string;
+        amount_cents: number;
+        occurred_on: string;
+        property_id: string | null;
+      }[];
+      cashflow = buildCashflow(txRows, now.getFullYear(), now.getMonth());
+
+      // Same 12-month window, netted per property. Amounts are recorded in
+      // the property's currency, so convert into the display currency before
+      // charting mixed FR/US portfolios side by side.
+      const displayCurrency = currencyFor(session.operationCountry);
+      const netByProperty = new Map<string, number>();
+      for (const t of txRows) {
+        if (!t.property_id) continue;
+        const signed = t.kind === "income" ? t.amount_cents : -t.amount_cents;
+        netByProperty.set(
+          t.property_id,
+          (netByProperty.get(t.property_id) ?? 0) + signed,
+        );
+      }
+      incomeByProperty = propertyRows
+        .filter((p) => netByProperty.has(p.id))
+        .map((p) => ({
+          name: p.label ?? p.address ?? p.id,
+          netCents: convertCents(
+            netByProperty.get(p.id)!,
+            currencyFor(p.country === "US" ? "US" : "FR"),
+            displayCurrency,
+            eurToUsd,
+          ),
+        }));
     }
   }
 
@@ -363,6 +425,15 @@ export default async function DashboardPage({
               locale={locale as Locale}
               data={cashflow}
               dict={dict.dashboard.cashflow}
+              currency={currencyFor(session.operationCountry)}
+            />
+          </div>
+          <div className="col-span-2 lg:col-span-2">
+            <OccupancyDonut
+              locale={locale as Locale}
+              occupied={occupiedCount}
+              total={propertiesCount}
+              dict={dict.dashboard.occupancy}
             />
           </div>
         </div>
@@ -379,6 +450,25 @@ export default async function DashboardPage({
               dict={dict.dashboard.calendar}
             />
           </div>
+          <div className="col-span-2 lg:col-span-2">
+            <UpcomingEvents
+              locale={locale as Locale}
+              events={upcomingEvents}
+              dict={dict.dashboard.upcoming}
+              eventLabels={dict.dashboard.calendar.events}
+            />
+          </div>
+        </div>
+      )}
+
+      {role === "owner" && (
+        <div className="mt-8">
+          <IncomeByProperty
+            locale={locale as Locale}
+            data={incomeByProperty}
+            currency={currencyFor(session.operationCountry)}
+            dict={dict.dashboard.incomeByProperty}
+          />
         </div>
       )}
 

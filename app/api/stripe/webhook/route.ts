@@ -38,11 +38,31 @@ async function syncSubscription(sub: Stripe.Subscription) {
   const isActive = ACTIVE_STATUSES.has(sub.status) && matched !== null;
 
   const admin = createAdminClient();
+
+  // Coexistence guard: a subscription bought in a mobile store (RevenueCat
+  // webhook) owns the plan columns; Stripe events must not clobber it.
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("plan_provider, subscription_status")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  if (
+    (profile?.plan_provider === "play" ||
+      profile?.plan_provider === "app_store") &&
+    ["active", "past_due"].includes(profile.subscription_status ?? "")
+  ) {
+    console.warn(
+      `[stripe.webhook] ignoring event; ${profile.plan_provider} sub active for customer ${customerId}`,
+    );
+    return;
+  }
+
   const { error } = await admin
     .from("profiles")
     .update({
       plan: isActive ? matched.plan : "free",
       plan_interval: isActive ? matched.interval : null,
+      plan_provider: isActive ? "stripe" : null,
       stripe_subscription_id: sub.status === "canceled" ? null : sub.id,
       subscription_status: sub.status,
       plan_current_period_end: periodEndISO(sub),

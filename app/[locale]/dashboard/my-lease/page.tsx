@@ -10,6 +10,12 @@ import {
   LeaseDocumentsTable,
   type LeaseDocumentRow,
 } from "../leases/lease-documents-table";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 type PropertyRef = {
   id: string;
@@ -92,6 +98,11 @@ export default async function MyLeasePage({
     }),
   );
 
+  const fmtDate = (iso: string) =>
+    new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
+      dateStyle: "medium",
+    }).format(new Date(iso));
+
   return (
     <div className="px-6 py-12">
       <h1 className="mb-6 text-3xl font-bold tracking-tight text-slate-900">
@@ -100,33 +111,68 @@ export default async function MyLeasePage({
 
       {blocks.length === 0 ? (
         <p className="text-sm text-slate-600">{dict.myLease.empty}</p>
+      ) : blocks.length === 1 ? (
+        <section>
+          <LeaseDetailCards
+            lease={blocks[0].lease}
+            property={blocks[0].property}
+            tenant={blocks[0].tenant}
+            dict={dict.leases}
+            locale={locale as Locale}
+            linkRefs={false}
+          />
+          <LeaseDocumentsTable
+            documents={blocks[0].documents}
+            dict={dict.documents.list}
+            heading={dict.myLease.documents}
+            emptyLabel={dict.myLease.noDocuments}
+            locale={locale as Locale}
+          />
+        </section>
       ) : (
-        <div className="space-y-10">
+        <Accordion
+          type="single"
+          collapsible
+          defaultValue={blocks[0].lease.id as string}
+        >
           {blocks.map(({ lease, property, tenant, documents }) => (
-            <section key={lease.id}>
-              {blocks.length > 1 && property && (
-                <h2 className="mb-4 text-xl font-semibold text-slate-900">
-                  {property.label ?? `${property.address}, ${property.city}`}
-                </h2>
-              )}
-              <LeaseDetailCards
-                lease={lease}
-                property={property}
-                tenant={tenant}
-                dict={dict.leases}
-                locale={locale as Locale}
-                linkRefs={false}
-              />
-              <LeaseDocumentsTable
-                documents={documents}
-                dict={dict.documents.list}
-                heading={dict.myLease.documents}
-                emptyLabel={dict.myLease.noDocuments}
-                locale={locale as Locale}
-              />
-            </section>
+            <AccordionItem key={lease.id} value={lease.id as string}>
+              <AccordionTrigger>
+                <span className="flex flex-col items-start text-left">
+                  <span className="text-base font-semibold text-slate-900">
+                    {property
+                      ? (property.label ??
+                        `${property.address}, ${property.city}`)
+                      : "—"}
+                  </span>
+                  <span className="mt-0.5 text-xs font-normal text-slate-500">
+                    {fmtDate(lease.start_date as string)}
+                    {lease.end_date
+                      ? ` → ${fmtDate(lease.end_date as string)}`
+                      : ""}
+                  </span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <LeaseDetailCards
+                  lease={lease}
+                  property={property}
+                  tenant={tenant}
+                  dict={dict.leases}
+                  locale={locale as Locale}
+                  linkRefs={false}
+                />
+                <LeaseDocumentsTable
+                  documents={documents}
+                  dict={dict.documents.list}
+                  heading={dict.myLease.documents}
+                  emptyLabel={dict.myLease.noDocuments}
+                  locale={locale as Locale}
+                />
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       )}
     </div>
   );

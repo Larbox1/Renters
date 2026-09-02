@@ -33,11 +33,15 @@ body {
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    /* Chart palette, validated with the dataviz palette script on white:
+       1 brand blue #2563eb · 2 emerald #059669 (income) · 3 red #dc2626
+       (expense) · 4 amber #d97706 · 5 pink #db2777. Matches PIE_SLOTS
+       entities in lib/category-colors.ts. */
+    --chart-1: 221.2 83.2% 53.3%;
+    --chart-2: 161.4 93.5% 30.4%;
+    --chart-3: 0 72.2% 50.6%;
+    --chart-4: 32.1 94.6% 43.7%;
+    --chart-5: 333.3 71.4% 50.6%;
     --radius: 0.5rem;
     --sidebar: 0 0% 98%;
     --sidebar-foreground: 222.2 84% 4.9%;

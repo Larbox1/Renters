@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { isLocale, defaultLocale } from "@/i18n/config";
-import { getCurrentSession } from "@/lib/auth/current-user";
+import { getCurrentSession, isOwnerOrAdmin } from "@/lib/auth/current-user";
 import { createAdminClient, hasServiceRoleKey } from "@/lib/supabase/admin";
 import {
   uploadTenantDocument,
@@ -13,6 +13,9 @@ import {
 import { checkStorageQuota } from "@/lib/storage/quota";
 
 export type TenantState = { error?: string };
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function getLocale(formData: FormData) {
   const raw = String(formData.get("locale") ?? "");
@@ -218,6 +221,9 @@ export async function createTenantAction(
   const locale = getLocale(formData);
   const session = await getCurrentSession();
   if (!session) redirect(`/${locale}/login`);
+  // Only owners/admins may create tenants — without this gate, any logged-in
+  // user could fire service-role invite emails at arbitrary addresses.
+  if (!isOwnerOrAdmin(session.role)) return { error: "forbidden" };
 
   const requestedOwnerId = String(formData.get("owner_id") ?? "").trim();
   const ownerId =
@@ -252,11 +258,9 @@ export async function createTenantAction(
     }
   }
 
-  let auth_user_id: string | null = null;
-  if (email) {
-    auth_user_id = await inviteTenant(email, fullName, locale);
-  }
-
+  // Insert first (RLS-gated), invite after: previously the service-role
+  // invite email fired even when the insert was later rejected, letting any
+  // caller spray branded invites at arbitrary addresses.
   const { error } = await session.supabase.from("tenants").insert({
     id: tenantId,
     owner_id: ownerId,
@@ -264,7 +268,6 @@ export async function createTenantAction(
     email,
     phone: nullableString(String(formData.get("phone") ?? "")),
     notes: nullableString(String(formData.get("notes") ?? "")),
-    auth_user_id,
     ...readExtendedFields(formData),
     id_document_path: uploaded?.path ?? null,
     id_document_name: uploaded?.name ?? null,
@@ -273,6 +276,22 @@ export async function createTenantAction(
   if (error) {
     if (uploaded) await deleteTenantDocument(uploaded.path);
     return { error: error.message };
+  }
+
+  if (email) {
+    const authUserId = await inviteTenant(email, fullName, locale);
+    if (authUserId && hasServiceRoleKey()) {
+      // auth_user_id is trigger-locked against client writes; link with the
+      // admin client, and only while still unlinked.
+      const { error: linkErr } = await createAdminClient()
+        .from("tenants")
+        .update({ auth_user_id: authUserId })
+        .eq("id", tenantId)
+        .is("auth_user_id", null);
+      if (linkErr) {
+        console.error("[tenants.create] auth link failed:", linkErr);
+      }
+    }
   }
 
   revalidatePath(`/${locale}/dashboard/tenants`);
@@ -297,12 +316,17 @@ export async function updateTenantAction(
     if (quotaError) return { error: quotaError };
   }
 
-  // Look up the existing path so we can replace it cleanly.
+  // Ownership gate BEFORE the service-role upload (path is "<id>/...", written
+  // with the admin client): this RLS-scoped read returns a row only if the
+  // caller owns the tenant (or is admin). Also look up the existing path so we
+  // can replace it cleanly.
+  if (!UUID_RE.test(id)) return { error: "not_found" };
   const { data: current } = await session.supabase
     .from("tenants")
     .select("id_document_path")
     .eq("id", id)
     .maybeSingle();
+  if (!current) return { error: "not_found" };
   const previousPath = (current?.id_document_path ?? null) as string | null;
 
   let uploaded: { path: string; name: string } | null = null;
@@ -419,10 +443,13 @@ export async function resendTenantInviteAction(formData: FormData) {
       locale,
     );
     if (newAuthUserId) {
-      await session.supabase
+      // auth_user_id is trigger-locked against client writes — use the admin
+      // client (the RLS-gated read above already proved ownership).
+      await createAdminClient()
         .from("tenants")
         .update({ auth_user_id: newAuthUserId })
-        .eq("id", id);
+        .eq("id", id)
+        .is("auth_user_id", null);
     }
     revalidatePath(`/${locale}/dashboard/tenants/${id}`);
     return;

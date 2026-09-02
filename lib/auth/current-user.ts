@@ -12,20 +12,6 @@ import {
 
 export type Role = "admin" | "owner" | "tenant" | "service_provider";
 
-const VALID_ROLES: readonly Role[] = [
-  "admin",
-  "owner",
-  "tenant",
-  "service_provider",
-];
-
-function isRole(value: unknown): value is Role {
-  return (
-    typeof value === "string" &&
-    (VALID_ROLES as readonly string[]).includes(value)
-  );
-}
-
 export type Profile = {
   role: Role;
   full_name: string | null;
@@ -108,16 +94,10 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
 
   const profile = await bootstrapAdmin(user, rawProfile);
 
-  // Role precedence:
-  //   1. profile.role — source of truth (set by trigger, admin promotion,
-  //      or ADMIN_EMAILS bootstrap).
-  //   2. user_metadata.role — what the user picked at signup. Recovers when
-  //      the auto-create-profile trigger never fired (e.g. migration 0001
-  //      applied after signup), so we don't silently downgrade an owner.
-  //   3. "tenant" — least-privileged last resort if nothing is known.
-  const metaRole = user.user_metadata?.role;
-  const role: Role =
-    profile?.role ?? (isRole(metaRole) ? metaRole : "tenant");
+  // profile.role is the only source of truth. user_metadata.role is
+  // client-writable (auth.updateUser) and must never grant privilege; a
+  // missing profile row degrades to the least-privileged role.
+  const role: Role = profile?.role ?? "tenant";
 
   return {
     supabase,

@@ -8,6 +8,7 @@ import type { SignedTenantDocument } from "@/lib/tenants/documents";
 import type { OperationCountry } from "@/lib/operation-country";
 import { currencyFor, localizeCurrencyLabel } from "@/lib/currency";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   createTenantAction,
   updateTenantAction,
@@ -239,11 +240,12 @@ export function TenantForm({
               </div>
               <div>
                 <label className={labelClass}>{dict.fields.dateOfBirth}</label>
-                <input
+                <DatePicker
                   name="date_of_birth"
-                  type="date"
                   defaultValue={tenant?.date_of_birth ?? ""}
-                  className={inputClass}
+                  displayFormat="P"
+                  fromYear={1900}
+                  toYear={new Date().getFullYear()}
                 />
               </div>
               <div>
@@ -426,11 +428,12 @@ export function TenantForm({
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className={labelClass}>{dict.fields.dateOfBirth}</label>
-                <input
+                <DatePicker
                   name="date_of_birth"
-                  type="date"
                   defaultValue={tenant?.date_of_birth ?? ""}
-                  className={inputClass}
+                  displayFormat="P"
+                  fromYear={1900}
+                  toYear={new Date().getFullYear()}
                 />
               </div>
               <div>
@@ -494,11 +497,12 @@ export function TenantForm({
               <label className={labelClass}>
                 {dict.fields.idDocumentExpiration}
               </label>
-              <input
+              <DatePicker
                 name="id_document_expiration"
-                type="date"
                 defaultValue={tenant?.id_document_expiration ?? ""}
-                className={inputClass}
+                displayFormat="P"
+                fromYear={new Date().getFullYear() - 10}
+                toYear={new Date().getFullYear() + 30}
               />
             </div>
           </div>

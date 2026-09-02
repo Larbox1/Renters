@@ -7,6 +7,7 @@ import { loginAction, type LoginState } from "./actions";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { GoogleAuthButton } from "@/components/google-auth-button";
+import { AppleAuthButton } from "@/components/apple-auth-button";
 
 function SubmitButton({ labels }: { labels: { idle: string; busy: string } }) {
   const { pending } = useFormStatus();
@@ -101,6 +102,8 @@ export function LoginForm({
         label={dict.googleButton}
         errorLabel={dict.googleError}
       />
+
+      <AppleAuthButton label={dict.appleButton} />
 
       <p className="text-center text-sm text-slate-600">
         {dict.noAccount}{" "}

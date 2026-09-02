@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
@@ -8,13 +8,25 @@ import type { CurrencyCode } from "@/lib/currency";
 import { localizeCurrencyLabel } from "@/lib/currency";
 import {
   createTransactionAction,
+  updateTransactionAction,
   type TransactionState,
 } from "./actions";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type PropertyOption = {
   id: string;
   label: string;
   currency: CurrencyCode;
+};
+
+export type EditableTransaction = {
+  id: string;
+  property_id: string;
+  kind: "income" | "expense";
+  category: string | null;
+  amount_cents: number;
+  occurred_on: string;
+  note: string | null;
 };
 
 const inputClass =
@@ -62,6 +74,7 @@ function TransactionForm({
   today,
   onSuccess,
   currency,
+  transaction,
 }: {
   locale: Locale;
   dict: Dictionary["finance"]["transactions"];
@@ -69,13 +82,17 @@ function TransactionForm({
   today: string;
   onSuccess: () => void;
   currency: CurrencyCode;
+  /** When set, the form edits this row instead of creating one. */
+  transaction?: EditableTransaction;
 }) {
   const [state, formAction] = useActionState<TransactionState, FormData>(
-    createTransactionAction,
+    transaction ? updateTransactionAction : createTransactionAction,
     {},
   );
-  const [kind, setKind] = useState<"income" | "expense">("income");
-  const [propertyId, setPropertyId] = useState("");
+  const [kind, setKind] = useState<"income" | "expense">(
+    transaction?.kind ?? "income",
+  );
+  const [propertyId, setPropertyId] = useState(transaction?.property_id ?? "");
 
   useEffect(() => {
     if (state.ok) onSuccess();
@@ -88,6 +105,7 @@ function TransactionForm({
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="locale" value={locale} />
+      {transaction && <input type="hidden" name="id" value={transaction.id} />}
 
       <div className="grid grid-cols-2 gap-2">
         {(["income", "expense"] as const).map((k) => (
@@ -148,6 +166,9 @@ function TransactionForm({
             min="0"
             step="0.01"
             required
+            defaultValue={
+              transaction ? (transaction.amount_cents / 100).toFixed(2) : ""
+            }
             placeholder={dict.fields.amountPlaceholder}
             className={inputClass}
           />
@@ -156,12 +177,10 @@ function TransactionForm({
           <label className={labelClass}>
             {dict.fields.date} <span className="text-red-500">*</span>
           </label>
-          <input
+          <DatePicker
             name="occurred_on"
-            type="date"
             required
-            defaultValue={today}
-            className={inputClass}
+            defaultValue={transaction?.occurred_on ?? today}
           />
         </div>
       </div>
@@ -173,7 +192,9 @@ function TransactionForm({
           // (income and expense have disjoint category lists).
           key={kind}
           name="category"
-          defaultValue=""
+          defaultValue={
+            kind === transaction?.kind ? (transaction?.category ?? "") : ""
+          }
           className={selectClass}
         >
           <option value="">{dict.fields.categoryPlaceholder}</option>
@@ -192,6 +213,7 @@ function TransactionForm({
         <input
           name="note"
           type="text"
+          defaultValue={transaction?.note ?? ""}
           placeholder={dict.fields.notePlaceholder}
           className={inputClass}
         />
@@ -212,6 +234,55 @@ function TransactionForm({
   );
 }
 
+function ModalShell({
+  title,
+  closeLabel,
+  onClose,
+  children,
+}: {
+  title: string;
+  closeLabel: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    function onEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onEscape);
+    return () => document.removeEventListener("keydown", onEscape);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={closeLabel}
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          >
+            <span aria-hidden className="text-lg leading-none">
+              ×
+            </span>
+          </button>
+        </div>
+        <div className="px-5 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 export function AddTransactionModal({
   locale,
   dict,
@@ -228,15 +299,6 @@ export function AddTransactionModal({
   const [open, setOpen] = useState(false);
   // Bumped on each open so the inner form (and its action state) remounts fresh.
   const [formKey, setFormKey] = useState(0);
-
-  useEffect(() => {
-    if (!open) return;
-    function onEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", onEscape);
-    return () => document.removeEventListener("keydown", onEscape);
-  }, [open]);
 
   const openModal = () => {
     setFormKey((k) => k + 1);
@@ -261,44 +323,74 @@ export function AddTransactionModal({
       </button>
 
       {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 sm:items-center"
-          role="dialog"
-          aria-modal="true"
-          aria-label={dict.modalTitle}
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setOpen(false);
-          }}
+        <ModalShell
+          title={dict.modalTitle}
+          closeLabel={dict.close}
+          onClose={() => setOpen(false)}
         >
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-              <h2 className="text-base font-semibold text-slate-900">
-                {dict.modalTitle}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label={dict.close}
-                className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-              >
-                <span aria-hidden className="text-lg leading-none">
-                  ×
-                </span>
-              </button>
-            </div>
-            <div className="px-5 py-4">
-              <TransactionForm
-                key={formKey}
-                locale={locale}
-                dict={dict}
-                properties={properties}
-                today={today}
-                onSuccess={() => setOpen(false)}
-                currency={currency}
-              />
-            </div>
-          </div>
-        </div>
+          <TransactionForm
+            key={formKey}
+            locale={locale}
+            dict={dict}
+            properties={properties}
+            today={today}
+            onSuccess={() => setOpen(false)}
+            currency={currency}
+          />
+        </ModalShell>
+      )}
+    </>
+  );
+}
+
+export function EditTransactionModal({
+  locale,
+  dict,
+  properties,
+  today,
+  currency,
+  transaction,
+}: {
+  locale: Locale;
+  dict: Dictionary["finance"]["transactions"];
+  properties: PropertyOption[];
+  today: string;
+  currency: CurrencyCode;
+  transaction: EditableTransaction;
+}) {
+  const [open, setOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setFormKey((k) => k + 1);
+          setOpen(true);
+        }}
+        className="text-xs font-medium text-slate-400 hover:text-brand-700"
+      >
+        {dict.edit}
+      </button>
+
+      {open && (
+        <ModalShell
+          title={dict.modalTitleEdit}
+          closeLabel={dict.close}
+          onClose={() => setOpen(false)}
+        >
+          <TransactionForm
+            key={formKey}
+            locale={locale}
+            dict={dict}
+            properties={properties}
+            today={today}
+            onSuccess={() => setOpen(false)}
+            currency={currency}
+            transaction={transaction}
+          />
+        </ModalShell>
       )}
     </>
   );

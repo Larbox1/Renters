@@ -5,6 +5,7 @@ import { Camera, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { ConfirmSubmit } from "@/components/confirm-submit";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   saveConditionReport,
   finalizeConditionReportAction,
@@ -243,11 +244,10 @@ export function ReportEditor({
         <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">
           {dict.reportDate}
         </label>
-        <input
-          type="date"
+        <DatePicker
           value={data.report_date}
-          onChange={(e) => update({ report_date: e.target.value })}
-          className={`${inputClass} mt-1 max-w-xs`}
+          onChange={(v) => update({ report_date: v })}
+          className="max-w-xs"
         />
       </section>
 
