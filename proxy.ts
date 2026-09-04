@@ -25,6 +25,11 @@ function pickLocale(req: NextRequest): Locale {
   return defaultLocale;
 }
 
+// Forwarded to server layouts so they can tell dashboard routes (own shell)
+// from public pages (global navbar + footer) — server components have no
+// access to the pathname otherwise.
+const PATHNAME_HEADER = "x-pathname";
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -50,7 +55,8 @@ export async function proxy(req: NextRequest) {
     // rewrite with a plain next() response.
     if (pathname === "/" && (!cookieLocale || cookieLocale === defaultLocale)) {
       url.pathname = `/${defaultLocale}`;
-      return NextResponse.rewrite(url);
+      req.headers.set(PATHNAME_HEADER, url.pathname);
+      return NextResponse.rewrite(url, { request: req });
     }
 
     const locale = cookieLocale ?? pickLocale(req);
@@ -58,6 +64,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  req.headers.set(PATHNAME_HEADER, pathname);
   const response = NextResponse.next({ request: req });
 
   if (hasSupabaseEnv()) {

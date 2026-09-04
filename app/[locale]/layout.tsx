@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import { Navbar } from "@/components/navbar";
@@ -62,7 +63,13 @@ export default async function LocaleLayout({
   const dict = getDictionary(locale as Locale);
 
   const session = hasSupabaseEnv() ? await getCurrentSession() : null;
-  const userEmail = session?.user.email ?? null;
+  const signedIn = session !== null;
+
+  // Set by proxy.ts. The dashboard renders its own full-height shell + top
+  // bar, so the global navbar/footer are only for public pages — regardless
+  // of whether the visitor happens to be signed in.
+  const pathname = (await headers()).get("x-pathname") ?? "";
+  const isDashboard = pathname.startsWith(`/${locale}/dashboard`);
 
   return (
     <html
@@ -70,17 +77,15 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
     >
       <body className="flex min-h-screen flex-col bg-white text-slate-900 antialiased">
-        {/* The global navbar is the marketing/auth header. Logged-in users get
-            the dashboard's own full-height shell + top bar instead. */}
-        {!userEmail && (
+        {!isDashboard && (
           <Navbar
             locale={locale as Locale}
             dict={dict.nav}
-            userEmail={userEmail}
+            signedIn={signedIn}
           />
         )}
         <main className="flex-1">{children}</main>
-        {!userEmail && <Footer locale={locale as Locale} dict={dict.footer} />}
+        {!isDashboard && <Footer locale={locale as Locale} dict={dict.footer} />}
         <Analytics />
       </body>
     </html>

@@ -150,6 +150,16 @@ export const fr: Dictionary = {
       googleError: "Connexion à Google impossible. Veuillez réessayer.",
       appleButton: "Continuer avec Apple",
     },
+    onboarding: {
+      title: "Une dernière étape",
+      subtitle:
+        "Dites-nous comment vous utiliserez Meskasas. Ce choix configure votre compte et ne pourra pas être modifié sans nous contacter.",
+      role: "Je suis",
+      submit: "Continuer",
+      submitting: "Configuration…",
+      errorGeneric: "Impossible d'enregistrer votre choix. Veuillez réessayer.",
+      signOut: "Ce n'est pas vous ? Se déconnecter",
+    },
   },
   dashboard: {
     title: "Tableau de bord",

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Home } from "lucide-react";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -38,6 +38,10 @@ export default async function DashboardLayout({
   // page-level checks still own redirects / setup notices, so we silently
   // skip the chrome when the user isn't authenticated yet.
   const session = hasSupabaseEnv() ? await getCurrentSession() : null;
+
+  // OAuth signups land here with a placeholder tenant profile until they
+  // pick a role. Nothing in the dashboard is meaningful before that.
+  if (session?.needsOnboarding) redirect(`/${locale}/onboarding`);
 
   // Lightweight count of unread received messages for the sidebar badge.
   let unreadMessages = 0;

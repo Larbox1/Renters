@@ -143,6 +143,16 @@ export const en = {
       googleError: "Could not connect to Google. Please try again.",
       appleButton: "Continue with Apple",
     },
+    onboarding: {
+      title: "One last step",
+      subtitle:
+        "Tell us how you'll use Meskasas. This sets up your account and cannot be changed later without contacting us.",
+      role: "I am a",
+      submit: "Continue",
+      submitting: "Setting up…",
+      errorGeneric: "Could not save your choice. Please try again.",
+      signOut: "Not you? Sign out",
+    },
   },
   dashboard: {
     title: "Dashboard",

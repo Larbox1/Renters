@@ -17,6 +17,8 @@ export type Profile = {
   full_name: string | null;
   operation_country?: OperationCountry | null;
   avatar_url?: string | null;
+  /** Null until the user explicitly chose a role (OAuth signups). */
+  onboarded_at?: string | null;
 };
 
 export type CurrentSession = {
@@ -29,6 +31,12 @@ export type CurrentSession = {
   avatarUrl: string | null;
   hasProfile: boolean;
   operationCountry: OperationCountry;
+  /**
+   * True when the profile was created without an explicit role choice
+   * (OAuth signup) and the user hasn't completed onboarding yet. Dashboard
+   * routes send such users to /onboarding.
+   */
+  needsOnboarding: boolean;
 };
 
 /**
@@ -61,7 +69,12 @@ async function bootstrapAdmin(
     const fullName =
       profile?.full_name ?? user.user_metadata?.full_name ?? null;
     const { error } = await adminClient.from("profiles").upsert(
-      { id: user.id, role: "admin", full_name: fullName },
+      {
+        id: user.id,
+        role: "admin",
+        full_name: fullName,
+        onboarded_at: new Date().toISOString(),
+      },
       { onConflict: "id" },
     );
     if (error) {
@@ -72,6 +85,7 @@ async function bootstrapAdmin(
       role: "admin",
       full_name: fullName,
       avatar_url: profile?.avatar_url ?? null,
+      onboarded_at: new Date().toISOString(),
     };
   } catch (err) {
     console.error("[admin-bootstrap] unexpected error:", err);
@@ -88,7 +102,7 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
 
   const { data: rawProfile } = await supabase
     .from("profiles")
-    .select("role, full_name, operation_country, avatar_url")
+    .select("role, full_name, operation_country, avatar_url, onboarded_at")
     .eq("id", user.id)
     .maybeSingle<Profile>();
 
@@ -118,6 +132,8 @@ export async function getCurrentSession(): Promise<CurrentSession | null> {
         ? user.user_metadata.picture
         : null),
     hasProfile: profile !== null,
+    needsOnboarding:
+      profile !== null && profile.role !== "admin" && !profile.onboarded_at,
     operationCountry: isOperationCountry(profile?.operation_country)
       ? profile.operation_country
       : "FR",

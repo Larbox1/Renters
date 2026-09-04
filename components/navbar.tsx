@@ -2,12 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
-import { AddMenu, type AddMenuItem } from "@/components/add-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import {
-  NotificationsBell,
-  type NotificationItem,
-} from "@/components/notifications-bell";
 
 const Chevron = () => (
   <svg className="h-2.5 w-2.5 text-ink-4" viewBox="0 0 16 16" fill="none">
@@ -33,18 +28,18 @@ const Arrow = () => (
   </svg>
 );
 
+/**
+ * Public-site header (landing, pricing, contact, legal…). Signed-in visitors
+ * get a "Dashboard" button in place of the login / sign-up actions.
+ */
 export function Navbar({
   locale,
   dict,
-  userEmail,
-  addItems = [],
-  notifications = [],
+  signedIn = false,
 }: {
   locale: Locale;
   dict: Dictionary["nav"];
-  userEmail: string | null;
-  addItems?: AddMenuItem[];
-  notifications?: NotificationItem[];
+  signedIn?: boolean;
 }) {
   const navLinks = [
     { href: `/${locale}#features`, label: dict.features, chevron: true },
@@ -56,11 +51,7 @@ export function Navbar({
 
   return (
     <header className="sticky top-0 z-50 h-16 shrink-0 border-b border-slate-200 bg-white/80 backdrop-blur">
-      <nav
-        className={`mx-auto flex h-full items-center justify-between px-6 ${
-          userEmail ? "max-w-none" : "max-w-[1360px]"
-        }`}
-      >
+      <nav className="mx-auto flex h-full max-w-[1360px] items-center justify-between px-6">
         <Link href={`/${locale}`} className="flex items-center">
           <Image
             src={locale === "fr" ? "/meskasas_logo_fr.png" : "/meskasas_logo_en.png"}
@@ -72,36 +63,31 @@ export function Navbar({
           />
         </Link>
 
-        {!userEmail && (
-          <div className="hidden items-center gap-1.5 md:flex">
-            {navLinks.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[14.5px] text-ink-2 transition hover:bg-paper-sunk hover:text-ink"
-              >
-                {l.label}
-                {l.chevron && <Chevron />}
-              </Link>
-            ))}
-          </div>
-        )}
+        <div className="hidden items-center gap-1.5 md:flex">
+          {navLinks.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[14.5px] text-ink-2 transition hover:bg-paper-sunk hover:text-ink"
+            >
+              {l.label}
+              {l.chevron && <Chevron />}
+            </Link>
+          ))}
+        </div>
 
         <div className="flex items-center gap-2">
-          {userEmail ? (
-            <>
-              <AddMenu items={addItems} ariaLabel={dict.addMenu} />
-              <NotificationsBell
-                items={notifications}
-                ariaLabel={dict.notifications}
-                emptyLabel={dict.notificationsEmpty}
-                viewAllLabel={dict.notificationsViewAll}
-                viewAllHref={`/${locale}/dashboard/messages`}
-              />
-            </>
+          <LanguageSwitcher current={locale} />
+          {signedIn ? (
+            <Link
+              href={`/${locale}/dashboard`}
+              className="inline-flex items-center gap-2 rounded-lg bg-ink px-3.5 py-2 text-sm font-medium text-paper transition hover:bg-ink-2"
+            >
+              {dict.dashboard}
+              <Arrow />
+            </Link>
           ) : (
             <>
-              <LanguageSwitcher current={locale} />
               <Link
                 href={`/${locale}/login`}
                 className="hidden rounded-lg px-3.5 py-2 text-sm font-medium text-ink-2 transition hover:bg-paper-sunk hover:text-ink sm:inline-block"
